@@ -1,0 +1,58 @@
+﻿@{
+    ViewData["Title"] = "Admin Analytics Dashboard";
+    var mostViewed = ViewBag.MostViewed as List<BLL.DTOs.ArticleDTO>;
+    var articlesPerCategory = ViewBag.ArticlesPerCategory as List<(string Category, int Count)>;
+}
+<div class="container py-5">
+    <h1>Admin Analytics Dashboard</h1>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Articles</h5>
+                    <p class="display-6">@ViewBag.TotalArticles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <p class="display-6">@ViewBag.TotalUsers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h4>Most Viewed Articles</h4>
+            <ul class="list-group">
+                @if (mostViewed != null)
+                {
+                    foreach (var art in mostViewed)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @art.Title
+                            <span class="badge bg-primary rounded-pill">@art.ViewsCount</span>
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h4>Articles per Category</h4>
+            <ul class="list-group">
+                @if (articlesPerCategory != null)
+                {
+                    foreach (var cat in articlesPerCategory)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @cat.Category
+                            <span class="badge bg-info rounded-pill">@cat.Count</span>
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+</div>

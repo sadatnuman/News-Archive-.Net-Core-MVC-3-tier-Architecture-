@@ -1,0 +1,71 @@
+﻿@model IEnumerable<BLL.DTOs.UserDTO>
+
+@{
+    ViewData["Title"] = "Admin - All Users";
+    var rolesDict = new Dictionary<int, string>();
+    var rawRoles = ViewBag.Roles as IEnumerable<dynamic>;
+    if (rawRoles != null)
+    {
+        foreach (var r in rawRoles)
+        {
+            int id = (int)r.Id;
+            string name = (string)(r.RoleName ?? "");
+            rolesDict[id] = name;
+        }
+    }
+    var currentAdminEmail = ViewBag.CurrentAdminEmail as string;
+}
+
+<a asp-action="AllUser" style="text-decoration:none; color:inherit;">
+    <h2>All Users</h2>
+</a>
+
+@if (TempData["Msg"] != null)
+{
+    var alertClass = TempData["Class"] as string ?? "info";
+    <div class="alert alert-@alertClass">
+        @TempData["Msg"]
+    </div>
+}
+
+<form asp-action="AllUser" method="post" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchTerm" class="form-control" placeholder="Search by name or email" />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+<p>
+    <a asp-action="Create" asp-controller="Admin" class="btn btn-success">Create New Member</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Created</th>
+            <th style="width:220px">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Email</td>
+                <td>@(rolesDict.TryGetValue(item.RoleId, out var rn) ? rn : item.RoleId.ToString())</td>
+                <td>@item.CreatedAt.ToString("g")</td>
+                <td>
+                    @if (!string.Equals(item.Email, currentAdminEmail, StringComparison.OrdinalIgnoreCase))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-danger ms-2">Delete</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a asp-controller="Article" a asp-action="Index" class="btn btn-secondary ms-2">Back</a>

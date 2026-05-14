@@ -1,0 +1,36 @@
+﻿@model BLL.DTOs.UserDTO
+@{
+    ViewBag.Title = "Profile";
+    var roles = ViewBag.Roles as IEnumerable<BLL.DTOs.RoleDTO>;
+}
+
+<h2>Profile</h2>
+@if (TempData["Msg"] != null)
+{
+    <div class="alert alert-@TempData["Class"]">@TempData["Msg"]</div>
+}
+<form asp-action="Profile" method="post">
+    <input type="hidden" asp-for="UserId" />
+
+    <div class="form-group">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Email"></label>
+        <input asp-for="Email" class="form-control" readonly />
+    </div>
+
+    <div class="form-group">
+        <label for="roleName">Role</label>
+        <input type="hidden" asp-for="RoleId" />
+        <input type="text" class="form-control" readonly value="@(roles?.FirstOrDefault(r => r.Id == Model.RoleId)?.RoleName ?? "N/A")" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+
+</form>
+<a asp-action="ChangePassword" asp-controller="Admin" class="btn btn-secondary mt-3">Change Password</a>
+<a asp-action="Index" asp-controller="Article" class="btn btn-secondary mt-3">Back to Home</a>

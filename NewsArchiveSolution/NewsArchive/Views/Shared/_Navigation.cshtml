@@ -1,0 +1,165 @@
+@using BLL.Services;
+@inject CategoryService categoryService;
+@inject ArticleService articleService;
+
+@{
+    var email = Context.Session.GetString("Email");
+    var roleId = Context.Session.GetInt32("RoleId");
+    var isLoggedIn = !string.IsNullOrEmpty(email) && roleId.HasValue;
+    var isAdmin = roleId == 1;
+    var isMember = roleId == 2;
+    var categories = categoryService.Get();
+    var hasBreaking = articleService.HasBreakingNews();
+}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand fw-bold" asp-controller="Article" asp-action="Index">
+            <i class="bi bi-newspaper"></i> NewsArchive
+        </a>
+
+        <!-- Toggle Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Categories in Middle (side-by-side links) -->
+            <ul class="navbar-nav mx-auto">
+                @if (categories != null && categories.Count > 0)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" asp-controller="Article" asp-action="Index">
+                            <i class="bi bi-house"></i> Home
+                        </a>
+                    </li>
+
+                    @if (hasBreaking)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Article" asp-action="BreakingNews">
+                                <i class="bi bi-broadcast-pin"></i> Breaking News
+                            </a>
+                        </li>
+                    }
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Article" asp-action="TrendingNews">
+                            <i class="bi bi-graph-up"></i> Trending News
+                        </a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Categories
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
+                            @foreach (var cat in categories)
+                            {
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Category" asp-action="ArticlesByCategory" asp-route-id="@cat.CategoryId">
+                                        @cat.Name
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+
+            <!-- Right Side Navigation -->
+            <ul class="navbar-nav ms-auto">
+                @if (!isLoggedIn)
+                {
+                    <!-- Not Logged In: Show Home, Login, Sign Up -->
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Auth" asp-action="Login">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Auth" asp-action="Create">
+                            <i class="bi bi-person-plus"></i> Sign Up
+                        </a>
+                    </li>
+                }
+                else if (isAdmin)
+                {
+                    <!-- Admin Navigation -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Article" asp-action="Index">
+                            <i class="bi bi-house"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Article" asp-action="Create">
+                            <i class="bi bi-file-earmark-plus"></i> New Article
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Category" asp-action="Create">
+                            <i class="bi bi-folder-plus"></i> New Category
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="AllUser">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="Index">
+                            <i class="bi bi-bar-chart"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Admin" asp-action="Profile">
+                                    <i class="bi bi-person-lines-fill"></i> Profile
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Auth" asp-action="Logout">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+                else if (isMember)
+                {
+                    <!-- Member Navigation -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Article" asp-action="Index">
+                            <i class="bi bi-house"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="memberDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> Profile
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="memberDropdown">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Member" asp-action="Profile">
+                                    <i class="bi bi-person-lines-fill"></i> My Profile
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Auth" asp-action="Logout">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</nav>

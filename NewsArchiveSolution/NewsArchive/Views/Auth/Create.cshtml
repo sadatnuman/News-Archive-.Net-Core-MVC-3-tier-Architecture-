@@ -1,0 +1,50 @@
+﻿@model BLL.DTOs.UserDTO
+
+@{
+    ViewData["Title"] = "Create Member";
+
+    // Build roles list safely
+    var roles = ViewBag.Roles as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+
+<h2>Create Member</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input asp-for="PasswordHash" type="password" class="form-control" />
+        <span asp-validation-for="PasswordHash" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Confirm Password</label>
+        <input asp-for="ConfPassword" type="password" class="form-control" />
+        <span asp-validation-for="ConfPassword" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <input type="submit" value="Create" class="btn btn-primary" />
+        <a asp-action="Dashboard" asp-controller="Home" class="btn btn-secondary ms-2">Back to Home</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

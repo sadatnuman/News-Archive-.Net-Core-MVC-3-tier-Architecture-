@@ -1,0 +1,16 @@
+﻿@model BLL.DTOs.ArticleDTO
+
+@{
+    ViewData["Title"] = "Delete Article";
+}
+
+<h1>Are you sure to delete?</h1>
+<h3>@Model.Title</h3>
+<h3>@Model.ViewsCount</h3>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.ArticleId" />
+    <input type="submit" value="Yes" name="Decision" class="btn btn-danger" />
+    <input type="submit" value="No" name="Decision" class="btn btn-primary" />
+</form>

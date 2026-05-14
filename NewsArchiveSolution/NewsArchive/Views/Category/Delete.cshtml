@@ -1,0 +1,22 @@
+﻿@model BLL.DTOs.CategoryDTO
+
+@{
+    ViewData["Title"] = "Delete Category";
+}
+
+<h2>Delete Category</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Name</h5>
+        <p class="card-text">@Model.Description</p>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="CategoryId" />
+    <div class="mb-3">
+        <button type="submit" name="Decision" value="Yes" class="btn btn-danger">Yes, delete</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    </div>
+</form>
