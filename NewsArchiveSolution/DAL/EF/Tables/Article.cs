@@ -54,4 +54,6 @@ public partial class Article
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
+
+    public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
 }

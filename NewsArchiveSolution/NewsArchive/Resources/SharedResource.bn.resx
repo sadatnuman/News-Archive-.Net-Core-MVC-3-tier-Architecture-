@@ -606,6 +606,9 @@
   <data name="Nothing here right now" xml:space="preserve">
     <value>এই মুহূর্তে এখানে কিছু নেই</value>
   </data>
+  <data name="Nothing saved yet" xml:space="preserve">
+    <value>এখনো কিছু সংরক্ষণ করা হয়নি</value>
+  </data>
   <data name="Nothing written by authors goes live until you approve it. Open an article to read it in full before deciding." xml:space="preserve">
     <value>আপনার অনুমোদন ছাড়া লেখকদের কোনো লেখা প্রকাশিত হয় না। সিদ্ধান্ত নেওয়ার আগে সংবাদটি খুলে পুরোটা পড়ুন।</value>
   </data>
@@ -744,6 +747,9 @@
   <data name="Related stories" xml:space="preserve">
     <value>সম্পর্কিত সংবাদ</value>
   </data>
+  <data name="Remove from saved" xml:space="preserve">
+    <value>সংরক্ষিত তালিকা থেকে সরান</value>
+  </data>
   <data name="Remove picture" xml:space="preserve">
     <value>ছবি সরান</value>
   </data>
@@ -782,6 +788,12 @@
   </data>
   <data name="Save draft" xml:space="preserve">
     <value>খসড়া সংরক্ষণ</value>
+  </data>
+  <data name="Save story" xml:space="preserve">
+    <value>সংবাদটি সংরক্ষণ করুন</value>
+  </data>
+  <data name="Saved stories" xml:space="preserve">
+    <value>সংরক্ষিত সংবাদ</value>
   </data>
   <data name="Search" xml:space="preserve">
     <value>অনুসন্ধান</value>
@@ -852,6 +864,9 @@
   <data name="Sign in" xml:space="preserve">
     <value>লগ-ইন</value>
   </data>
+  <data name="Sign in to save this story" xml:space="preserve">
+    <value>সংবাদটি সংরক্ষণ করতে সাইন ইন করুন</value>
+  </data>
   <data name="Sign in with another account" xml:space="preserve">
     <value>অন্য অ্যাকাউন্টে সাইন ইন করুন</value>
   </data>
@@ -890,6 +905,12 @@
   </data>
   <data name="Stories by {0}, page {1}" xml:space="preserve">
     <value>{0}-এর লেখা সংবাদ, পৃষ্ঠা {1}</value>
+  </data>
+  <data name="Story removed from your saved list." xml:space="preserve">
+    <value>সংবাদটি আপনার সংরক্ষিত তালিকা থেকে সরানো হয়েছে।</value>
+  </data>
+  <data name="Story saved." xml:space="preserve">
+    <value>সংবাদটি সংরক্ষিত হয়েছে।</value>
   </data>
   <data name="Submit" xml:space="preserve">
     <value>জমা দিন</value>
@@ -990,6 +1011,9 @@
   <data name="This section has {0} articles. Choose where to move them before deleting." xml:space="preserve">
     <value>এই বিভাগে {0}টি সংবাদ আছে। মোছার আগে সেগুলো কোথায় সরানো হবে তা বেছে নিন।</value>
   </data>
+  <data name="This story could not be saved." xml:space="preserve">
+    <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
+  </data>
   <data name="This user has written articles. Reassign or delete them first." xml:space="preserve">
     <value>এই ব্যবহারকারী সংবাদ লিখেছেন। আগে সেগুলো অন্য কাউকে দিন বা মুছে ফেলুন।</value>
   </data>
@@ -1061,6 +1085,9 @@
   </data>
   <data name="Use a site path like /images/articles/photo.jpg or an https:// address" xml:space="preserve">
     <value>/images/articles/photo.jpg এর মতো সাইটের পথ বা https:// ঠিকানা দিন</value>
+  </data>
+  <data name="Use the bookmark button on any story to read it later." xml:space="preserve">
+    <value>যেকোনো সংবাদের বুকমার্ক বোতাম চেপে পরে পড়ার জন্য রেখে দিন।</value>
   </data>
   <data name="User ID is required" xml:space="preserve">
     <value>ব্যবহারকারীর আইডি প্রয়োজন</value>
@@ -1169,6 +1196,9 @@
   </data>
   <data name="{0} stories found" xml:space="preserve">
     <value>{0}টি সংবাদ পাওয়া গেছে</value>
+  </data>
+  <data name="{0} stories saved to read later." xml:space="preserve">
+    <value>পরে পড়ার জন্য {0}টি সংবাদ সংরক্ষিত।</value>
   </data>
   <data name="{0} stories, organised by year, month and day." xml:space="preserve">
     <value>{0}টি সংবাদ, বছর, মাস ও দিন অনুযায়ী সাজানো।</value>

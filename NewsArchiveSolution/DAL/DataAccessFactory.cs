@@ -29,5 +29,7 @@ namespace DAL
         public IRepository<Role> GetRoleRepository() => new Repository<Role>(db);
 
         public ITagRepository GetTagRepository() => new TagRepo(db);
+
+        public IBookmarkRepository GetBookmarkRepository() => new BookmarkRepo(db);
     }
 }

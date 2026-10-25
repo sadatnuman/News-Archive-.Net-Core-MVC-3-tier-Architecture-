@@ -182,6 +182,30 @@ namespace DAL.EF.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.Bookmark", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.HasKey("UserId", "ArticleId")
+                        .HasName("PK_Bookmarks");
+
+                    b.HasIndex(new[] { "ArticleId" }, "IX_Bookmarks_ArticleId");
+
+                    b.HasIndex(new[] { "UserId", "CreatedAt" }, "IX_Bookmarks_UserId_CreatedAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("Bookmarks");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Category", b =>
                 {
                     b.Property<int>("CategoryId")
@@ -529,6 +553,27 @@ namespace DAL.EF.Migrations
                     b.Navigation("Status");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.Bookmark", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Article", "Article")
+                        .WithMany("Bookmarks")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_Bookmarks_Articles");
+
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("Bookmarks")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_Bookmarks_Users");
+
+                    b.Navigation("Article");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Comment", b =>
                 {
                     b.HasOne("DAL.EF.Tables.Article", "Article")
@@ -574,6 +619,8 @@ namespace DAL.EF.Migrations
 
             modelBuilder.Entity("DAL.EF.Tables.Article", b =>
                 {
+                    b.Navigation("Bookmarks");
+
                     b.Navigation("Comments");
                 });
 
@@ -600,6 +647,8 @@ namespace DAL.EF.Migrations
             modelBuilder.Entity("DAL.EF.Tables.User", b =>
                 {
                     b.Navigation("Articles");
+
+                    b.Navigation("Bookmarks");
 
                     b.Navigation("Comments");
 

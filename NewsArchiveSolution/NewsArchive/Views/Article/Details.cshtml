@@ -143,6 +143,14 @@
                         <a href="https://www.facebook.com/sharer/sharer.php?u=@shareUrl" target="_blank" rel="noopener" aria-label="@L["Share on {0}", "Facebook"]"><i class="bi bi-facebook"></i></a>
                         <a href="https://wa.me/?text=@shareText%20@shareUrl" target="_blank" rel="noopener" aria-label="@L["Share on {0}", "WhatsApp"]"><i class="bi bi-whatsapp"></i></a>
                         <button type="button" data-copy-link="@absoluteUrl" aria-label="@L["Copy link"]"><i class="bi bi-link-45deg"></i></button>
+                        @if (isLoggedIn)
+                        {
+                            @await Html.PartialAsync("_SaveButton", (Model.ArticleId, ViewBag.IsSaved as bool? == true, "bookmark-inline"))
+                        }
+                        else
+                        {
+                            <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@path" rel="nofollow" aria-label="@L["Sign in to save this story"]" title="@L["Sign in to save this story"]"><i class="bi bi-bookmark"></i></a>
+                        }
                     </div>
                 }
             </div>

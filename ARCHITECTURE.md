@@ -63,6 +63,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `AddTagTranslationsAndSlugs` | Bangla tag names and unique slugs for tag pages |
 | `AddUserAvatars` | `Users.AvatarPath` for profile pictures |
 | `AddUserBio` | `Users.Bio` (up to 500 characters) for author pages |
+| `AddBookmarks` | `Bookmarks` join table for "read later" |
 
 ### Tables (3NF)
 
@@ -78,6 +79,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `ContentLabels` | `(ArticleId, TagId)` | `ArticleId → Articles` (cascade), `TagId → Tags` (cascade) | |
 | `Comments` | `CommentId` | `ArticleId → Articles` (cascade), `UserId → Users` | |
 | `UserTokens` | `TokenId` | `UserId → Users` (cascade) | `UX_UserTokens_TokenHash` |
+| `Bookmarks` | `(UserId, ArticleId)` | `UserId → Users` (cascade), `ArticleId → Articles` (cascade) | `IX_Bookmarks_ArticleId`, `IX_Bookmarks_UserId_CreatedAt` |
 
 Normalization changes:
 
@@ -212,6 +214,7 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | Tag | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Member | `Profile`, `ChangePassword` | Reader, Author |
 | Avatar | `Upload`, `Remove` (POST) | Any signed-in user, own picture only |
+| Bookmark | `/bookmarks` (saved stories, paged), `POST /bookmarks/toggle` (JSON for the page script, redirect without JavaScript) | Any signed-in user; published articles only, up to 500 per user |
 | Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 
 Access is declared with `[CustomAuthorize(roles...)]` (`Filters/CustomAuthorize.cs`, an `IAuthorizationFilter`). Anonymous users are sent to `/Auth/Login?returnUrl=...`; signed-in users without the role are sent to `/Auth/AccessDenied` (HTTP 403).
@@ -249,6 +252,7 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}?moveArticlesTo=` | Admin | 201 / 204 / 409 |
 | `GET /api/tags?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 |
 | `GET /api/authors?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 / 404 |
+| `GET /api/bookmarks?page=&pageSize=`, `POST /api/bookmarks/{articleId}`, `DELETE /api/bookmarks/{articleId}` | Any token, own list only | 200 / 204 / 400 / 404 |
 | `GET /api/archive?lang=`, `/api/archive/{year}/{month}?day=&lang=&page=&pageSize=`, `/api/archive/{year}/{month}/days` | Public | 200 / 404 for impossible dates |
 | `POST /api/tags`, `PUT /api/tags/{id}`, `DELETE /api/tags/{id}` | Admin | 201 / 204 / 409 |
 
@@ -367,6 +371,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 4b | Show/hide password, image upload for articles and profile pictures | Done |
 | 4c | Date archive with calendar and "On this day" | Done |
 | 4d | Author pages with bios | Done |
-| 4e | Bookmarks, rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
+| 4e | Bookmarks ("read later") | Done |
+| 4f | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

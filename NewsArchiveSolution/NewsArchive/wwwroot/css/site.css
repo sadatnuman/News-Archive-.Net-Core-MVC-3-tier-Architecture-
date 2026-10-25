@@ -1866,3 +1866,56 @@ img {
     height: 96px;
   }
 }
+
+.bookmark-form {
+  margin: 0;
+}
+
+.bookmark-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 1rem;
+  box-shadow: var(--depth-1);
+  transition: transform .2s var(--ease-depth), box-shadow .2s var(--ease-depth), color .15s ease, background-color .15s ease;
+}
+
+.bookmark-btn:hover,
+.bookmark-btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--depth-2);
+  color: var(--accent);
+}
+
+.bookmark-btn.is-saved {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.bookmark-on-card {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 2;
+  transform: translateZ(50px);
+}
+
+.bookmark-on-card .bookmark-btn {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.bookmark-on-card .bookmark-btn.is-saved {
+  background: var(--accent);
+}
+
+.share .bookmark-form {
+  display: inline-flex;
+}

@@ -1,0 +1,17 @@
+@model (int ArticleId, bool Saved, string Css)
+
+@{
+    var returnUrl = $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
+    var saveLabel = L["Save story"].Value;
+    var removeLabel = L["Remove from saved"].Value;
+}
+
+<form asp-controller="Bookmark" asp-action="Toggle" method="post" class="bookmark-form @Model.Css">
+    <input type="hidden" name="articleId" value="@Model.ArticleId" />
+    <input type="hidden" name="returnUrl" value="@returnUrl" />
+    <button type="submit" class="bookmark-btn @(Model.Saved ? "is-saved" : "")" aria-pressed="@(Model.Saved ? "true" : "false")"
+            aria-label="@(Model.Saved ? removeLabel : saveLabel)" title="@(Model.Saved ? removeLabel : saveLabel)"
+            data-save-label="@saveLabel" data-remove-label="@removeLabel">
+        <i class="bi @(Model.Saved ? "bi-bookmark-fill" : "bi-bookmark")" aria-hidden="true"></i>
+    </button>
+</form>

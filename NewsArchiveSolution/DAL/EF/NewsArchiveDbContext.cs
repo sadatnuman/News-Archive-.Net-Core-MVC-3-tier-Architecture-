@@ -32,6 +32,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<UserToken> UserTokens { get; set; }
 
+    public virtual DbSet<Bookmark> Bookmarks { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -166,6 +168,28 @@ public partial class NewsArchiveDbContext : DbContext
             entity.Property(e => e.DescriptionBn).HasMaxLength(255);
 
             entity.HasIndex(e => e.NameBn, "UX_Categories_NameBn").IsUnique().HasFilter("[NameBn] IS NOT NULL");
+        });
+
+        modelBuilder.Entity<Bookmark>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.ArticleId }).HasName("PK_Bookmarks");
+
+            entity.HasIndex(e => e.ArticleId, "IX_Bookmarks_ArticleId");
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt }, "IX_Bookmarks_UserId_CreatedAt").IsDescending(false, true);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Bookmarks)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Bookmarks_Users");
+
+            entity.HasOne(d => d.Article).WithMany(p => p.Bookmarks)
+                .HasForeignKey(d => d.ArticleId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Bookmarks_Articles");
         });
 
         modelBuilder.Entity<Comment>(entity =>

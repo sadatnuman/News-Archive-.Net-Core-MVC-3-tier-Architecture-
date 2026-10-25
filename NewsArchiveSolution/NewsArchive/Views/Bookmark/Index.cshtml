@@ -1,0 +1,51 @@
+@model List<BLL.DTOs.ArticleDTO>
+
+@{
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var total = (int)ViewBag.Total;
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    ViewData["Title"] = L["Saved stories"];
+    ViewData["NoIndex"] = true;
+}
+
+<div class="container py-4 py-lg-5">
+    <header class="mb-4">
+        <h1 class="page-title"><i class="bi bi-bookmark-heart text-accent" aria-hidden="true"></i> @L["Saved stories"]</h1>
+        <p class="page-intro mb-0">@L["{0} stories saved to read later.", total]</p>
+    </header>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-bookmark"></i>
+            <h2 class="h5 mt-3">@L["Nothing saved yet"]</h2>
+            <p class="mb-0">@L["Use the bookmark button on any story to read it later."]</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <partial name="_StoryCard" model="item" />
+                </div>
+            }
+        </div>
+    }
+
+    @if (totalPages > 1)
+    {
+        <nav class="mt-5" aria-label="@L["Pages"]">
+            <ul class="pagination justify-content-center flex-wrap">
+                @for (var i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link" href="@SeoUrls.Page($"/bookmarks?page={i}")" aria-current="@(i == page ? "page" : null)">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>

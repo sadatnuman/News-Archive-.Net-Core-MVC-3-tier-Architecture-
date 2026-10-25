@@ -103,6 +103,38 @@
         });
     });
 
+    document.addEventListener("submit", function (event) {
+        var form = event.target.closest(".bookmark-form");
+        if (!form || !window.fetch) return;
+        event.preventDefault();
+        var button = form.querySelector(".bookmark-btn");
+        var token = form.querySelector("input[name=__RequestVerificationToken]");
+        button.disabled = true;
+        fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            credentials: "same-origin",
+            headers: { "Accept": "application/json", "RequestVerificationToken": token ? token.value : "" }
+        }).then(function (response) {
+            if (!response.ok) throw new Error("bookmark");
+            return response.json();
+        }).then(function (data) {
+            document.querySelectorAll(".bookmark-form input[name=articleId][value='" + form.querySelector("input[name=articleId]").value + "']").forEach(function (input) {
+                var other = input.closest(".bookmark-form").querySelector(".bookmark-btn");
+                var label = data.saved ? other.getAttribute("data-remove-label") : other.getAttribute("data-save-label");
+                other.classList.toggle("is-saved", data.saved);
+                other.setAttribute("aria-pressed", data.saved ? "true" : "false");
+                other.setAttribute("aria-label", label);
+                other.setAttribute("title", label);
+                other.querySelector("i").className = "bi " + (data.saved ? "bi-bookmark-fill" : "bi-bookmark");
+            });
+        }).catch(function () {
+            form.submit();
+        }).finally(function () {
+            button.disabled = false;
+        });
+    });
+
     var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
 

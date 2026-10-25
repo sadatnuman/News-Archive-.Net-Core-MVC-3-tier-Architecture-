@@ -139,6 +139,7 @@ namespace NewsArchive.Controllers
             ViewBag.UserId = userId;
             ViewBag.RoleId = roleId;
             ViewBag.CanEdit = ArticleService.CanEdit(article.AuthorId, article.StatusId, userId ?? 0, roleId);
+            ViewBag.IsSaved = userId.HasValue && HttpContext.RequestServices.GetRequiredService<BookmarkService>().IsSaved(userId.Value, id);
             var recommendations = article.IsPublished
                 ? articleService.GetRecommendedArticles(id, 4)
                 : new List<ArticleDTO>();
