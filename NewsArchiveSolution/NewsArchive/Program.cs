@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using NewsArchive;
 using NewsArchive.Auth;
+using NewsArchive.Media;
+using NewsArchive.Health;
+using BLL.Media;
 using NewsArchive.Seo;
 using System.Globalization;
 using System.Text.Encodings.Web;
@@ -35,6 +38,7 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginThrottle>();
+builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "Meridian.Antiforgery";
@@ -67,6 +71,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                     context.HttpContext.Session.Clear();
                     await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 }
+                else if (context.Principal.NeedsRefresh(current!))
+                {
+                    context.ReplacePrincipal(AuthClaims.CreatePrincipal(current!));
+                    context.ShouldRenew = true;
+                }
             }
         };
     });
@@ -98,6 +107,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -169,12 +179,15 @@ builder.Services.AddBusinessLayer(connectionString);
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+var migrateOnStartup = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Database:MigrateOnStartup");
+try
 {
-    scope.ServiceProvider.GetRequiredService<ArticleService>().EnsureSlugs();
-    scope.ServiceProvider.GetRequiredService<CategoryService>().EnsureSlugs();
-    scope.ServiceProvider.GetRequiredService<TagService>().EnsureSlugs();
-    scope.ServiceProvider.GetRequiredService<AuthService>().PurgeExpiredTokens();
+    app.Services.InitializeBusinessLayer(migrateOnStartup);
+}
+catch (Exception ex)
+{
+    app.Logger.LogCritical(ex, "The database could not be prepared. Check ConnectionStrings:DbConn in appsettings.json and make sure SQL Server is running.");
+    if (!app.Environment.IsDevelopment()) throw;
 }
 
 app.UseForwardedHeaders();
@@ -269,6 +282,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+app.MapHealthChecks("/health");
 
 app.MapControllerRoute(
     name: "default",

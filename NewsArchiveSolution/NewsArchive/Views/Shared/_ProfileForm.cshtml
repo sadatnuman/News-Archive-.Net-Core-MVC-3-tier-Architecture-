@@ -9,6 +9,26 @@
     <div class="auth-card">
         <h1 class="h3 mb-1">@L["Profile"]</h1>
         <p class="text-muted mb-4">@L["Signed in as {0}", L[AppRoles.Name(Model.RoleId)]]</p>
+
+        <section class="avatar-editor mb-4" aria-labelledby="photo-heading">
+            @await Html.PartialAsync("_Avatar", (Model.Name, Model.AvatarPath, "avatar-xl"))
+            <div class="flex-grow-1">
+                <h2 id="photo-heading" class="h6 mb-1">@L["Profile picture"]</h2>
+                <p class="small text-muted mb-2">@L["JPEG, PNG, WebP or GIF, up to 2 MB."]</p>
+                <form asp-controller="Avatar" asp-action="Upload" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
+                    <label for="photo" class="visually-hidden">@L["Profile picture"]</label>
+                    <input id="photo" name="photo" type="file" class="form-control form-control-sm" accept="@BLL.Services.MediaService.AcceptedTypes" data-max-bytes="@BLL.Services.MediaService.MaxAvatarBytes" data-too-large="@L["The image is too large. The limit is 2 MB."]" required />
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-upload"></i> @L["Upload"]</button>
+                </form>
+                @if (!string.IsNullOrEmpty(Model.AvatarPath))
+                {
+                    <form asp-controller="Avatar" asp-action="Remove" method="post" class="mt-2">
+                        <button type="submit" class="btn btn-sm btn-link text-danger p-0">@L["Remove picture"]</button>
+                    </form>
+                }
+            </div>
+        </section>
+
         <form asp-action="Profile" method="post">
             <input type="hidden" asp-for="UserId" />
             <div class="mb-3">
@@ -19,6 +39,11 @@
             <div class="mb-3">
                 <label asp-for="Email" class="form-label fw-semibold"></label>
                 <input asp-for="Email" class="form-control" readonly />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Bio" class="form-label fw-semibold"></label>
+                <textarea asp-for="Bio" class="form-control" rows="3" maxlength="500" placeholder="@L["A sentence or two about you, shown on your author page"]"></textarea>
+                <span asp-validation-for="Bio" class="text-danger small"></span>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-primary">@L["Save changes"]</button>

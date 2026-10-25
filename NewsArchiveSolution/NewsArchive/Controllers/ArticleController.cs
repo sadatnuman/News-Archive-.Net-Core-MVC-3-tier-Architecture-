@@ -15,14 +15,36 @@ namespace NewsArchive.Controllers
         CommentService commentService;
         UserService userService;
         TagService tagService;
+        MediaService mediaService;
 
-        public ArticleController(ArticleService articleService, CategoryService categoryService, CommentService commentService, UserService userService, TagService tagService)
+        public ArticleController(ArticleService articleService, CategoryService categoryService, CommentService commentService, UserService userService, TagService tagService, MediaService mediaService)
         {
             this.tagService = tagService;
+            this.mediaService = mediaService;
             this.articleService = articleService;
             this.categoryService = categoryService;
             this.commentService = commentService;
             this.userService = userService;
+        }
+
+        private string? ApplyImage(ArticleFormDTO form, IFormFile? imageFile, bool removeImage)
+        {
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                using var stream = imageFile.OpenReadStream();
+                var result = mediaService.SaveArticleImage(stream, imageFile.Length);
+                if (!result.Success)
+                {
+                    ModelState.AddModelError("imageFile", L[result.Error!]);
+                    return null;
+                }
+                form.ImagePath = result.Path;
+                return result.Path;
+            }
+
+            if (removeImage)
+                form.ImagePath = null;
+            return null;
         }
 
         private void SetFormData()
@@ -50,6 +72,7 @@ namespace NewsArchive.Controllers
             ViewBag.IsSearch = isSearch;
             ViewBag.Trending = trending;
             ViewBag.PopularTags = isSearch ? new List<TagDTO>() : tagService.GetPopular(12, CurrentLanguage);
+            ViewBag.OnThisDay = isSearch ? new List<ArticleDTO>() : articleService.GetOnThisDay(DateTime.Now, 3, CurrentLanguage);
             ViewBag.Keyword = keyword;
             ViewBag.From = from;
             ViewBag.To = to;
@@ -104,6 +127,8 @@ namespace NewsArchive.Controllers
 
             var comments = article.IsPublished ? commentService.GetByArticleId(id) : new List<CommentDTO>();
             var users = userService.GetNames(comments.Select(c => c.UserId).Append(article.AuthorId));
+            ViewBag.Avatars = userService.GetAvatars(comments.Select(c => c.UserId).Append(article.AuthorId));
+            ViewBag.AuthorId = article.AuthorId;
 
             ViewBag.Comments = comments;
             ViewBag.AuthorName = users.TryGetValue(article.AuthorId, out var authorName) ? authorName : L["Staff reporter"].Value;
@@ -114,6 +139,7 @@ namespace NewsArchive.Controllers
             ViewBag.UserId = userId;
             ViewBag.RoleId = roleId;
             ViewBag.CanEdit = ArticleService.CanEdit(article.AuthorId, article.StatusId, userId ?? 0, roleId);
+            ViewBag.IsSaved = userId.HasValue && HttpContext.RequestServices.GetRequiredService<BookmarkService>().IsSaved(userId.Value, id);
             var recommendations = article.IsPublished
                 ? articleService.GetRecommendedArticles(id, 4)
                 : new List<ArticleDTO>();
@@ -135,11 +161,13 @@ namespace NewsArchive.Controllers
 
         [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Create(ArticleFormDTO form, string? submitAction)
+        [RequestSizeLimit(MediaService.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        public IActionResult Create(ArticleFormDTO form, string? submitAction, IFormFile? imageFile, bool removeImage = false)
         {
             var userId = CurrentUserId;
             var roleId = CurrentRoleId;
+            var uploaded = ModelState.IsValid ? ApplyImage(form, imageFile, removeImage) : null;
             if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
                 if (articleService.Create(form, userId.Value, roleId.Value, submitAction == "submit") > 0)
@@ -155,6 +183,7 @@ namespace NewsArchive.Controllers
                 ModelState.AddModelError(string.Empty, L["The article could not be saved."]);
             }
 
+            mediaService.DeleteIfUploaded(uploaded);
             SetFormData();
             return View(form);
         }
@@ -175,15 +204,20 @@ namespace NewsArchive.Controllers
 
         [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, ArticleFormDTO form, string? submitAction)
+        [RequestSizeLimit(MediaService.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        public IActionResult Edit(int id, ArticleFormDTO form, string? submitAction, IFormFile? imageFile, bool removeImage = false)
         {
             var userId = CurrentUserId;
             var roleId = CurrentRoleId;
+            var previousImage = articleService.Get(id)?.ImagePath;
+            var uploaded = ModelState.IsValid ? ApplyImage(form, imageFile, removeImage) : null;
             if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
                 if (articleService.Update(id, form, userId.Value, roleId.Value, submitAction == "submit"))
                 {
+                    if (previousImage != form.ImagePath)
+                        mediaService.DeleteIfUploaded(previousImage);
                     if (roleId == AppRoles.Admin)
                     {
                         Flash("success", "Article updated.");
@@ -194,6 +228,9 @@ namespace NewsArchive.Controllers
                 }
                 ModelState.AddModelError(string.Empty, L["You cannot edit this article."]);
             }
+
+            mediaService.DeleteIfUploaded(uploaded);
+            if (uploaded != null) form.ImagePath = previousImage;
 
             form.ArticleId = id;
             SetFormData();
@@ -218,12 +255,24 @@ namespace NewsArchive.Controllers
         {
             if (Decision == "Yes")
             {
+                var image = articleService.Get(id)?.ImagePath;
                 if (articleService.Delete(id, CurrentUserId ?? 0, CurrentRoleId ?? 0))
+                {
+                    mediaService.DeleteIfUploaded(image);
                     Flash("success", "Article deleted.");
+                }
                 else
                     Flash("danger", "The article could not be deleted.");
             }
             return CurrentRoleId == AppRoles.Author ? RedirectToAction("MyArticles") : RedirectToAction("Index");
+        }
+
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
+        [HttpPost]
+        public IActionResult Preview(string? content)
+        {
+            if (content != null && content.Length > 20000) content = content[..20000];
+            return Content(NewsArchive.Content.ArticleRenderer.Render(content).ToString() ?? string.Empty, "text/html; charset=utf-8");
         }
 
         [CustomAuthorize(AppRoles.Author)]

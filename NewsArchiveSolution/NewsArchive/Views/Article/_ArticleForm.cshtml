@@ -9,7 +9,7 @@
     var isEdit = Model.ArticleId > 0;
 }
 
-<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.ArticleId : null)" method="post" class="editor-form">
+<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.ArticleId : null)" method="post" enctype="multipart/form-data" class="editor-form">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
     @if (Model.StatusId == ArticleStatus.Rejected && !string.IsNullOrEmpty(Model.ReviewNote))
@@ -54,17 +54,51 @@
         <span asp-validation-for="Summary" class="text-danger small"></span>
     </div>
 
-    <div class="mb-4">
-        <label asp-for="Content" class="form-label fw-semibold"></label>
-        <textarea asp-for="Content" class="form-control" rows="14" placeholder="@L["Write the full story. Leave an empty line between paragraphs."]"></textarea>
+    <div class="mb-4 md-editor" data-preview-url="@Url.Action("Preview", "Article")">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-2">
+            <label asp-for="Content" class="form-label fw-semibold mb-0"></label>
+            <div class="btn-group btn-group-sm md-tabs" role="tablist" aria-label="@L["Editor view"]">
+                <button type="button" class="btn btn-outline-secondary active" data-md-tab="write" role="tab" aria-selected="true">@L["Write"]</button>
+                <button type="button" class="btn btn-outline-secondary" data-md-tab="preview" role="tab" aria-selected="false">@L["Preview"]</button>
+            </div>
+        </div>
+        <div class="md-toolbar" role="toolbar" aria-label="@L["Formatting"]">
+            <button type="button" class="btn btn-sm" data-md="heading" title="@L["Heading"]" aria-label="@L["Heading"]"><i class="bi bi-type-h2"></i></button>
+            <button type="button" class="btn btn-sm" data-md="bold" title="@L["Bold"]" aria-label="@L["Bold"]"><i class="bi bi-type-bold"></i></button>
+            <button type="button" class="btn btn-sm" data-md="italic" title="@L["Italic"]" aria-label="@L["Italic"]"><i class="bi bi-type-italic"></i></button>
+            <button type="button" class="btn btn-sm" data-md="quote" title="@L["Quote"]" aria-label="@L["Quote"]"><i class="bi bi-quote"></i></button>
+            <button type="button" class="btn btn-sm" data-md="list" title="@L["Bulleted list"]" aria-label="@L["Bulleted list"]"><i class="bi bi-list-ul"></i></button>
+            <button type="button" class="btn btn-sm" data-md="numbered" title="@L["Numbered list"]" aria-label="@L["Numbered list"]"><i class="bi bi-list-ol"></i></button>
+            <button type="button" class="btn btn-sm" data-md="link" title="@L["Link"]" aria-label="@L["Link"]"><i class="bi bi-link-45deg"></i></button>
+        </div>
+        <textarea asp-for="Content" class="form-control md-input" rows="16" placeholder="@L["Write the full story. Leave an empty line between paragraphs."]"></textarea>
+        <div class="md-preview article-body" hidden aria-live="polite"></div>
+        <div class="form-text">@L["Formatting: ## heading, **bold**, *italic*, > quote, - list, [text](https://link)."]</div>
         <span asp-validation-for="Content" class="text-danger small"></span>
     </div>
 
-    <div class="mb-4">
-        <label asp-for="ImagePath" class="form-label fw-semibold"></label>
-        <input asp-for="ImagePath" class="form-control" placeholder="images/articles/image-name.jpg" />
+    <fieldset class="mb-4 image-editor">
+        <legend class="form-label fw-semibold fs-6 mb-2">@L["Picture"]</legend>
+        @if (!string.IsNullOrEmpty(Model.ImagePath))
+        {
+            <div class="image-preview mb-3">
+                <img src="@SeoUrls.Image(Model.ImagePath)" alt="" loading="lazy" />
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="removeImage" value="true" id="removeImage" />
+                    <label class="form-check-label" for="removeImage">@L["Remove this picture"]</label>
+                </div>
+            </div>
+        }
+        <label for="imageFile" class="form-label small">@L["Upload a picture"]</label>
+        <input id="imageFile" name="imageFile" type="file" class="form-control" accept="@BLL.Services.MediaService.AcceptedTypes" data-max-bytes="@BLL.Services.MediaService.MaxArticleImageBytes" data-too-large="@L["The image is too large. The limit is 5 MB."]" />
+        <div class="form-text">@L["JPEG, PNG, WebP or GIF, up to 5 MB. Use a landscape picture, ideally 1200 × 675 pixels."]</div>
         <span asp-validation-for="ImagePath" class="text-danger small"></span>
-    </div>
+        <span class="text-danger small d-block">@Html.ValidationMessage("imageFile")</span>
+        <details class="mt-3">
+            <summary class="small">@L["Or use an existing picture address"]</summary>
+            <input asp-for="ImagePath" class="form-control mt-2" placeholder="images/articles/image-name.jpg" />
+        </details>
+    </fieldset>
 
     @if (tags.Count > 0)
     {

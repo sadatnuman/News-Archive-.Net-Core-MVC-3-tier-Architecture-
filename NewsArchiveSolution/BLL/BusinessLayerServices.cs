@@ -20,8 +20,25 @@ namespace BLL
             services.AddScoped<RoleService>();
             services.AddScoped<AnalyticsService>();
             services.AddScoped<AuthService>();
+            services.AddScoped<MediaService>();
+            services.AddScoped<SystemService>();
+            services.AddScoped<AuthorService>();
+            services.AddScoped<BookmarkService>();
 
             return services;
+        }
+
+        public static void InitializeBusinessLayer(this IServiceProvider services, bool applyMigrations)
+        {
+            if (applyMigrations)
+                services.MigrateDataLayer();
+
+            using var scope = services.CreateScope();
+            var provider = scope.ServiceProvider;
+            provider.GetRequiredService<ArticleService>().EnsureSlugs();
+            provider.GetRequiredService<CategoryService>().EnsureSlugs();
+            provider.GetRequiredService<TagService>().EnsureSlugs();
+            provider.GetRequiredService<AuthService>().PurgeExpiredTokens();
         }
     }
 }

@@ -12,6 +12,14 @@ namespace DAL.Interfaces
 
         List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
 
+        List<Article> GetByPeriod(DateTime from, DateTime toExclusive, string? language, int page, int pageSize, out int total);
+
+        List<(int Year, int Month, int Count)> CountByMonth(string? language = null);
+
+        Dictionary<int, int> CountByDay(int year, int month, string? language = null);
+
+        List<Article> GetOnThisDay(int month, int day, int beforeYear, int count, string? language = null);
+
         List<Article> GetBreaking(string? language = null);
 
         bool HasBreakingNews(string? language = null);
@@ -25,6 +33,10 @@ namespace DAL.Interfaces
         List<Article> GetRecommended(int articleId, int count);
 
         List<Article> GetByAuthor(int authorId);
+
+        List<Article> GetPublishedByAuthor(int authorId, string? language, int page, int pageSize, out int total);
+
+        Dictionary<int, int> CountPublishedByAuthor(string? language = null);
 
         List<Article> GetByStatus(int statusId);
 

@@ -1,0 +1,43 @@
+@model (int Year, int Month, int? Day, Dictionary<int, int> Counts)
+@using System.Globalization
+
+@{
+    var format = CultureInfo.CurrentCulture.DateTimeFormat;
+    var first = new DateTime(Model.Year, Model.Month, 1);
+    var firstDay = format.FirstDayOfWeek;
+    var offset = ((int)first.DayOfWeek - (int)firstDay + 7) % 7;
+    var days = DateTime.DaysInMonth(Model.Year, Model.Month);
+    var names = Enumerable.Range(0, 7).Select(i => format.AbbreviatedDayNames[((int)firstDay + i) % 7]).ToList();
+    var today = DateTime.Today;
+}
+
+<div class="archive-calendar" role="group" aria-label="@L["Calendar for {0}", first.ToString("MMMM yyyy")]">
+    <div class="calendar-head">
+        <a href="@SeoUrls.Archive(Model.Year, Model.Month)" class="calendar-title">@first.ToString("MMMM yyyy")</a>
+    </div>
+    <div class="calendar-grid">
+        @foreach (var name in names)
+        {
+            <span class="calendar-dow" aria-hidden="true">@name</span>
+        }
+        @for (var i = 0; i < offset; i++)
+        {
+            <span class="calendar-cell is-empty"></span>
+        }
+        @for (var d = 1; d <= days; d++)
+        {
+            var count = Model.Counts.TryGetValue(d, out var c) ? c : 0;
+            var classes = "calendar-cell" + (Model.Day == d ? " is-selected" : "") + (today.Year == Model.Year && today.Month == Model.Month && today.Day == d ? " is-today" : "");
+            if (count > 0)
+            {
+                <a class="@classes has-stories" href="@SeoUrls.Archive(Model.Year, Model.Month, d)" aria-label="@L["{0}: {1} stories", new DateTime(Model.Year, Model.Month, d).ToString("d MMMM yyyy"), count]" aria-current="@(Model.Day == d ? "date" : null)">
+                    <span>@d</span><small>@count</small>
+                </a>
+            }
+            else
+            {
+                <span class="@classes"><span>@d</span></span>
+            }
+        }
+    </div>
+</div>

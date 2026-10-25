@@ -1,0 +1,152 @@
+@model List<BLL.DTOs.ArticleDTO>
+@inject SeoUrls Urls
+@using System.Globalization
+
+@{
+    var lang = UiLanguage.Current;
+    var year = (int)ViewBag.Year;
+    var month = (int)ViewBag.Month;
+    var day = ViewBag.Day as int?;
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var total = (int)ViewBag.Total;
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    var dayCounts = ViewBag.DayCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var newer = ViewBag.Newer as BLL.DTOs.ArchiveMonthDTO;
+    var older = ViewBag.Older as BLL.DTOs.ArchiveMonthDTO;
+    var format = CultureInfo.CurrentCulture.DateTimeFormat;
+    var monthName = format.GetMonthName(month);
+    var monthLabel = new DateTime(year, month, 1).ToString("MMMM yyyy");
+    var label = day.HasValue ? new DateTime(year, month, day.Value).ToString("d MMMM yyyy") : monthLabel;
+    var path = SeoUrls.Archive(year, month, day, page: page);
+
+    var meta = ViewData.Meta();
+    meta.Title = page > 1 ? L["News from {0}, page {1}", label, page] : L["News from {0}", label];
+    meta.Description = L["Every story The Meridian Newsfolio published on {0}.", label];
+    meta.CanonicalPath = path;
+    meta.NoIndex = total == 0;
+    meta.Image = Model.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagePath))?.ImagePath;
+    meta.Breadcrumbs.Add((L["Archive"], SeoUrls.Page("/archive")));
+    meta.Breadcrumbs.Add((year.ToString(), SeoUrls.Archive(year)));
+    meta.Breadcrumbs.Add((monthName, SeoUrls.Archive(year, month)));
+    if (day.HasValue) meta.Breadcrumbs.Add((day.Value.ToString(), SeoUrls.Archive(year, month, day)));
+    meta.JsonLd.Add(new Dictionary<string, object?>
+    {
+        ["@type"] = "CollectionPage",
+        ["name"] = meta.Title,
+        ["url"] = Urls.Absolute(path),
+        ["inLanguage"] = lang,
+        ["description"] = meta.Description,
+        ["mainEntity"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "ItemList",
+            ["itemListElement"] = Model.Select((a, i) => new Dictionary<string, object?>
+            {
+                ["@type"] = "ListItem",
+                ["position"] = (page - 1) * pageSize + i + 1,
+                ["url"] = Urls.Absolute(SeoUrls.Article(a))
+            }).ToList()
+        }
+    });
+}
+
+@section Head {
+    @if (page > 1)
+    {
+        <link rel="prev" href="@SeoUrls.Archive(year, month, day, page: page - 1)" />
+    }
+    @if (page < totalPages)
+    {
+        <link rel="next" href="@SeoUrls.Archive(year, month, day, page: page + 1)" />
+    }
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/archive")">@L["Archive"]</a></li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Archive(year)">@year</a></li>
+            @if (day.HasValue)
+            {
+                <li class="breadcrumb-item"><a href="@SeoUrls.Archive(year, month)">@monthName</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@day</li>
+            }
+            else
+            {
+                <li class="breadcrumb-item active" aria-current="page">@monthName</li>
+            }
+        </ol>
+    </nav>
+
+    <header class="mb-4 pb-3 border-bottom">
+        <span class="kicker">@L["Archive"]</span>
+        <h1 class="page-title mt-1">@L["News from {0}", label]</h1>
+        <p class="page-intro mb-0">@L["{0} stories found", total]</p>
+    </header>
+
+    <div class="row g-4 g-lg-5">
+        <section class="col-lg-8" aria-label="@L["Stories"]">
+            @if (Model.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="bi bi-calendar-x"></i>
+                    <h2 class="h5 mt-3">@L["No stories on this date"]</h2>
+                    <p class="mb-0"><a href="@SeoUrls.Page("/archive")">@L["Browse the archive"]</a></p>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var item in Model)
+                    {
+                        <div class="col-md-6">
+                            <partial name="_StoryCard" model="item" />
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (totalPages > 1)
+            {
+                <nav class="mt-5" aria-label="@L["Pages"]">
+                    <ul class="pagination justify-content-center flex-wrap">
+                        @for (var i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == page ? "active" : "")">
+                                <a class="page-link" href="@SeoUrls.Archive(year, month, day, page: i)" aria-current="@(i == page ? "page" : null)">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        </section>
+
+        <aside class="col-lg-4">
+            <div class="sticky-aside">
+                <div class="side-panel">
+                    <h2 class="side-panel-title">@L["Calendar"]</h2>
+                    @await Html.PartialAsync("_ArchiveCalendar", (year, month, day, dayCounts))
+                    <div class="d-flex justify-content-between gap-2 mt-3 small">
+                        @if (older != null)
+                        {
+                            <a href="@SeoUrls.Archive(older.Year, older.Month)" rel="nofollow"><i class="bi bi-arrow-left" aria-hidden="true"></i> @(new DateTime(older.Year, older.Month, 1).ToString("MMMM yyyy"))</a>
+                        }
+                        else
+                        {
+                            <span></span>
+                        }
+                        @if (newer != null)
+                        {
+                            <a href="@SeoUrls.Archive(newer.Year, newer.Month)" rel="nofollow">@(new DateTime(newer.Year, newer.Month, 1).ToString("MMMM yyyy")) <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                        }
+                    </div>
+                    @if (day.HasValue)
+                    {
+                        <a class="btn btn-outline-primary btn-sm w-100 mt-3" href="@SeoUrls.Archive(year, month)">@L["All of {0}", monthLabel]</a>
+                    }
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

@@ -6,7 +6,10 @@
 
 <div class="container py-5">
     <div class="text-center py-5 mx-auto" style="max-width: 36rem;">
-        <div class="display-1 fw-bold serif text-accent">403</div>
+        <div class="error-hero">
+            @await Html.PartialAsync("_Globe", "globe-lg")
+            <div class="error-code display-1 fw-bold serif text-accent">403</div>
+        </div>
         <h1 class="page-title mt-2">@meta.Title</h1>
         <p class="page-intro mx-auto">@L["Your account does not have permission to open this page."]</p>
         <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">

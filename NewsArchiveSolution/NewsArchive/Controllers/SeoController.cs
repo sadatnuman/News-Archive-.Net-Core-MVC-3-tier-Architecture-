@@ -17,11 +17,13 @@ namespace NewsArchive.Controllers
         private readonly ArticleService articleService;
         private readonly CategoryService categoryService;
         private readonly TagService tagService;
+        private readonly AuthorService authorService;
         private readonly SeoUrls urls;
         private readonly SiteOptions site;
 
-        public SeoController(ArticleService articleService, CategoryService categoryService, TagService tagService, SeoUrls urls, IOptions<SiteOptions> site)
+        public SeoController(ArticleService articleService, CategoryService categoryService, TagService tagService, AuthorService authorService, SeoUrls urls, IOptions<SiteOptions> site)
         {
+            this.authorService = authorService;
             this.tagService = tagService;
             this.articleService = articleService;
             this.categoryService = categoryService;
@@ -83,6 +85,15 @@ namespace NewsArchive.Controllers
                 foreach (var c in categories)
                     AddUrl(SeoUrls.Category(c.CategoryId, c.Slug, lang), null, "daily", "0.7");
                 AddUrl(SeoUrls.Page("/tags", lang), null, "weekly", "0.5");
+                AddUrl(SeoUrls.Page("/archive", lang), latest, "daily", "0.5");
+                AddUrl(SeoUrls.Page("/authors", lang), null, "weekly", "0.4");
+                foreach (var a in authorService.GetAuthors(lang))
+                    AddUrl(SeoUrls.Author(a.UserId, a.Name, lang), null, "weekly", "0.5");
+                var months = articleService.GetArchiveMonths(lang);
+                foreach (var year in months.Select(m => m.Year).Distinct())
+                    AddUrl(SeoUrls.Archive(year, language: lang), null, "monthly", "0.4");
+                foreach (var m in months)
+                    AddUrl(SeoUrls.Archive(m.Year, m.Month, language: lang), null, "weekly", "0.4");
                 foreach (var t in tagService.GetWithCounts(lang).Where(t => t.ArticleCount > 0))
                     AddUrl(SeoUrls.Tag(t.TagId, t.Slug, lang), null, "daily", "0.6");
             }

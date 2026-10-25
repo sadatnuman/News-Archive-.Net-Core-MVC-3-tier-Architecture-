@@ -1,8 +1,16 @@
 @model BLL.DTOs.ArticleDTO
 @using NewsArchive.Seo
 
-<article class="story story-card h-100" lang="@Model.LanguageCode">
+@{
+    var savedIds = ViewBag.SavedIds as HashSet<int>;
+}
+
+<article class="story story-card h-100" lang="@Model.LanguageCode" data-tilt>
     <partial name="_StoryMedia" model="Model" />
+    @if (savedIds != null && Model.IsPublished)
+    {
+        @await Html.PartialAsync("_SaveButton", (Model.ArticleId, savedIds.Contains(Model.ArticleId), "bookmark-on-card"))
+    }
     <div class="pt-3">
         <partial name="_StoryKicker" model="Model" />
         <h3 class="story-title"><a href="@SeoUrls.Article(Model)">@Model.Title</a></h3>

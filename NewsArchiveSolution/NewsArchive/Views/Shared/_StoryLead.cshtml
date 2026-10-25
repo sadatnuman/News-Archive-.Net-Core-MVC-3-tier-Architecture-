@@ -1,7 +1,7 @@
 @model BLL.DTOs.ArticleDTO
 @using NewsArchive.Seo
 
-<article class="story story-lead" lang="@Model.LanguageCode">
+<article class="story story-lead" lang="@Model.LanguageCode" data-tilt data-tilt-max="3">
     <partial name="_StoryMedia" model="Model" view-data='new ViewDataDictionary(ViewData) { { "Eager", true } }' />
     <div class="pt-3">
         <partial name="_StoryKicker" model="Model" />

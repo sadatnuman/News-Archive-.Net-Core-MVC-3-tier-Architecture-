@@ -39,6 +39,7 @@ namespace NewsArchive.Controllers
             }
 
             existing.Name = obj.Name;
+            existing.Bio = obj.Bio;
             if (userService.Update(existing))
             {
                 Flash("success", "User updated");

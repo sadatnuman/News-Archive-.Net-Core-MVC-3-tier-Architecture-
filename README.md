@@ -13,11 +13,14 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - Light, dark and system themes
 - Home page with a lead story, latest news, trending stories and a breaking-news ticker
 - Sections, topics (tags), trending and breaking news, search by keyword and date range
+- Date archive by year, month and day with a calendar (`/archive/2026/10`) and an "On this day" panel on the home page
+- Author pages with picture, bio and every story (`/authors`, `/author/{id}/{name}`); bylines link there
 - Article pages with byline, reading time, share buttons (LinkedIn, X, Facebook, WhatsApp), comments and related stories
-- Sign up, sign in, profile, password change and password reset with a one-time code; every password field has a show/hide eye button
+- Save stories to read later with the bookmark button on every card and article (`/bookmarks`)
+- Sign up, sign in, profile with a profile picture, password change and password reset with a one-time code; every password field has a show/hide eye button
 
 **Authors**
-- Write articles in English or Bangla, tag them with up to 8 topics, save drafts and submit them for approval
+- Write articles in English or Bangla with safe formatting (headings, bold, quotes, lists, links), a toolbar and live preview, upload a picture, tag them with up to 8 topics, save drafts and submit them for approval
 - "My articles" page with the status of every article and the editor's notes on rejected ones
 
 **Admins**
@@ -46,6 +49,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - JSON-LD structured data (`NewsArticle`, `NewsMediaOrganization`, `WebSite`, `BreadcrumbList`)
 - `robots.txt`, XML sitemap for both languages, Google News sitemap and RSS feeds (`/rss.xml`, `/rss.xml?lang=bn`)
 
+**Design**
+- Light, dark and system themes with a 3D layer: rotating meridian globe, tilt cards with depth and glare, glass navigation, scroll reveal; all of it switches off for visitors who prefer reduced motion
+
 **Responsive design**
 - Checked without horizontal scrolling from 320 px phones to 1920 px desktops in Chrome and Edge
 
@@ -53,9 +59,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 
 | Layer | Technology |
 |---|---|
-| Framework | ASP.NET Core MVC, .NET 10 |
-| Data | Entity Framework Core 10 (migrations), SQL Server |
-| Mapping | AutoMapper (profile registered through dependency injection) |
+| Framework | ASP.NET Core MVC, .NET 10 (SDK pinned by `global.json`, any 10.0.x feature band) |
+| Data | Entity Framework Core 10.0.14 (migrations), SQL Server |
+| Mapping | AutoMapper 14 (profile registered through dependency injection, `MaxDepth` safeguard) |
 | Authentication | Cookie authentication with claims (MVC), hashed bearer and cookie tokens (API) |
 | API docs | Swashbuckle (Swagger / OpenAPI) |
 | Localization | ASP.NET Core localization, resource files, culture-specific views |
@@ -119,11 +125,28 @@ The sample stories are fictional. While `Site:ShowDemoNotice` is `true`, a banne
 
 ### 4. Run
 
+In Development the app applies pending migrations by itself on startup (`Database:MigrateOnStartup` in `appsettings.Development.json`), so step 2 is only needed for production or for a manual check.
+
+**Visual Studio Community 2026 (or 2022)**
+
+1. Open `NewsArchiveSolution/NewsArchiveSolution.slnx`.
+2. Choose the **http** profile in the toolbar (the **https** profile asks once to trust the local development certificate).
+3. Press **F5**. The browser opens at `http://localhost:5096`.
+
+**VS Code**
+
+1. Open the repository folder (not the solution folder). Accept the recommended extensions (C# Dev Kit, C#, SQL Server).
+2. Press **F5** and pick **NewsArchive (http)**. The `build` task runs first and the browser opens when the site is ready.
+3. **Terminal → Run Task** offers `build`, `watch` (hot reload) and `database update`.
+
+**Command line**
+
 ```bash
-dotnet run --project NewsArchive
+cd NewsArchiveSolution
+dotnet run --project NewsArchive --launch-profile http
 ```
 
-Or open `NewsArchiveSolution/NewsArchiveSolution.slnx` in Visual Studio 2022+ and press F5.
+`/health` returns `Healthy` when the site can reach the database. If SQL Server is not reachable, the log explains which setting to check.
 
 ### 5. Try the API
 
@@ -149,6 +172,11 @@ The full endpoint list is in [ARCHITECTURE.md](ARCHITECTURE.md#rest-api).
 | `Api:TokenLifetimeHours` | API token lifetime (default 12) |
 | `Api:AllowedOrigins` | Other websites allowed to call the API from a browser (CORS) |
 | `Hosting:KnownProxies` | IP addresses of a reverse proxy whose `X-Forwarded-*` headers can be trusted |
+| `Database:MigrateOnStartup` | Apply pending migrations when the app starts (always on in Development) |
+
+On another PC change `Data Source` in `ConnectionStrings:DbConn` to that machine's SQL Server instance, for example `localhost\SQLEXPRESS` or `(localdb)\MSSQLLocalDB`.
+
+Uploaded pictures are saved in `NewsArchiveSolution/NewsArchive/wwwroot/uploads/` (not tracked by git). Back this folder up together with the database.
 
 Before going live: change the sample passwords, keep `Api:SwaggerEnabled` off unless the API docs should be public, and serve the site over HTTPS (cookies are marked Secure outside Development).
 
@@ -161,6 +189,10 @@ Social networks fetch the page from the public internet, so previews only work a
 3. On X, paste the link into a new post to see the card preview.
 
 Article pages use the article image as the thumbnail; other pages use `wwwroot/images/brand/og-default.png`.
+
+## Continuous integration
+
+`.github/workflows/build.yml` restores, builds in Release and lists vulnerable packages on every push and pull request to `develop` and `main`.
 
 ## Branching
 

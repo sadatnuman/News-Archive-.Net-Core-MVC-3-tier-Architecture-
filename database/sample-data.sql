@@ -277,4 +277,8 @@ INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (20
 INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (22, 4, N'মোবাইলে বানানো ছবির জন্য পুরস্কারের ধারণাটা দারুণ।', '2026-10-24T10:24:00');
 INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (17, 6, N'আমাদের এলাকাতেও এ বছর বৃষ্টি খুব অনিয়মিত। কৃষকদের জন্য ভালো খবর।', '2026-10-23T04:12:00');
 
+UPDATE [Users] SET [Bio] = N'The Meridian Newsfolio editorial desk reviews every story before it is published and keeps the archive accurate.' WHERE [Email] = N'admin@meridiannewsfolio.local';
+UPDATE [Users] SET [Bio] = N'Farhana Rahman covers Dhaka, transport and sport, with a focus on how city life is changing.' WHERE [Email] = N'farhana@meridiannewsfolio.local';
+UPDATE [Users] SET [Bio] = N'Tanvir Ahmed reports on business, technology and science from Chattogram and Dhaka.' WHERE [Email] = N'tanvir@meridiannewsfolio.local';
+
 COMMIT TRANSACTION;

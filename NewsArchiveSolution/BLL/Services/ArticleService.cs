@@ -221,6 +221,45 @@ namespace BLL.Services
             return mapper.Map<List<ArticleDTO>>(data);
         }
 
+        public const int ArchiveMinYear = 1990;
+
+        public static bool IsValidArchiveDate(int year, int? month = null, int? day = null)
+        {
+            if (year < ArchiveMinYear || year > DateTime.Now.Year + 1) return false;
+            if (month == null) return day == null;
+            if (month < 1 || month > 12) return false;
+            return day == null || (day >= 1 && day <= DateTime.DaysInMonth(year, month.Value));
+        }
+
+        public List<ArticleDTO> GetArchive(int year, int? month, int? day, string? language, int page, int pageSize, out int total)
+        {
+            total = 0;
+            if (!IsValidArchiveDate(year, month, day)) return new List<ArticleDTO>();
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 12;
+
+            var from = new DateTime(year, month ?? 1, day ?? 1);
+            var to = day.HasValue ? from.AddDays(1) : month.HasValue ? from.AddMonths(1) : from.AddYears(1);
+            return mapper.Map<List<ArticleDTO>>(repo.GetByPeriod(from, to, language, page, pageSize, out total));
+        }
+
+        public List<ArchiveMonthDTO> GetArchiveMonths(string? language = null)
+        {
+            return repo.CountByMonth(language)
+                .Select(m => new ArchiveMonthDTO { Year = m.Year, Month = m.Month, Count = m.Count })
+                .ToList();
+        }
+
+        public Dictionary<int, int> GetArchiveDayCounts(int year, int month, string? language = null)
+        {
+            return IsValidArchiveDate(year, month) ? repo.CountByDay(year, month, language) : new Dictionary<int, int>();
+        }
+
+        public List<ArticleDTO> GetOnThisDay(DateTime today, int count, string? language = null)
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetOnThisDay(today.Month, today.Day, today.Year, count, language));
+        }
+
         public List<ArticleDTO> GetBreakingNews(string? language = null)
         {
             return mapper.Map<List<ArticleDTO>>(repo.GetBreaking(language));

@@ -35,6 +35,12 @@ namespace BLL.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Role ID must be greater than 0")]
         public int RoleId { get; set; }
 
+        public string? AvatarPath { get; set; }
+
+        [Display(Name = "Short bio")]
+        [StringLength(500, ErrorMessage = "Bio cannot exceed 500 characters")]
+        public string? Bio { get; set; }
+
         [Required(ErrorMessage = "Created date is required")]
         public DateTime CreatedAt { get; set; }
     }

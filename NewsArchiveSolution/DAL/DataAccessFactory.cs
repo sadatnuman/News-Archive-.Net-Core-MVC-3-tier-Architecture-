@@ -14,6 +14,8 @@ namespace DAL
             this.db = db;
         }
 
+        public bool CanConnect() => db.Database.CanConnect();
+
         public IArticleRepository GetArticleRepository() => new ArticleRepo(db);
 
         public ICategoryRepository GetCategoryRepository() => new CategoryRepo(db);
@@ -27,5 +29,7 @@ namespace DAL
         public IRepository<Role> GetRoleRepository() => new Repository<Role>(db);
 
         public ITagRepository GetTagRepository() => new TagRepo(db);
+
+        public IBookmarkRepository GetBookmarkRepository() => new BookmarkRepo(db);
     }
 }

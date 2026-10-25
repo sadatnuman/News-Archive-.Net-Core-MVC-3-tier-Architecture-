@@ -24,6 +24,9 @@
   <data name="A section with this name already exists." xml:space="preserve">
     <value>এই নামে একটি বিভাগ আগে থেকেই আছে।</value>
   </data>
+  <data name="A sentence or two about you, shown on your author page" xml:space="preserve">
+    <value>নিজের সম্পর্কে এক-দুই বাক্য, যা আপনার লেখক পাতায় দেখানো হবে</value>
+  </data>
   <data name="A tag with this name already exists." xml:space="preserve">
     <value>এই নামে একটি ট্যাগ আগে থেকেই আছে।</value>
   </data>
@@ -54,6 +57,9 @@
   <data name="Admins approve or return articles with a note. You can edit drafts, pending and rejected articles." xml:space="preserve">
     <value>অ্যাডমিন লেখা অনুমোদন দেন অথবা মন্তব্যসহ ফেরত পাঠান। খসড়া, অপেক্ষমাণ ও ফেরত আসা লেখা আপনি সম্পাদনা করতে পারবেন।</value>
   </data>
+  <data name="All of {0}" xml:space="preserve">
+    <value>{0}-এর সব সংবাদ</value>
+  </data>
   <data name="All rights reserved." xml:space="preserve">
     <value>সর্বস্বত্ব সংরক্ষিত।</value>
   </data>
@@ -71,6 +77,9 @@
   </data>
   <data name="Approve &amp; publish" xml:space="preserve">
     <value>অনুমোদন ও প্রকাশ</value>
+  </data>
+  <data name="Archive" xml:space="preserve">
+    <value>আর্কাইভ</value>
   </data>
   <data name="Article" xml:space="preserve">
     <value>সংবাদ</value>
@@ -111,6 +120,9 @@
   <data name="Author" xml:space="preserve">
     <value>লেখক</value>
   </data>
+  <data name="Authors" xml:space="preserve">
+    <value>লেখকবৃন্দ</value>
+  </data>
   <data name="Awaiting approval" xml:space="preserve">
     <value>অনুমোদনের অপেক্ষায়</value>
   </data>
@@ -119,6 +131,12 @@
   </data>
   <data name="Back to sign in" xml:space="preserve">
     <value>লগ-ইনে ফিরুন</value>
+  </data>
+  <data name="Bio cannot exceed 500 characters" xml:space="preserve">
+    <value>পরিচিতি ৫০০ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
+  <data name="Bold" xml:space="preserve">
+    <value>গাঢ়</value>
   </data>
   <data name="Breadcrumb" xml:space="preserve">
     <value>অবস্থান</value>
@@ -141,11 +159,26 @@
   <data name="Browse all topics" xml:space="preserve">
     <value>সব বিষয় দেখুন</value>
   </data>
+  <data name="Browse every story by year, month and day." xml:space="preserve">
+    <value>বছর, মাস ও দিন অনুযায়ী সব সংবাদ দেখুন।</value>
+  </data>
+  <data name="Browse the archive" xml:space="preserve">
+    <value>আর্কাইভ দেখুন</value>
+  </data>
+  <data name="Bulleted list" xml:space="preserve">
+    <value>বুলেট তালিকা</value>
+  </data>
   <data name="By" xml:space="preserve">
     <value>লিখেছেন</value>
   </data>
   <data name="By {0}" xml:space="preserve">
     <value>লিখেছেন {0}</value>
+  </data>
+  <data name="Calendar" xml:space="preserve">
+    <value>ক্যালেন্ডার</value>
+  </data>
+  <data name="Calendar for {0}" xml:space="preserve">
+    <value>{0}-এর ক্যালেন্ডার</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>বাতিল</value>
@@ -176,6 +209,9 @@
   </data>
   <data name="Choose a section to move this section's articles to." xml:space="preserve">
     <value>এই বিভাগের সংবাদগুলো কোন বিভাগে সরানো হবে তা বেছে নিন।</value>
+  </data>
+  <data name="Choose an image to upload." xml:space="preserve">
+    <value>আপলোড করার জন্য একটি ছবি বেছে নিন।</value>
   </data>
   <data name="Choose the language the story is written in. It appears on that language's edition of the site." xml:space="preserve">
     <value>সংবাদটি যে ভাষায় লেখা তা বেছে নিন। সাইটের ওই ভাষার সংস্করণে এটি দেখানো হবে।</value>
@@ -306,6 +342,9 @@
   <data name="Edited articles go back to the admin for approval." xml:space="preserve">
     <value>সম্পাদিত লেখা আবার অ্যাডমিনের অনুমোদনের জন্য যাবে।</value>
   </data>
+  <data name="Editor view" xml:space="preserve">
+    <value>সম্পাদকের দৃশ্য</value>
+  </data>
   <data name="Editor's note:" xml:space="preserve">
     <value>সম্পাদকের মন্তব্য:</value>
   </data>
@@ -330,11 +369,20 @@
   <data name="Enter your code" xml:space="preserve">
     <value>কোড লিখুন</value>
   </data>
+  <data name="Every story The Meridian Newsfolio published on {0}." xml:space="preserve">
+    <value>{0} তারিখে দ্য মেরিডিয়ান নিউজফোলিওতে প্রকাশিত সব সংবাদ।</value>
+  </data>
   <data name="Every story about {0} in The Meridian Newsfolio archive." xml:space="preserve">
     <value>দ্য মেরিডিয়ান নিউজফোলিওর আর্কাইভে {0} বিষয়ক সব সংবাদ।</value>
   </data>
   <data name="Every story in the archive is filed under one of these sections." xml:space="preserve">
     <value>আর্কাইভের প্রতিটি সংবাদ এই বিভাগগুলোর কোনো একটিতে রাখা আছে।</value>
+  </data>
+  <data name="Every story published by The Meridian Newsfolio in {0}, month by month." xml:space="preserve">
+    <value>{0} সালে দ্য মেরিডিয়ান নিউজফোলিওতে প্রকাশিত সব সংবাদ, মাস অনুযায়ী।</value>
+  </data>
+  <data name="Every story published by The Meridian Newsfolio, organised by year, month and day." xml:space="preserve">
+    <value>দ্য মেরিডিয়ান নিউজফোলিওতে প্রকাশিত সব সংবাদ, বছর, মাস ও দিন অনুযায়ী সাজানো।</value>
   </data>
   <data name="Explore" xml:space="preserve">
     <value>আরও দেখুন</value>
@@ -351,8 +399,17 @@
   <data name="Forgot password?" xml:space="preserve">
     <value>পাসওয়ার্ড ভুলে গেছেন?</value>
   </data>
+  <data name="Formatting" xml:space="preserve">
+    <value>বিন্যাস</value>
+  </data>
+  <data name="Formatting: ## heading, **bold**, *italic*, &gt; quote, - list, [text](https://link)." xml:space="preserve">
+    <value>বিন্যাস: ## শিরোনাম, **গাঢ়**, *বাঁকা*, &gt; উদ্ধৃতি, - তালিকা, [লেখা](https://লিংক)।</value>
+  </data>
   <data name="From" xml:space="preserve">
     <value>শুরু</value>
+  </data>
+  <data name="From the archive" xml:space="preserve">
+    <value>আর্কাইভ থেকে</value>
   </data>
   <data name="Give a user the Author role so they can write articles for review." xml:space="preserve">
     <value>লেখকের ভূমিকা দিলে ব্যবহারকারী পর্যালোচনার জন্য সংবাদ লিখতে পারবেন।</value>
@@ -362,6 +419,9 @@
   </data>
   <data name="Guest" xml:space="preserve">
     <value>অতিথি</value>
+  </data>
+  <data name="Heading" xml:space="preserve">
+    <value>উপশিরোনাম</value>
   </data>
   <data name="Headline" xml:space="preserve">
     <value>শিরোনাম</value>
@@ -399,6 +459,15 @@
   <data name="Invalid username/email or password" xml:space="preserve">
     <value>ইমেইল বা পাসওয়ার্ড সঠিক নয়</value>
   </data>
+  <data name="Italic" xml:space="preserve">
+    <value>বাঁকা</value>
+  </data>
+  <data name="JPEG, PNG, WebP or GIF, up to 2 MB." xml:space="preserve">
+    <value>JPEG, PNG, WebP বা GIF, সর্বোচ্চ ২ MB।</value>
+  </data>
+  <data name="JPEG, PNG, WebP or GIF, up to 5 MB. Use a landscape picture, ideally 1200 × 675 pixels." xml:space="preserve">
+    <value>JPEG, PNG, WebP বা GIF, সর্বোচ্চ ৫ MB। আড়াআড়ি ছবি দিন, সবচেয়ে ভালো ১২০০ × ৬৭৫ পিক্সেল।</value>
+  </data>
   <data name="Join readers who follow, discuss and save the news." xml:space="preserve">
     <value>সংবাদ পড়ুন, আলোচনা করুন আর সংরক্ষণ করুন, পাঠকদের সঙ্গে যুক্ত হোন।</value>
   </data>
@@ -408,6 +477,9 @@
   <data name="Joined" xml:space="preserve">
     <value>যোগদান</value>
   </data>
+  <data name="Joined {0}" xml:space="preserve">
+    <value>যোগ দিয়েছেন {0}</value>
+  </data>
   <data name="Keyword" xml:space="preserve">
     <value>কীওয়ার্ড</value>
   </data>
@@ -416,6 +488,9 @@
   </data>
   <data name="Last change" xml:space="preserve">
     <value>সর্বশেষ পরিবর্তন</value>
+  </data>
+  <data name="Latest from {0}" xml:space="preserve">
+    <value>{0}-এর সাম্প্রতিক লেখা</value>
   </data>
   <data name="Latest news" xml:space="preserve">
     <value>সর্বশেষ সংবাদ</value>
@@ -429,11 +504,17 @@
   <data name="Light" xml:space="preserve">
     <value>লাইট</value>
   </data>
+  <data name="Link" xml:space="preserve">
+    <value>লিংক</value>
+  </data>
   <data name="Logged out successfully" xml:space="preserve">
     <value>আপনি লগ-আউট করেছেন</value>
   </data>
   <data name="Main" xml:space="preserve">
     <value>প্রধান মেনু</value>
+  </data>
+  <data name="Meet the reporters and editors behind The Meridian Newsfolio: {0}." xml:space="preserve">
+    <value>দ্য মেরিডিয়ান নিউজফোলিওর প্রতিবেদক ও সম্পাদকদের সঙ্গে পরিচিত হোন: {0}।</value>
   </data>
   <data name="More" xml:space="preserve">
     <value>আরও</value>
@@ -492,6 +573,18 @@
   <data name="News Preserved. Stories Rediscovered." xml:space="preserve">
     <value>সংবাদ সংরক্ষিত, গল্পের নতুন আবিষ্কার।</value>
   </data>
+  <data name="News archive" xml:space="preserve">
+    <value>সংবাদ আর্কাইভ</value>
+  </data>
+  <data name="News archive {0}" xml:space="preserve">
+    <value>সংবাদ আর্কাইভ {0}</value>
+  </data>
+  <data name="News from {0}" xml:space="preserve">
+    <value>{0}-এর সংবাদ</value>
+  </data>
+  <data name="News from {0}, page {1}" xml:space="preserve">
+    <value>{0}-এর সংবাদ, পৃষ্ঠা {1}</value>
+  </data>
   <data name="News sections" xml:space="preserve">
     <value>সংবাদ বিভাগ</value>
   </data>
@@ -504,11 +597,20 @@
   <data name="No comments yet. Be the first to share your view." xml:space="preserve">
     <value>এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন।</value>
   </data>
+  <data name="No published authors yet" xml:space="preserve">
+    <value>এখনো কোনো প্রকাশিত লেখক নেই</value>
+  </data>
   <data name="No sections yet" xml:space="preserve">
     <value>এখনো কোনো বিভাগ নেই</value>
   </data>
+  <data name="No stories in this language yet" xml:space="preserve">
+    <value>এই ভাষায় এখনো কোনো সংবাদ নেই</value>
+  </data>
   <data name="No stories match your search" xml:space="preserve">
     <value>আপনার অনুসন্ধানের সঙ্গে মেলে এমন কোনো সংবাদ নেই</value>
+  </data>
+  <data name="No stories on this date" xml:space="preserve">
+    <value>এই তারিখে কোনো সংবাদ নেই</value>
   </data>
   <data name="No stories published yet" xml:space="preserve">
     <value>এখনো কোনো সংবাদ প্রকাশিত হয়নি</value>
@@ -528,8 +630,14 @@
   <data name="Nothing here right now" xml:space="preserve">
     <value>এই মুহূর্তে এখানে কিছু নেই</value>
   </data>
+  <data name="Nothing saved yet" xml:space="preserve">
+    <value>এখনো কিছু সংরক্ষণ করা হয়নি</value>
+  </data>
   <data name="Nothing written by authors goes live until you approve it. Open an article to read it in full before deciding." xml:space="preserve">
     <value>আপনার অনুমোদন ছাড়া লেখকদের কোনো লেখা প্রকাশিত হয় না। সিদ্ধান্ত নেওয়ার আগে সংবাদটি খুলে পুরোটা পড়ুন।</value>
+  </data>
+  <data name="Numbered list" xml:space="preserve">
+    <value>ক্রমিক তালিকা</value>
   </data>
   <data name="OTP already used" xml:space="preserve">
     <value>এই ওটিপি আগেই ব্যবহার করা হয়েছে</value>
@@ -540,11 +648,17 @@
   <data name="OTP sent (check console for dev)." xml:space="preserve">
     <value>ওটিপি পাঠানো হয়েছে (ডেভেলপমেন্টে কনসোলে দেখুন)।</value>
   </data>
+  <data name="On this day" xml:space="preserve">
+    <value>এই দিনে</value>
+  </data>
   <data name="One or two sentences shown in listings and search results" xml:space="preserve">
     <value>তালিকা ও অনুসন্ধানে দেখানোর জন্য এক বা দুই বাক্যের সারাংশ</value>
   </data>
   <data name="One-time code" xml:space="preserve">
     <value>ওটিপি কোড</value>
+  </data>
+  <data name="Only JPEG, PNG, WebP and GIF images can be uploaded." xml:space="preserve">
+    <value>শুধু JPEG, PNG, WebP ও GIF ছবি আপলোড করা যায়।</value>
   </data>
   <data name="Only drafts and rejected articles can be submitted." xml:space="preserve">
     <value>শুধু খসড়া ও ফেরত আসা লেখা জমা দেওয়া যায়।</value>
@@ -554,6 +668,12 @@
   </data>
   <data name="Only pending articles can be rejected." xml:space="preserve">
     <value>শুধু অপেক্ষমাণ লেখা ফেরত পাঠানো যায়।</value>
+  </data>
+  <data name="Or use an existing picture address" xml:space="preserve">
+    <value>অথবা আগে থেকে থাকা ছবির ঠিকানা দিন</value>
+  </data>
+  <data name="Our authors" xml:space="preserve">
+    <value>আমাদের লেখকেরা</value>
   </data>
   <data name="Page not found" xml:space="preserve">
     <value>পাতাটি পাওয়া যায়নি</value>
@@ -585,6 +705,9 @@
   <data name="Pending review" xml:space="preserve">
     <value>পর্যালোচনার অপেক্ষায়</value>
   </data>
+  <data name="Picture" xml:space="preserve">
+    <value>ছবি</value>
+  </data>
   <data name="Please choose a role" xml:space="preserve">
     <value>একটি ভূমিকা বেছে নিন</value>
   </data>
@@ -597,11 +720,23 @@
   <data name="Post comment" xml:space="preserve">
     <value>মন্তব্য করুন</value>
   </data>
+  <data name="Preview" xml:space="preserve">
+    <value>প্রিভিউ</value>
+  </data>
   <data name="Privacy policy" xml:space="preserve">
     <value>গোপনীয়তা নীতি</value>
   </data>
   <data name="Profile" xml:space="preserve">
     <value>প্রোফাইল</value>
+  </data>
+  <data name="Profile picture" xml:space="preserve">
+    <value>প্রোফাইল ছবি</value>
+  </data>
+  <data name="Profile picture removed." xml:space="preserve">
+    <value>প্রোফাইল ছবি সরানো হয়েছে।</value>
+  </data>
+  <data name="Profile picture updated." xml:space="preserve">
+    <value>প্রোফাইল ছবি হালনাগাদ হয়েছে।</value>
   </data>
   <data name="Publish" xml:space="preserve">
     <value>প্রকাশ করুন</value>
@@ -614,6 +749,9 @@
   </data>
   <data name="Put the file in wwwroot/images/articles/. A 1200 × 630 image looks best when shared." xml:space="preserve">
     <value>ফাইলটি wwwroot/images/articles/ ফোল্ডারে রাখুন। শেয়ারের জন্য ১২০০ × ৬৩০ মাপের ছবি সবচেয়ে ভালো দেখায়।</value>
+  </data>
+  <data name="Quote" xml:space="preserve">
+    <value>উদ্ধৃতি</value>
   </data>
   <data name="RSS feed" xml:space="preserve">
     <value>আরএসএস ফিড</value>
@@ -641,6 +779,15 @@
   </data>
   <data name="Related stories" xml:space="preserve">
     <value>সম্পর্কিত সংবাদ</value>
+  </data>
+  <data name="Remove from saved" xml:space="preserve">
+    <value>সংরক্ষিত তালিকা থেকে সরান</value>
+  </data>
+  <data name="Remove picture" xml:space="preserve">
+    <value>ছবি সরান</value>
+  </data>
+  <data name="Remove this picture" xml:space="preserve">
+    <value>এই ছবিটি সরান</value>
   </data>
   <data name="Reset your password" xml:space="preserve">
     <value>পাসওয়ার্ড পুনরুদ্ধার</value>
@@ -674,6 +821,12 @@
   </data>
   <data name="Save draft" xml:space="preserve">
     <value>খসড়া সংরক্ষণ</value>
+  </data>
+  <data name="Save story" xml:space="preserve">
+    <value>সংবাদটি সংরক্ষণ করুন</value>
+  </data>
+  <data name="Saved stories" xml:space="preserve">
+    <value>সংরক্ষিত সংবাদ</value>
   </data>
   <data name="Search" xml:space="preserve">
     <value>অনুসন্ধান</value>
@@ -735,11 +888,17 @@
   <data name="Share this article" xml:space="preserve">
     <value>সংবাদটি শেয়ার করুন</value>
   </data>
+  <data name="Short bio" xml:space="preserve">
+    <value>সংক্ষিপ্ত পরিচিতি</value>
+  </data>
   <data name="Show password" xml:space="preserve">
     <value>পাসওয়ার্ড দেখুন</value>
   </data>
   <data name="Sign in" xml:space="preserve">
     <value>লগ-ইন</value>
+  </data>
+  <data name="Sign in to save this story" xml:space="preserve">
+    <value>সংবাদটি সংরক্ষণ করতে সাইন ইন করুন</value>
   </data>
   <data name="Sign in with another account" xml:space="preserve">
     <value>অন্য অ্যাকাউন্টে সাইন ইন করুন</value>
@@ -770,6 +929,21 @@
   </data>
   <data name="Stay informed" xml:space="preserve">
     <value>খবরে থাকুন</value>
+  </data>
+  <data name="Stories" xml:space="preserve">
+    <value>সংবাদ</value>
+  </data>
+  <data name="Stories by {0}" xml:space="preserve">
+    <value>{0}-এর লেখা সংবাদ</value>
+  </data>
+  <data name="Stories by {0}, page {1}" xml:space="preserve">
+    <value>{0}-এর লেখা সংবাদ, পৃষ্ঠা {1}</value>
+  </data>
+  <data name="Story removed from your saved list." xml:space="preserve">
+    <value>সংবাদটি আপনার সংরক্ষিত তালিকা থেকে সরানো হয়েছে।</value>
+  </data>
+  <data name="Story saved." xml:space="preserve">
+    <value>সংবাদটি সংরক্ষিত হয়েছে।</value>
   </data>
   <data name="Submit" xml:space="preserve">
     <value>জমা দিন</value>
@@ -825,6 +999,12 @@
   <data name="The article could not be saved." xml:space="preserve">
     <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
   </data>
+  <data name="The image is too large. The limit is 2 MB." xml:space="preserve">
+    <value>ছবিটি অনেক বড়। সর্বোচ্চ ২ MB।</value>
+  </data>
+  <data name="The image is too large. The limit is 5 MB." xml:space="preserve">
+    <value>ছবিটি অনেক বড়। সর্বোচ্চ ৫ MB।</value>
+  </data>
   <data name="The latest {0} news, analysis and reporting from The Meridian Newsfolio." xml:space="preserve">
     <value>দ্য মেরিডিয়ান নিউজফোলিওর সর্বশেষ {0} সংবাদ, বিশ্লেষণ ও প্রতিবেদন।</value>
   </data>
@@ -833,6 +1013,9 @@
   </data>
   <data name="The page you are looking for has moved or no longer exists." xml:space="preserve">
     <value>আপনি যে পাতাটি খুঁজছেন সেটি সরানো হয়েছে অথবা আর নেই।</value>
+  </data>
+  <data name="The reporters and editors whose stories fill the archive." xml:space="preserve">
+    <value>যাঁদের লেখায় সমৃদ্ধ এই আর্কাইভ, সেই প্রতিবেদক ও সম্পাদকেরা।</value>
   </data>
   <data name="The review queue is empty" xml:space="preserve">
     <value>পর্যালোচনার তালিকা খালি</value>
@@ -860,6 +1043,9 @@
   </data>
   <data name="This section has {0} articles. Choose where to move them before deleting." xml:space="preserve">
     <value>এই বিভাগে {0}টি সংবাদ আছে। মোছার আগে সেগুলো কোথায় সরানো হবে তা বেছে নিন।</value>
+  </data>
+  <data name="This story could not be saved." xml:space="preserve">
+    <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
   </data>
   <data name="This user has written articles. Reassign or delete them first." xml:space="preserve">
     <value>এই ব্যবহারকারী সংবাদ লিখেছেন। আগে সেগুলো অন্য কাউকে দিন বা মুছে ফেলুন।</value>
@@ -924,8 +1110,17 @@
   <data name="Updated" xml:space="preserve">
     <value>হালনাগাদ</value>
   </data>
+  <data name="Upload" xml:space="preserve">
+    <value>আপলোড</value>
+  </data>
+  <data name="Upload a picture" xml:space="preserve">
+    <value>ছবি আপলোড করুন</value>
+  </data>
   <data name="Use a site path like /images/articles/photo.jpg or an https:// address" xml:space="preserve">
     <value>/images/articles/photo.jpg এর মতো সাইটের পথ বা https:// ঠিকানা দিন</value>
+  </data>
+  <data name="Use the bookmark button on any story to read it later." xml:space="preserve">
+    <value>যেকোনো সংবাদের বুকমার্ক বোতাম চেপে পরে পড়ার জন্য রেখে দিন।</value>
   </data>
   <data name="User ID is required" xml:space="preserve">
     <value>ব্যবহারকারীর আইডি প্রয়োজন</value>
@@ -978,6 +1173,9 @@
   <data name="Writing guide" xml:space="preserve">
     <value>লেখার নির্দেশিকা</value>
   </data>
+  <data name="Years" xml:space="preserve">
+    <value>বছর</value>
+  </data>
   <data name="Yes, delete" xml:space="preserve">
     <value>হ্যাঁ, মুছুন</value>
   </data>
@@ -1026,10 +1224,25 @@
   <data name="{0} news, page {1}" xml:space="preserve">
     <value>{0} সংবাদ, পৃষ্ঠা {1}</value>
   </data>
+  <data name="{0} stories" xml:space="preserve">
+    <value>{0}টি সংবাদ</value>
+  </data>
   <data name="{0} stories found" xml:space="preserve">
     <value>{0}টি সংবাদ পাওয়া গেছে</value>
   </data>
+  <data name="{0} stories saved to read later." xml:space="preserve">
+    <value>পরে পড়ার জন্য {0}টি সংবাদ সংরক্ষিত।</value>
+  </data>
+  <data name="{0} stories, organised by year, month and day." xml:space="preserve">
+    <value>{0}টি সংবাদ, বছর, মাস ও দিন অনুযায়ী সাজানো।</value>
+  </data>
   <data name="{0} views" xml:space="preserve">
     <value>{0} বার পঠিত</value>
+  </data>
+  <data name="{0} writes for The Meridian Newsfolio. Read every story by {0}." xml:space="preserve">
+    <value>{0} দ্য মেরিডিয়ান নিউজফোলিওতে লেখেন। {0}-এর সব সংবাদ পড়ুন।</value>
+  </data>
+  <data name="{0}: {1} stories" xml:space="preserve">
+    <value>{0}: {1}টি সংবাদ</value>
   </data>
 </root>

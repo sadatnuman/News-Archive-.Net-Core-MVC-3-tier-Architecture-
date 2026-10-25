@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DAL.EF.Tables;
@@ -13,6 +13,10 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
+    public string? AvatarPath { get; set; }
+
+    public string? Bio { get; set; }
+
     public int RoleId { get; set; }
 
     public DateTime CreatedAt { get; set; }
@@ -24,6 +28,8 @@ public partial class User
     public virtual ICollection<UserToken> Tokens { get; set; } = new List<UserToken>();
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+    public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
 
     public virtual Role Role { get; set; } = null!;
 }

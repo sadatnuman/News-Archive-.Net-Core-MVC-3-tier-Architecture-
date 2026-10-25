@@ -34,6 +34,21 @@ namespace DAL.Repos
                 .ExecuteUpdate(s => s.SetProperty(u => u.PasswordHash, passwordHash)) > 0;
         }
 
+        public bool UpdateAvatar(int userId, string? avatarPath)
+        {
+            return db.Users
+                .Where(u => u.UserId == userId)
+                .ExecuteUpdate(s => s.SetProperty(u => u.AvatarPath, avatarPath)) > 0;
+        }
+
+        public Dictionary<int, string> GetAvatars(IEnumerable<int> ids)
+        {
+            var idList = ids.Distinct().ToList();
+            return db.Users.AsNoTracking()
+                .Where(u => idList.Contains(u.UserId) && u.AvatarPath != null)
+                .ToDictionary(u => u.UserId, u => u.AvatarPath!);
+        }
+
         public User? GetByEmail(string? email)
         {
             if (string.IsNullOrEmpty(email)) return null;

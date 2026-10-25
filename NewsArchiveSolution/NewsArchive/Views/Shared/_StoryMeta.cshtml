@@ -8,7 +8,7 @@
 <div class="meta">
     @if (!string.IsNullOrEmpty(author))
     {
-        <span>@L["By {0}", author]</span><span class="sep">&bull;</span>
+        <span>@L["By"] <a class="byline-link" href="@SeoUrls.Author(Model.AuthorId, author)">@author</a></span><span class="sep">&bull;</span>
     }
     <time datetime="@Model.PublishDate.ToString("yyyy-MM-ddTHH:mm")">@Model.PublishDate.ToString("MMM d, yyyy")</time>
 </div>

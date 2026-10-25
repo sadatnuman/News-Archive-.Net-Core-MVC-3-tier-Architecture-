@@ -45,7 +45,10 @@
                 }
                 else
                 {
-                    <span class="d-none d-sm-inline">@L["Signed in as {0}", RoleName(roleId)]</span>
+                    <span class="d-inline-flex align-items-center gap-2">
+                        @await Html.PartialAsync("_Avatar", (User.DisplayName() ?? string.Empty, User.AvatarPath(), "avatar-xs"))
+                        <span class="d-none d-sm-inline">@L["Signed in as {0}", RoleName(roleId)]</span>
+                    </span>
                     <span class="divider d-none d-sm-inline">|</span>
                     <a asp-controller="Auth" asp-action="Logout" rel="nofollow">@L["Sign out"]</a>
                 }
@@ -55,7 +58,8 @@
 </div>
 
 <header class="masthead">
-    <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-3">
+    @await Html.PartialAsync("_Globe", "globe-masthead")
+    <div class="container masthead-inner d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-3">
         <a class="brand" href="@SeoUrls.Page("/")" aria-label="@L["{0} home", site.Name]">
             <img class="brand-logo" src="~/images/brand/logo-mark.svg" width="60" height="51" alt="" />
             <span class="brand-text">
@@ -86,6 +90,7 @@
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link @Active("/")" href="@SeoUrls.Page("/")">@L["Home"]</a></li>
                 <li class="nav-item"><a class="nav-link @Active("/trending")" href="@SeoUrls.Page("/trending")">@L["Trending"]</a></li>
+                <li class="nav-item"><a class="nav-link @Active("/archive")" href="@SeoUrls.Page("/archive")">@L["Archive"]</a></li>
                 @if (breaking.Count > 0)
                 {
                     <li class="nav-item"><a class="nav-link @Active("/breaking-news")" href="@SeoUrls.Page("/breaking-news")">@L["Breaking"]</a></li>
@@ -156,6 +161,7 @@
                                 }
                                 <li><a class="dropdown-item" asp-controller="Member" asp-action="Profile"><i class="bi bi-person me-2"></i>@L["Profile"]</a></li>
                             }
+                            <li><a class="dropdown-item" href="@SeoUrls.Page("/bookmarks")"><i class="bi bi-bookmark me-2"></i>@L["Saved stories"]</a></li>
                             <li><a class="dropdown-item" asp-controller="Auth" asp-action="Logout"><i class="bi bi-box-arrow-right me-2"></i>@L["Sign out"]</a></li>
                         </ul>
                     </li>

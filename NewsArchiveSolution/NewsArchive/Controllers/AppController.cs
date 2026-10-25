@@ -41,6 +41,8 @@ namespace NewsArchive.Controllers
             ViewBag.AuthorNames = services.GetRequiredService<UserService>().GetNames(articles.Select(a => a.AuthorId));
             ViewBag.CategoryNames = categories.ToDictionary(c => c.CategoryId, c => c.LocalName(CurrentLanguage));
             ViewBag.CategorySlugs = categories.ToDictionary(c => c.CategoryId, c => c.Slug);
+            if (CurrentUserId.HasValue)
+                ViewBag.SavedIds = services.GetRequiredService<BookmarkService>().GetSavedIds(CurrentUserId.Value, articles.Select(a => a.ArticleId));
         }
 
         protected void Flash(string cssClass, string message)

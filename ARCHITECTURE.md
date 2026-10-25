@@ -61,6 +61,9 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `AddLanguages` | `Languages` lookup table, `Articles.LanguageCode` foreign key, Bangla names for sections |
 | `AddUserTokens` | `UserTokens` table for API tokens (hash only, expiry, revocation) |
 | `AddTagTranslationsAndSlugs` | Bangla tag names and unique slugs for tag pages |
+| `AddUserAvatars` | `Users.AvatarPath` for profile pictures |
+| `AddUserBio` | `Users.Bio` (up to 500 characters) for author pages |
+| `AddBookmarks` | `Bookmarks` join table for "read later" |
 
 ### Tables (3NF)
 
@@ -76,6 +79,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `ContentLabels` | `(ArticleId, TagId)` | `ArticleId → Articles` (cascade), `TagId → Tags` (cascade) | |
 | `Comments` | `CommentId` | `ArticleId → Articles` (cascade), `UserId → Users` | |
 | `UserTokens` | `TokenId` | `UserId → Users` (cascade) | `UX_UserTokens_TokenHash` |
+| `Bookmarks` | `(UserId, ArticleId)` | `UserId → Users` (cascade), `ArticleId → Articles` (cascade) | `IX_Bookmarks_ArticleId`, `IX_Bookmarks_UserId_CreatedAt` |
 
 Normalization changes:
 
@@ -119,6 +123,10 @@ Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 - `GetPublishedForSitemap`, `GetLatest` sitemap and RSS.
 - `IncrementViewCount` single `UPDATE` through `ExecuteUpdate`.
 
+`ArticleRepo` also groups published articles by month and by day in SQL (`CountByMonth`, `CountByDay`), pages a date range (`GetByPeriod`) and finds stories published on the same day in earlier years (`GetOnThisDay`), used by the archive pages and the home page's **On this day** panel.
+
+`BLL/Services/AuthorService` combines `ArticleRepo.CountPublishedByAuthor` / `GetPublishedByAuthor` with the user repository; bylines and the `NewsArticle` JSON-LD link to the author page.
+
 `TagRepo` counts published articles per tag in SQL (`CountPublished`, `GetPopular`), pages the published articles of a tag (`GetArticles`) and replaces an article's tags in one save (`SetArticleTags`).
 
 ## Business layer (BLL)
@@ -128,6 +136,7 @@ Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 | `Services/` | `ArticleService`, `CategoryService`, `CommentService`, `TagService`, `UserService`, `RoleService`, `AnalyticsService`, `AuthService`; each takes `DataAccessFactory` and `IMapper` |
 | `DTOs/` | Read DTOs, form DTOs (`ArticleFormDTO` prevents over-posting of author, views and status), `LoginDTO`, `RegisterDTO`, `AuthUserDTO`, `TokenDTO`, `PagedResultDTO<T>`, `ReviewDTO`, `CommentCreateDTO` |
 | `Mapping/MappingProfile.cs` | AutoMapper `Profile`, registered with `AddAutoMapper` and injected as `IMapper` |
+| `Services/MediaService.cs`, `Media/IFileStorage.cs` | Image upload rules and the storage abstraction (see Media uploads) |
 | `Security/PasswordHasher.cs` | PBKDF2-SHA256 (100,000 iterations, 16-byte salt), legacy MD5 verification with upgrade, token generation and SHA-256 token hashing, security stamp |
 | `Validations/UniqueEmail.cs` | Checks email uniqueness through `DataAccessFactory` |
 | `SlugHelper.cs` | URL slugs that keep Bangla and other Unicode letters |
@@ -154,6 +163,20 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 - The home page sidebar lists the 12 most used topics in the current language; tag pages are paged, have `CollectionPage` JSON-LD, `rel=prev/next` and are listed in the sitemap.
 - Deleting a tag only removes the link from articles (cascade on `ContentLabels`).
 
+## Media uploads
+
+| Concern | Implementation |
+|---|---|
+| Layering | `BLL/Services/MediaService` holds the rules and talks to `BLL/Media/IFileStorage`; the UI implements it in `NewsArchive/Media/WebRootFileStorage` (files under `wwwroot/uploads`). BLL never sees `IFormFile` or HTTP types |
+| Accepted files | JPEG, PNG, WebP and GIF detected from the file's first bytes (the name and the browser's content type are ignored); SVG and everything else is rejected |
+| Size limits | Article pictures 5 MB, profile pictures 2 MB, enforced while reading the stream and by `RequestSizeLimit` / `RequestFormLimits` |
+| File names | Random GUID plus the extension of the detected type: `/uploads/articles/{yyyy}/{MM}/{guid}.jpg`, `/uploads/avatars/{guid}.png` |
+| Path safety | `WebRootFileStorage` resolves every path with `Path.GetFullPath` and refuses anything outside `wwwroot/uploads`; `MediaService.DeleteIfUploaded` only deletes `/uploads/...` paths |
+| Clean-up | Replacing or removing a picture, deleting an article, or a failed save deletes the uploaded file |
+| Article form | Upload a picture, keep or remove the current one, or type an existing site path or `https://` address |
+| Profile pictures | Upload and remove on the profile page (`Avatar/Upload`, `Avatar/Remove`); shown in the top bar, the byline and next to comments, with an initial when there is none. The sign-in cookie picks up a new name or picture on the next request |
+| Serving | Static files with `X-Content-Type-Options: nosniff`; `wwwroot/uploads/` is ignored by git |
+
 ## Presentation layer (NewsArchive)
 
 ### Public URLs
@@ -165,6 +188,11 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | `/news/{id}/{slug}` | `Article/Details` | Canonical article URL; `/Article/Details/{id}` and wrong slugs redirect (301) |
 | `/category/{id}/{slug}` | `Category/ArticlesByCategory` | `/Category/ArticlesByCategory/{id}` redirects (301) |
 | `/Category` | `Category/Index` | All sections |
+| `/archive` | `Archive/Index` | Every year with month tiles and story counts in the current language |
+| `/archive/{year}` | `Archive/Year` | Twelve month tiles for one year |
+| `/archive/{year}/{MM}`, `/archive/{year}/{MM}/{DD}?page=` | `Archive/Period` | Paged stories of a month or day with a calendar; unpadded numbers redirect (301); empty periods are `noindex` |
+| `/authors` | `Author/Index` | Everyone with at least one published story, with picture, role and count |
+| `/author/{id}/{slug}?page=` | `Author/Profile` | Bio, picture, paged stories, `ProfilePage` + `Person` JSON-LD; the slug comes from the name and wrong slugs redirect (301); people without published stories get 404 |
 | `/tags` | `Tag/Index` | Topics with article counts in the current language (management table for admins) |
 | `/tag/{id}/{slug}?page=` | `Tag/Articles` | Paged published stories of a topic; wrong or missing slug redirects (301) |
 | `/trending`, `/breaking-news` | `Article/TrendingNews`, `Article/BreakingNews` | |
@@ -185,6 +213,8 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | Category | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Tag | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Member | `Profile`, `ChangePassword` | Reader, Author |
+| Avatar | `Upload`, `Remove` (POST) | Any signed-in user, own picture only |
+| Bookmark | `/bookmarks` (saved stories, paged), `POST /bookmarks/toggle` (JSON for the page script, redirect without JavaScript) | Any signed-in user; published articles only, up to 500 per user |
 | Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 
 Access is declared with `[CustomAuthorize(roles...)]` (`Filters/CustomAuthorize.cs`, an `IAuthorizationFilter`). Anonymous users are sent to `/Auth/Login?returnUrl=...`; signed-in users without the role are sent to `/Auth/AccessDenied` (HTTP 403).
@@ -201,6 +231,8 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `POST /api/auth/login?webClient=true` | Public, rate limited | 200; token is set in the `AuthToken` cookie (HttpOnly, SameSite=Strict, Secure on HTTPS, path `/api`) and not returned in the body |
 | `POST /api/auth/register` | Public, rate limited | 201 (new Reader) |
 | `GET /api/auth/me` | Any token | 200 |
+| `PUT /api/auth/me/avatar` (multipart `file`), `DELETE /api/auth/me/avatar` | Any token | 200 / 204 |
+| `POST /api/media/images` (multipart `file`) | Admin, Author | 201 with `{ path }` to use as `imagePath` |
 | `POST /api/auth/logout` | Any token | 204, token revoked |
 | `POST /api/auth/logout-all` | Any token | 204, every token of the user revoked |
 | `GET /api/articles?q=&from=&to=&lang=&page=&pageSize=` | Public | 200 `PagedResultDTO<ArticleDTO>` (page size 1-50) |
@@ -219,6 +251,9 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `GET /api/categories`, `/{id}`, `/{id}/articles?lang=` | Public | 200 |
 | `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}?moveArticlesTo=` | Admin | 201 / 204 / 409 |
 | `GET /api/tags?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 |
+| `GET /api/authors?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 / 404 |
+| `GET /api/bookmarks?page=&pageSize=`, `POST /api/bookmarks/{articleId}`, `DELETE /api/bookmarks/{articleId}` | Any token, own list only | 200 / 204 / 400 / 404 |
+| `GET /api/archive?lang=`, `/api/archive/{year}/{month}?day=&lang=&page=&pageSize=`, `/api/archive/{year}/{month}/days` | Public | 200 / 404 for impossible dates |
 | `POST /api/tags`, `PUT /api/tags/{id}`, `DELETE /api/tags/{id}` | Admin | 201 / 204 / 409 |
 
 Article `POST` and `PUT` accept `tagIds` in the body; `GET /api/articles/{id}` returns the article's `tags`.
@@ -233,6 +268,7 @@ Swagger UI is served at `/swagger` in Development, or anywhere when `Api:Swagger
 - `_Navigation.cshtml` top bar, masthead with search, sticky section navigation, role menus, breaking-news ticker.
 - `_Footer.cshtml` brand, sections, explore links, company and policy links, RSS.
 - Story partials: `_StoryLead`, `_StoryCard`, `_StoryCompact`, built from `_StoryMedia`, `_StoryKicker`, `_StoryMeta`.
+- The article form has a Markdown toolbar (heading, bold, italic, quote, lists, link) and a **Preview** tab that renders through `POST /Article/Preview` (Admin, Author, antiforgery) with the same renderer as the article page. Plain-text articles keep rendering one paragraph per blank line.
 - `wwwroot/js/site.js` adds a show/hide button to every password field (localized label from `data-show-password` / `data-hide-password` on `<body>`, `aria-pressed`, the field is masked again on submit) and limits the tag picker to 8 choices.
 - Design tokens and components in `wwwroot/css/site.css` (Source Serif 4 and Inter, with Noto Bengali fallbacks).
 - Brand assets in `wwwroot/images/brand/` (1200×630 share image, icons) and `wwwroot/site.webmanifest`.
@@ -252,6 +288,19 @@ Swagger UI is served at `/swagger` in Development, or anywhere when `Api:Swagger
 ## Theme
 
 Light, dark and system themes use Bootstrap 5.3 `data-bs-theme`. `wwwroot/js/theme-init.js`, loaded first in `<head>`, applies the saved choice before the page paints (an external file so the Content Security Policy can forbid inline scripts), `wwwroot/js/site.js` handles the switcher in the top bar and follows the operating system when **System** is selected. Colour tokens for both themes are defined in `wwwroot/css/site.css`.
+
+## 3D design layer
+
+Pure CSS and a few lines of JavaScript; no WebGL library and no inline scripts, so the Content Security Policy stays strict.
+
+| Piece | Where |
+|---|---|
+| Depth tokens `--depth-1` to `--depth-4`, glare and ring colours for light and dark | `wwwroot/css/site.css` (`:root` and `[data-bs-theme="dark"]`) |
+| Rotating 3D meridian globe (six meridians, three parallels, orbiting satellite, `transform-style: preserve-3d`) | `Views/Shared/_Globe.cshtml`; masthead background, side panel of the information pages, 404/500 and 403 pages |
+| Tilt cards that follow the mouse with a moving glare and the picture and headline lifted on separate depth planes | `[data-tilt]` on `_StoryCard`, `_StoryLead` (gentler) and section cards; `site.js` `attachTilt` (requestAnimationFrame, mouse only) |
+| Glass sticky navigation (`backdrop-filter`, solid fallback), lifted compact stories, 3D topic chips, raised buttons | `site.css` |
+| Scroll reveal for cards and panels below the fold (opacity and transform only, no layout shift) | `site.js` with `IntersectionObserver` |
+| Accessibility | Everything stops under `prefers-reduced-motion`; touch devices get depth without tilt; the globe is `aria-hidden` and hidden in print |
 
 ## Brand
 
@@ -289,20 +338,24 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | Brute force | Per-account lockout after 5 failed sign-ins for 15 minutes (`Auth/LoginThrottle.cs`, MVC and API); per-IP rate limits: sign-in, sign-up and reset 20/min, comments 6/min, whole API 120/min; unknown emails cost the same time as known ones |
 | Password reset | 6-digit OTP from a cryptographic RNG, valid 5 minutes, single use, 5 attempts, same response whether or not the email exists; logged only in Development |
 | CSRF | `AutoValidateAntiforgeryToken` on every MVC POST (antiforgery cookie SameSite=Strict); API cookie is SameSite=Strict and the API only accepts JSON bodies |
-| XSS | Razor encoding everywhere, article content rendered as encoded paragraphs, JSON-LD serialized with the default JavaScript encoder, image paths limited to site paths or `https://` |
+| XSS | Razor encoding everywhere, article content rendered by `Content/ArticleRenderer` (Markdig with raw HTML disabled; only `http`, `https`, `mailto`, `#` and site-relative links, only site or `https` images, external links get `rel="nofollow noopener noreferrer"`, headings shifted to h2-h6), JSON-LD serialized with the default JavaScript encoder, image paths limited to site paths or `https://` |
 | Open redirect | `returnUrl` is only followed when `Url.IsLocalUrl` accepts it |
 | Security headers | `Content-Security-Policy` (scripts from self only, no objects, frame-ancestors self), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cache-Control: no-store` on account and API responses, no `Server` header; HSTS outside Development |
 | Proxies | Forwarded headers are only trusted from loopback or from addresses listed in `Hosting:KnownProxies`, so clients cannot fake their IP to dodge rate limits |
 | CORS | Only origins listed in `Api:AllowedOrigins` |
 | Errors | MVC: `/error/500` and `/error/{code}` pages. API: JSON `ProblemDetails` for exceptions and status codes |
 | Compression | Response compression enabled for HTTPS |
-| Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*`, `Api:*`, `Hosting:KnownProxies` |
+| Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*`, `Api:*`, `Hosting:KnownProxies`, `Database:MigrateOnStartup` |
+| Startup | `BusinessLayerServices.InitializeBusinessLayer` applies migrations (Development or `Database:MigrateOnStartup`), fills missing slugs and purges old tokens; a database failure is logged with the setting to check |
+| Health | `/health` runs `Health/DatabaseHealthCheck` through `SystemService.IsDatabaseReachable` (`DataAccessFactory.CanConnect`) |
+| Packages | EF Core 10.0.14, Swashbuckle 10.3.1, `System.Security.Cryptography.Pkcs` 10.0.14 pinned in DAL to replace the vulnerable transitive 9.0.x from SqlClient. AutoMapper 14.0.0 is kept for the course pattern; advisory GHSA-rvv3-g6hj-g44x (deep recursion) is suppressed in `BLL.csproj` / `NewsArchive.csproj` because every map is flat and capped with `MaxDepth(3)` |
+| Tooling | `global.json` (SDK 10.0, latest feature band), `.vscode` launch, tasks and recommended extensions, `.github/workflows/build.yml` CI |
 | Code style | No code comments; names must explain intent |
 | Responsive layout | Verified without horizontal overflow at 320, 375, 414, 768, 1024, 1366 and 1920 px in Chrome and Edge |
 
 ## Known limitations
 
-- Images are referenced by typed path; there is no upload.
+- Uploaded pictures are stored as sent (type and size checked); they are not resized or re-encoded, and they live on the web server's disk, so `wwwroot/uploads` must be backed up and shared if the site runs on several servers.
 - The password reset code is not emailed yet; an email sender will be plugged in later.
 - Login lockout counters live in memory, so they reset when the app restarts and are per server.
 
@@ -316,7 +369,11 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 2 | Course-aligned architecture: repository interfaces, generic repository, `DataAccessFactory`, AutoMapper profile via DI, cookie authentication with claims, PBKDF2 password hashing | Done |
 | 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger, security hardening | Done |
 | 4 | Tags and topic pages | Done |
-| 4b | Show/hide password, image upload for articles and profile pictures | In progress |
-| 4c | Rich text, date archive, revisions, scheduling | Planned |
+| 4b | Show/hide password, image upload for articles and profile pictures | Done |
+| 4c | Date archive with calendar and "On this day" | Done |
+| 4d | Author pages with bios | Done |
+| 4e | Bookmarks ("read later") | Done |
+| 4f | Safe Markdown formatting with toolbar and live preview | Done |
+| 4g | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |
