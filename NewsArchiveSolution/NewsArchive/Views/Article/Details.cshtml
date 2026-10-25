@@ -17,6 +17,8 @@
     var commentNames = ViewBag.CommentUserNames as Dictionary<int, string> ?? new Dictionary<int, string>();
     var recommendations = ViewBag.Recommendations as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
     var latest = ViewBag.Latest as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
+    var avatars = ViewBag.Avatars as Dictionary<int, string> ?? new Dictionary<int, string>();
+    string? AvatarOf(int id) => avatars.TryGetValue(id, out var a) ? a : null;
 
     var path = SeoUrls.Article(Model);
     var absoluteUrl = Urls.Absolute(path);
@@ -121,7 +123,7 @@
             </header>
 
             <div class="byline">
-                <span class="avatar" aria-hidden="true">@(authorName.Length > 0 ? authorName[0] : 'N')</span>
+                @await Html.PartialAsync("_Avatar", (authorName, AvatarOf(Model.AuthorId), "avatar-md"))
                 <div>
                     <div>@L["By"] <strong>@authorName</strong></div>
                     <div>
@@ -220,7 +222,8 @@
                     {
                         <div class="comment">
                             <div class="d-flex justify-content-between align-items-start gap-3">
-                                <div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    @await Html.PartialAsync("_Avatar", (commentNames.TryGetValue(comment.CommentId, out var an) ? an : L["Reader"].Value, AvatarOf(comment.UserId), "avatar-sm"))
                                     <span class="comment-author">@(commentNames.TryGetValue(comment.CommentId, out var n) ? n : L["Reader"])</span>
                                     <span class="meta ms-2"><time datetime="@comment.CreatedDate.ToString("yyyy-MM-ddTHH:mm")">@comment.CreatedDate.ToString("d MMM yyyy, h:mm tt")</time></span>
                                 </div>

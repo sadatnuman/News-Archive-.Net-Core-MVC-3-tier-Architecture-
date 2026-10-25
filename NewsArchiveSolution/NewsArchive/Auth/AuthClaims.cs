@@ -9,6 +9,7 @@ namespace NewsArchive.Auth
     {
         public const string RoleIdType = "RoleId";
         public const string StampType = "SecurityStamp";
+        public const string AvatarType = "Avatar";
 
         public static ClaimsPrincipal CreatePrincipal(AuthUserDTO user)
         {
@@ -21,6 +22,8 @@ namespace NewsArchive.Auth
                 new(RoleIdType, user.RoleId.ToString(CultureInfo.InvariantCulture)),
                 new(StampType, user.SecurityStamp)
             };
+            if (!string.IsNullOrEmpty(user.AvatarPath))
+                claims.Add(new Claim(AvatarType, user.AvatarPath));
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             return new ClaimsPrincipal(identity);
         }
@@ -32,6 +35,14 @@ namespace NewsArchive.Auth
                 && principal.RoleId() == user.RoleId
                 && principal.FindFirstValue(StampType) == user.SecurityStamp;
         }
+
+        public static bool NeedsRefresh(this ClaimsPrincipal principal, AuthUserDTO user)
+        {
+            return principal.FindFirstValue(ClaimTypes.Name) != user.Name
+                || principal.FindFirstValue(AvatarType) != user.AvatarPath;
+        }
+
+        public static string? AvatarPath(this ClaimsPrincipal user) => user.IsSignedIn() ? user.FindFirstValue(AvatarType) : null;
 
         public static bool IsSignedIn(this ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true;
 

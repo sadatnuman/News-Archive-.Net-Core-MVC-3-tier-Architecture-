@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DAL.EF.Tables;
@@ -12,6 +12,8 @@ public partial class User
     public string Email { get; set; } = null!;
 
     public string PasswordHash { get; set; } = null!;
+
+    public string? AvatarPath { get; set; }
 
     public int RoleId { get; set; }
 

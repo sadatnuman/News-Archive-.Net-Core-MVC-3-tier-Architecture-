@@ -1,0 +1,16 @@
+@model (string Name, string? Path, string Size)
+
+@{
+    var name = string.IsNullOrWhiteSpace(Model.Name) ? "?" : Model.Name.Trim();
+    var initial = char.ToUpperInvariant(name[0]);
+    var src = SeoUrls.Image(Model.Path);
+}
+
+@if (src != null)
+{
+    <img class="avatar @Model.Size" src="@src" alt="" width="40" height="40" loading="lazy" decoding="async" />
+}
+else
+{
+    <span class="avatar avatar-initial @Model.Size" aria-hidden="true">@initial</span>
+}

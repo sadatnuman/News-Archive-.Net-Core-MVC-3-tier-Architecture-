@@ -35,6 +35,8 @@ namespace BLL.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Role ID must be greater than 0")]
         public int RoleId { get; set; }
 
+        public string? AvatarPath { get; set; }
+
         [Required(ErrorMessage = "Created date is required")]
         public DateTime CreatedAt { get; set; }
     }

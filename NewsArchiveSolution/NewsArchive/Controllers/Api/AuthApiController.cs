@@ -14,10 +14,14 @@ namespace NewsArchive.Controllers.Api
         private readonly AuthService authService;
         private readonly LoginThrottle throttle;
         private readonly ApiOptions options;
+        private readonly UserService userService;
+        private readonly MediaService mediaService;
 
-        public AuthApiController(AuthService authService, LoginThrottle throttle, IOptions<ApiOptions> options)
+        public AuthApiController(AuthService authService, LoginThrottle throttle, IOptions<ApiOptions> options, UserService userService, MediaService mediaService)
         {
             this.authService = authService;
+            this.userService = userService;
+            this.mediaService = mediaService;
             this.throttle = throttle;
             this.options = options.Value;
         }
@@ -78,6 +82,45 @@ namespace NewsArchive.Controllers.Api
         public async Task<IActionResult> Me()
         {
             return Ok(await RequireApiUserAsync());
+        }
+
+        [HttpPut("me/avatar")]
+        [ApiAuthorize]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(MediaService.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        [ProducesResponseType(typeof(AuthUserDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            var user = await RequireApiUserAsync();
+            if (file == null || file.Length == 0)
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Choose an image to upload.");
+
+            using var stream = file.OpenReadStream();
+            var result = mediaService.SaveAvatar(stream, file.Length);
+            if (!result.Success)
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: result.Error);
+
+            if (!userService.SetAvatar(user.UserId, result.Path))
+            {
+                mediaService.DeleteIfUploaded(result.Path);
+                return Problem(statusCode: StatusCodes.Status500InternalServerError, title: "Update failed");
+            }
+
+            mediaService.DeleteIfUploaded(user.AvatarPath);
+            return Ok(authService.GetUser(user.UserId));
+        }
+
+        [HttpDelete("me/avatar")]
+        [ApiAuthorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> RemoveAvatar()
+        {
+            var user = await RequireApiUserAsync();
+            if (userService.SetAvatar(user.UserId, null))
+                mediaService.DeleteIfUploaded(user.AvatarPath);
+            return NoContent();
         }
 
         [HttpPost("logout")]

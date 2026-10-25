@@ -1147,3 +1147,74 @@ img {
 .password-field:focus-within .password-toggle {
   border-color: var(--accent);
 }
+
+.avatar {
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--chrome);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.avatar-initial {
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.avatar-xs {
+  width: 24px;
+  height: 24px;
+  font-size: .7rem;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: .8rem;
+}
+
+.avatar-md {
+  width: 40px;
+  height: 40px;
+  font-size: .95rem;
+}
+
+.avatar-xl {
+  width: 84px;
+  height: 84px;
+  font-size: 2rem;
+}
+
+.topbar .avatar-initial {
+  background: var(--accent);
+  color: var(--chrome);
+}
+
+.avatar-editor {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+}
+
+.image-preview img {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+
+@media (max-width: 575.98px) {
+  .avatar-editor {
+    flex-direction: column;
+  }
+}

@@ -45,7 +45,10 @@
                 }
                 else
                 {
-                    <span class="d-none d-sm-inline">@L["Signed in as {0}", RoleName(roleId)]</span>
+                    <span class="d-inline-flex align-items-center gap-2">
+                        @await Html.PartialAsync("_Avatar", (User.DisplayName() ?? string.Empty, User.AvatarPath(), "avatar-xs"))
+                        <span class="d-none d-sm-inline">@L["Signed in as {0}", RoleName(roleId)]</span>
+                    </span>
                     <span class="divider d-none d-sm-inline">|</span>
                     <a asp-controller="Auth" asp-action="Logout" rel="nofollow">@L["Sign out"]</a>
                 }

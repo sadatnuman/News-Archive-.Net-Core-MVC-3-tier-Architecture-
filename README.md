@@ -14,10 +14,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - Home page with a lead story, latest news, trending stories and a breaking-news ticker
 - Sections, topics (tags), trending and breaking news, search by keyword and date range
 - Article pages with byline, reading time, share buttons (LinkedIn, X, Facebook, WhatsApp), comments and related stories
-- Sign up, sign in, profile, password change and password reset with a one-time code; every password field has a show/hide eye button
+- Sign up, sign in, profile with a profile picture, password change and password reset with a one-time code; every password field has a show/hide eye button
 
 **Authors**
-- Write articles in English or Bangla, tag them with up to 8 topics, save drafts and submit them for approval
+- Write articles in English or Bangla, upload a picture, tag them with up to 8 topics, save drafts and submit them for approval
 - "My articles" page with the status of every article and the editor's notes on rejected ones
 
 **Admins**
@@ -149,6 +149,8 @@ The full endpoint list is in [ARCHITECTURE.md](ARCHITECTURE.md#rest-api).
 | `Api:TokenLifetimeHours` | API token lifetime (default 12) |
 | `Api:AllowedOrigins` | Other websites allowed to call the API from a browser (CORS) |
 | `Hosting:KnownProxies` | IP addresses of a reverse proxy whose `X-Forwarded-*` headers can be trusted |
+
+Uploaded pictures are saved in `NewsArchiveSolution/NewsArchive/wwwroot/uploads/` (not tracked by git). Back this folder up together with the database.
 
 Before going live: change the sample passwords, keep `Api:SwaggerEnabled` off unless the API docs should be public, and serve the site over HTTPS (cookies are marked Secure outside Development).
 

@@ -61,6 +61,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `AddLanguages` | `Languages` lookup table, `Articles.LanguageCode` foreign key, Bangla names for sections |
 | `AddUserTokens` | `UserTokens` table for API tokens (hash only, expiry, revocation) |
 | `AddTagTranslationsAndSlugs` | Bangla tag names and unique slugs for tag pages |
+| `AddUserAvatars` | `Users.AvatarPath` for profile pictures |
 
 ### Tables (3NF)
 
@@ -128,6 +129,7 @@ Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 | `Services/` | `ArticleService`, `CategoryService`, `CommentService`, `TagService`, `UserService`, `RoleService`, `AnalyticsService`, `AuthService`; each takes `DataAccessFactory` and `IMapper` |
 | `DTOs/` | Read DTOs, form DTOs (`ArticleFormDTO` prevents over-posting of author, views and status), `LoginDTO`, `RegisterDTO`, `AuthUserDTO`, `TokenDTO`, `PagedResultDTO<T>`, `ReviewDTO`, `CommentCreateDTO` |
 | `Mapping/MappingProfile.cs` | AutoMapper `Profile`, registered with `AddAutoMapper` and injected as `IMapper` |
+| `Services/MediaService.cs`, `Media/IFileStorage.cs` | Image upload rules and the storage abstraction (see Media uploads) |
 | `Security/PasswordHasher.cs` | PBKDF2-SHA256 (100,000 iterations, 16-byte salt), legacy MD5 verification with upgrade, token generation and SHA-256 token hashing, security stamp |
 | `Validations/UniqueEmail.cs` | Checks email uniqueness through `DataAccessFactory` |
 | `SlugHelper.cs` | URL slugs that keep Bangla and other Unicode letters |
@@ -153,6 +155,20 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 - Article pages show the tags as links and add them as `keywords` in the `NewsArticle` JSON-LD.
 - The home page sidebar lists the 12 most used topics in the current language; tag pages are paged, have `CollectionPage` JSON-LD, `rel=prev/next` and are listed in the sitemap.
 - Deleting a tag only removes the link from articles (cascade on `ContentLabels`).
+
+## Media uploads
+
+| Concern | Implementation |
+|---|---|
+| Layering | `BLL/Services/MediaService` holds the rules and talks to `BLL/Media/IFileStorage`; the UI implements it in `NewsArchive/Media/WebRootFileStorage` (files under `wwwroot/uploads`). BLL never sees `IFormFile` or HTTP types |
+| Accepted files | JPEG, PNG, WebP and GIF detected from the file's first bytes (the name and the browser's content type are ignored); SVG and everything else is rejected |
+| Size limits | Article pictures 5 MB, profile pictures 2 MB, enforced while reading the stream and by `RequestSizeLimit` / `RequestFormLimits` |
+| File names | Random GUID plus the extension of the detected type: `/uploads/articles/{yyyy}/{MM}/{guid}.jpg`, `/uploads/avatars/{guid}.png` |
+| Path safety | `WebRootFileStorage` resolves every path with `Path.GetFullPath` and refuses anything outside `wwwroot/uploads`; `MediaService.DeleteIfUploaded` only deletes `/uploads/...` paths |
+| Clean-up | Replacing or removing a picture, deleting an article, or a failed save deletes the uploaded file |
+| Article form | Upload a picture, keep or remove the current one, or type an existing site path or `https://` address |
+| Profile pictures | Upload and remove on the profile page (`Avatar/Upload`, `Avatar/Remove`); shown in the top bar, the byline and next to comments, with an initial when there is none. The sign-in cookie picks up a new name or picture on the next request |
+| Serving | Static files with `X-Content-Type-Options: nosniff`; `wwwroot/uploads/` is ignored by git |
 
 ## Presentation layer (NewsArchive)
 
@@ -185,6 +201,7 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | Category | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Tag | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Member | `Profile`, `ChangePassword` | Reader, Author |
+| Avatar | `Upload`, `Remove` (POST) | Any signed-in user, own picture only |
 | Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 
 Access is declared with `[CustomAuthorize(roles...)]` (`Filters/CustomAuthorize.cs`, an `IAuthorizationFilter`). Anonymous users are sent to `/Auth/Login?returnUrl=...`; signed-in users without the role are sent to `/Auth/AccessDenied` (HTTP 403).
@@ -201,6 +218,8 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `POST /api/auth/login?webClient=true` | Public, rate limited | 200; token is set in the `AuthToken` cookie (HttpOnly, SameSite=Strict, Secure on HTTPS, path `/api`) and not returned in the body |
 | `POST /api/auth/register` | Public, rate limited | 201 (new Reader) |
 | `GET /api/auth/me` | Any token | 200 |
+| `PUT /api/auth/me/avatar` (multipart `file`), `DELETE /api/auth/me/avatar` | Any token | 200 / 204 |
+| `POST /api/media/images` (multipart `file`) | Admin, Author | 201 with `{ path }` to use as `imagePath` |
 | `POST /api/auth/logout` | Any token | 204, token revoked |
 | `POST /api/auth/logout-all` | Any token | 204, every token of the user revoked |
 | `GET /api/articles?q=&from=&to=&lang=&page=&pageSize=` | Public | 200 `PagedResultDTO<ArticleDTO>` (page size 1-50) |
@@ -302,7 +321,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 
 ## Known limitations
 
-- Images are referenced by typed path; there is no upload.
+- Uploaded pictures are stored as sent (type and size checked); they are not resized or re-encoded, and they live on the web server's disk, so `wwwroot/uploads` must be backed up and shared if the site runs on several servers.
 - The password reset code is not emailed yet; an email sender will be plugged in later.
 - Login lockout counters live in memory, so they reset when the app restarts and are per server.
 
@@ -316,7 +335,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 2 | Course-aligned architecture: repository interfaces, generic repository, `DataAccessFactory`, AutoMapper profile via DI, cookie authentication with claims, PBKDF2 password hashing | Done |
 | 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger, security hardening | Done |
 | 4 | Tags and topic pages | Done |
-| 4b | Show/hide password, image upload for articles and profile pictures | In progress |
+| 4b | Show/hide password, image upload for articles and profile pictures | Done |
 | 4c | Rich text, date archive, revisions, scheduling | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

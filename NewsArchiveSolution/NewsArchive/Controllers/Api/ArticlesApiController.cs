@@ -14,9 +14,11 @@ namespace NewsArchive.Controllers.Api
         private readonly ArticleService articleService;
         private readonly CategoryService categoryService;
         private readonly CommentService commentService;
+        private readonly MediaService mediaService;
 
-        public ArticlesApiController(ArticleService articleService, CategoryService categoryService, CommentService commentService)
+        public ArticlesApiController(ArticleService articleService, CategoryService categoryService, CommentService commentService, MediaService mediaService)
         {
+            this.mediaService = mediaService;
             this.articleService = articleService;
             this.categoryService = categoryService;
             this.commentService = commentService;
@@ -147,9 +149,11 @@ namespace NewsArchive.Controllers.Api
             if (!ArticleService.CanEdit(article.AuthorId, article.StatusId, user.UserId, user.RoleId))
                 return Forbidden("You cannot delete this article.");
 
-            return articleService.Delete(id, user.UserId, user.RoleId)
-                ? NoContent()
-                : Problem(statusCode: StatusCodes.Status409Conflict, title: "The article could not be deleted.");
+            if (!articleService.Delete(id, user.UserId, user.RoleId))
+                return Problem(statusCode: StatusCodes.Status409Conflict, title: "The article could not be deleted.");
+
+            mediaService.DeleteIfUploaded(article.ImagePath);
+            return NoContent();
         }
 
         [HttpPost("{id:int}/submit")]

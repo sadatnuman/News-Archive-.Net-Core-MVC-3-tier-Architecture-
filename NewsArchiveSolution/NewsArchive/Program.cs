@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using NewsArchive;
 using NewsArchive.Auth;
+using NewsArchive.Media;
+using BLL.Media;
 using NewsArchive.Seo;
 using System.Globalization;
 using System.Text.Encodings.Web;
@@ -35,6 +37,7 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginThrottle>();
+builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "Meridian.Antiforgery";
@@ -66,6 +69,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                     context.RejectPrincipal();
                     context.HttpContext.Session.Clear();
                     await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                }
+                else if (context.Principal.NeedsRefresh(current!))
+                {
+                    context.ReplacePrincipal(AuthClaims.CreatePrincipal(current!));
+                    context.ShouldRenew = true;
                 }
             }
         };

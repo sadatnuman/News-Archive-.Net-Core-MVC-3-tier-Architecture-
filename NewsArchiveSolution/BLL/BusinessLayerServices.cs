@@ -20,6 +20,7 @@ namespace BLL
             services.AddScoped<RoleService>();
             services.AddScoped<AnalyticsService>();
             services.AddScoped<AuthService>();
+            services.AddScoped<MediaService>();
 
             return services;
         }

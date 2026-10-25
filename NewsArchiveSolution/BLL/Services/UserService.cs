@@ -39,6 +39,7 @@ namespace BLL.Services
             converted.Email = converted.Email.Trim();
             converted.PasswordHash = PasswordHasher.Hash(c.PasswordHash);
             converted.CreatedAt = DateTime.UtcNow;
+            converted.AvatarPath = null;
             return repo.Create(converted);
         }
 
@@ -71,6 +72,16 @@ namespace BLL.Services
         {
             var data = repo.GetByEmail(email);
             return data == null ? null : mapper.Map<UserDTO>(data);
+        }
+
+        public Dictionary<int, string> GetAvatars(IEnumerable<int> ids)
+        {
+            return repo.GetAvatars(ids);
+        }
+
+        public bool SetAvatar(int userId, string? avatarPath)
+        {
+            return repo.UpdateAvatar(userId, avatarPath);
         }
 
         public Dictionary<int, string> GetNames(IEnumerable<int> ids)

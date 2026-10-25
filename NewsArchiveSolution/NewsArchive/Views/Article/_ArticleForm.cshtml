@@ -9,7 +9,7 @@
     var isEdit = Model.ArticleId > 0;
 }
 
-<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.ArticleId : null)" method="post" class="editor-form">
+<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.ArticleId : null)" method="post" enctype="multipart/form-data" class="editor-form">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
     @if (Model.StatusId == ArticleStatus.Rejected && !string.IsNullOrEmpty(Model.ReviewNote))
@@ -60,11 +60,28 @@
         <span asp-validation-for="Content" class="text-danger small"></span>
     </div>
 
-    <div class="mb-4">
-        <label asp-for="ImagePath" class="form-label fw-semibold"></label>
-        <input asp-for="ImagePath" class="form-control" placeholder="images/articles/image-name.jpg" />
+    <fieldset class="mb-4 image-editor">
+        <legend class="form-label fw-semibold fs-6 mb-2">@L["Picture"]</legend>
+        @if (!string.IsNullOrEmpty(Model.ImagePath))
+        {
+            <div class="image-preview mb-3">
+                <img src="@SeoUrls.Image(Model.ImagePath)" alt="" loading="lazy" />
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="removeImage" value="true" id="removeImage" />
+                    <label class="form-check-label" for="removeImage">@L["Remove this picture"]</label>
+                </div>
+            </div>
+        }
+        <label for="imageFile" class="form-label small">@L["Upload a picture"]</label>
+        <input id="imageFile" name="imageFile" type="file" class="form-control" accept="@BLL.Services.MediaService.AcceptedTypes" data-max-bytes="@BLL.Services.MediaService.MaxArticleImageBytes" data-too-large="@L["The image is too large. The limit is 5 MB."]" />
+        <div class="form-text">@L["JPEG, PNG, WebP or GIF, up to 5 MB. Use a landscape picture, ideally 1200 × 675 pixels."]</div>
         <span asp-validation-for="ImagePath" class="text-danger small"></span>
-    </div>
+        <span class="text-danger small d-block">@Html.ValidationMessage("imageFile")</span>
+        <details class="mt-3">
+            <summary class="small">@L["Or use an existing picture address"]</summary>
+            <input asp-for="ImagePath" class="form-control mt-2" placeholder="images/articles/image-name.jpg" />
+        </details>
+    </fieldset>
 
     @if (tags.Count > 0)
     {

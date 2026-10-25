@@ -177,6 +177,9 @@
   <data name="Choose a section to move this section's articles to." xml:space="preserve">
     <value>এই বিভাগের সংবাদগুলো কোন বিভাগে সরানো হবে তা বেছে নিন।</value>
   </data>
+  <data name="Choose an image to upload." xml:space="preserve">
+    <value>আপলোড করার জন্য একটি ছবি বেছে নিন।</value>
+  </data>
   <data name="Choose the language the story is written in. It appears on that language's edition of the site." xml:space="preserve">
     <value>সংবাদটি যে ভাষায় লেখা তা বেছে নিন। সাইটের ওই ভাষার সংস্করণে এটি দেখানো হবে।</value>
   </data>
@@ -399,6 +402,12 @@
   <data name="Invalid username/email or password" xml:space="preserve">
     <value>ইমেইল বা পাসওয়ার্ড সঠিক নয়</value>
   </data>
+  <data name="JPEG, PNG, WebP or GIF, up to 2 MB." xml:space="preserve">
+    <value>JPEG, PNG, WebP বা GIF, সর্বোচ্চ ২ MB।</value>
+  </data>
+  <data name="JPEG, PNG, WebP or GIF, up to 5 MB. Use a landscape picture, ideally 1200 × 675 pixels." xml:space="preserve">
+    <value>JPEG, PNG, WebP বা GIF, সর্বোচ্চ ৫ MB। আড়াআড়ি ছবি দিন, সবচেয়ে ভালো ১২০০ × ৬৭৫ পিক্সেল।</value>
+  </data>
   <data name="Join readers who follow, discuss and save the news." xml:space="preserve">
     <value>সংবাদ পড়ুন, আলোচনা করুন আর সংরক্ষণ করুন, পাঠকদের সঙ্গে যুক্ত হোন।</value>
   </data>
@@ -546,6 +555,9 @@
   <data name="One-time code" xml:space="preserve">
     <value>ওটিপি কোড</value>
   </data>
+  <data name="Only JPEG, PNG, WebP and GIF images can be uploaded." xml:space="preserve">
+    <value>শুধু JPEG, PNG, WebP ও GIF ছবি আপলোড করা যায়।</value>
+  </data>
   <data name="Only drafts and rejected articles can be submitted." xml:space="preserve">
     <value>শুধু খসড়া ও ফেরত আসা লেখা জমা দেওয়া যায়।</value>
   </data>
@@ -554,6 +566,9 @@
   </data>
   <data name="Only pending articles can be rejected." xml:space="preserve">
     <value>শুধু অপেক্ষমাণ লেখা ফেরত পাঠানো যায়।</value>
+  </data>
+  <data name="Or use an existing picture address" xml:space="preserve">
+    <value>অথবা আগে থেকে থাকা ছবির ঠিকানা দিন</value>
   </data>
   <data name="Page not found" xml:space="preserve">
     <value>পাতাটি পাওয়া যায়নি</value>
@@ -585,6 +600,9 @@
   <data name="Pending review" xml:space="preserve">
     <value>পর্যালোচনার অপেক্ষায়</value>
   </data>
+  <data name="Picture" xml:space="preserve">
+    <value>ছবি</value>
+  </data>
   <data name="Please choose a role" xml:space="preserve">
     <value>একটি ভূমিকা বেছে নিন</value>
   </data>
@@ -602,6 +620,15 @@
   </data>
   <data name="Profile" xml:space="preserve">
     <value>প্রোফাইল</value>
+  </data>
+  <data name="Profile picture" xml:space="preserve">
+    <value>প্রোফাইল ছবি</value>
+  </data>
+  <data name="Profile picture removed." xml:space="preserve">
+    <value>প্রোফাইল ছবি সরানো হয়েছে।</value>
+  </data>
+  <data name="Profile picture updated." xml:space="preserve">
+    <value>প্রোফাইল ছবি হালনাগাদ হয়েছে।</value>
   </data>
   <data name="Publish" xml:space="preserve">
     <value>প্রকাশ করুন</value>
@@ -641,6 +668,12 @@
   </data>
   <data name="Related stories" xml:space="preserve">
     <value>সম্পর্কিত সংবাদ</value>
+  </data>
+  <data name="Remove picture" xml:space="preserve">
+    <value>ছবি সরান</value>
+  </data>
+  <data name="Remove this picture" xml:space="preserve">
+    <value>এই ছবিটি সরান</value>
   </data>
   <data name="Reset your password" xml:space="preserve">
     <value>পাসওয়ার্ড পুনরুদ্ধার</value>
@@ -825,6 +858,12 @@
   <data name="The article could not be saved." xml:space="preserve">
     <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
   </data>
+  <data name="The image is too large. The limit is 2 MB." xml:space="preserve">
+    <value>ছবিটি অনেক বড়। সর্বোচ্চ ২ MB।</value>
+  </data>
+  <data name="The image is too large. The limit is 5 MB." xml:space="preserve">
+    <value>ছবিটি অনেক বড়। সর্বোচ্চ ৫ MB।</value>
+  </data>
   <data name="The latest {0} news, analysis and reporting from The Meridian Newsfolio." xml:space="preserve">
     <value>দ্য মেরিডিয়ান নিউজফোলিওর সর্বশেষ {0} সংবাদ, বিশ্লেষণ ও প্রতিবেদন।</value>
   </data>
@@ -923,6 +962,12 @@
   </data>
   <data name="Updated" xml:space="preserve">
     <value>হালনাগাদ</value>
+  </data>
+  <data name="Upload" xml:space="preserve">
+    <value>আপলোড</value>
+  </data>
+  <data name="Upload a picture" xml:space="preserve">
+    <value>ছবি আপলোড করুন</value>
   </data>
   <data name="Use a site path like /images/articles/photo.jpg or an https:// address" xml:space="preserve">
     <value>/images/articles/photo.jpg এর মতো সাইটের পথ বা https:// ঠিকানা দিন</value>

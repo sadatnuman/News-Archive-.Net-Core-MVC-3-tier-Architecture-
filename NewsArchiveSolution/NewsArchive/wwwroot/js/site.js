@@ -92,6 +92,17 @@
 
     document.querySelectorAll("input[type=password]").forEach(addPasswordToggle);
 
+    document.querySelectorAll("input[type=file][data-max-bytes]").forEach(function (input) {
+        input.addEventListener("change", function () {
+            var max = parseInt(input.getAttribute("data-max-bytes"), 10);
+            var file = input.files && input.files[0];
+            var tooLarge = file && max && file.size > max;
+            input.setCustomValidity(tooLarge ? input.getAttribute("data-too-large") : "");
+            input.classList.toggle("is-invalid", !!tooLarge);
+            if (tooLarge) input.reportValidity();
+        });
+    });
+
     media.addEventListener("change", function () {
         if (storedChoice() === "system") apply("system");
     });

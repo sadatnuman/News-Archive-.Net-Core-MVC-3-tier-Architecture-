@@ -14,6 +14,8 @@ namespace BLL.DTOs
 
         public string RoleName { get; set; } = null!;
 
+        public string? AvatarPath { get; set; }
+
         [JsonIgnore]
         public string SecurityStamp { get; set; } = string.Empty;
     }
