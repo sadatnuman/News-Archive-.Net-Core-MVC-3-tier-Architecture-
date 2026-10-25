@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Head", required: false)
 </head>
-<body>
+<body data-show-password="@L["Show password"]" data-hide-password="@L["Hide password"]">
     <a class="skip-link" href="#main">@L["Skip to main content"]</a>
 
     <partial name="_DemoNotice" />

@@ -233,6 +233,7 @@ Swagger UI is served at `/swagger` in Development, or anywhere when `Api:Swagger
 - `_Navigation.cshtml` top bar, masthead with search, sticky section navigation, role menus, breaking-news ticker.
 - `_Footer.cshtml` brand, sections, explore links, company and policy links, RSS.
 - Story partials: `_StoryLead`, `_StoryCard`, `_StoryCompact`, built from `_StoryMedia`, `_StoryKicker`, `_StoryMeta`.
+- `wwwroot/js/site.js` adds a show/hide button to every password field (localized label from `data-show-password` / `data-hide-password` on `<body>`, `aria-pressed`, the field is masked again on submit) and limits the tag picker to 8 choices.
 - Design tokens and components in `wwwroot/css/site.css` (Source Serif 4 and Inter, with Noto Bengali fallbacks).
 - Brand assets in `wwwroot/images/brand/` (1200×630 share image, icons) and `wwwroot/site.webmanifest`.
 

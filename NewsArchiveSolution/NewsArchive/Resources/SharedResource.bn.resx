@@ -366,6 +366,9 @@
   <data name="Headline" xml:space="preserve">
     <value>শিরোনাম</value>
   </data>
+  <data name="Hide password" xml:space="preserve">
+    <value>পাসওয়ার্ড লুকান</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>প্রচ্ছদ</value>
   </data>
@@ -731,6 +734,9 @@
   </data>
   <data name="Share this article" xml:space="preserve">
     <value>সংবাদটি শেয়ার করুন</value>
+  </data>
+  <data name="Show password" xml:space="preserve">
+    <value>পাসওয়ার্ড দেখুন</value>
   </data>
   <data name="Sign in" xml:space="preserve">
     <value>লগ-ইন</value>

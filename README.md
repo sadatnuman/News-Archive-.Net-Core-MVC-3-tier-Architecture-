@@ -14,7 +14,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - Home page with a lead story, latest news, trending stories and a breaking-news ticker
 - Sections, topics (tags), trending and breaking news, search by keyword and date range
 - Article pages with byline, reading time, share buttons (LinkedIn, X, Facebook, WhatsApp), comments and related stories
-- Sign up, sign in, profile, password change and password reset with a one-time code
+- Sign up, sign in, profile, password change and password reset with a one-time code; every password field has a show/hide eye button
 
 **Authors**
 - Write articles in English or Bangla, tag them with up to 8 topics, save drafts and submit them for approval

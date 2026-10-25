@@ -1124,3 +1124,26 @@ img {
   border-radius: var(--radius);
   background: var(--paper);
 }
+
+.password-field .form-control {
+  border-right: 0;
+}
+
+.password-toggle {
+  border: 1px solid var(--line-strong);
+  border-left: 0;
+  background: var(--paper);
+  color: var(--muted);
+  padding: 0 .85rem;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--accent);
+  background: var(--paper-2);
+}
+
+.password-field:focus-within .form-control,
+.password-field:focus-within .password-toggle {
+  border-color: var(--accent);
+}
