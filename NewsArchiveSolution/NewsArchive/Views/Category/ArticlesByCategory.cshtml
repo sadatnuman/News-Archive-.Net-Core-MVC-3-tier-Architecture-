@@ -1,25 +1,28 @@
 @model List<BLL.DTOs.ArticleDTO>
-@using NewsArchive.Seo
 @inject SeoUrls Urls
 
 @{
+    var lang = UiLanguage.Current;
     var category = ViewBag.Category as BLL.DTOs.CategoryDTO;
-    var name = category?.Name ?? "News";
+    var name = category?.LocalName(lang) ?? L["News"].Value;
+    var description = category?.LocalDescription(lang);
     var path = SeoUrls.Category(category?.CategoryId ?? 0, category?.Slug);
 
     var meta = ViewData.Meta();
-    meta.Title = $"{name} news";
-    meta.Description = string.IsNullOrWhiteSpace(category?.Description)
-        ? $"The latest {name} news, analysis and reporting from NewsArchive."
-        : category!.Description;
+    meta.Title = L["{0} news", name];
+    meta.Description = string.IsNullOrWhiteSpace(description)
+        ? L["The latest {0} news, analysis and reporting from The Meridian Newsfolio.", name]
+        : description;
     meta.CanonicalPath = path;
     meta.Image = Model.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagePath))?.ImagePath;
+    meta.Breadcrumbs.Add((L["Sections"], SeoUrls.Page("/Category")));
     meta.Breadcrumbs.Add((name, path));
     meta.JsonLd.Add(new Dictionary<string, object?>
     {
         ["@type"] = "CollectionPage",
-        ["name"] = $"{name} news",
+        ["name"] = meta.Title,
         ["url"] = Urls.Absolute(path),
+        ["inLanguage"] = lang,
         ["description"] = meta.Description,
         ["mainEntity"] = new Dictionary<string, object?>
         {
@@ -28,7 +31,7 @@
             {
                 ["@type"] = "ListItem",
                 ["position"] = i + 1,
-                ["url"] = Urls.Absolute(SeoUrls.Article(a.ArticleId, a.Slug))
+                ["url"] = Urls.Absolute(SeoUrls.Article(a))
             }).ToList()
         }
     });
@@ -37,20 +40,20 @@
 }
 
 <div class="container py-4 py-lg-5">
-    <nav class="crumbs" aria-label="Breadcrumb">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item"><a href="/Category">Sections</a></li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/Category")">@L["Sections"]</a></li>
             <li class="breadcrumb-item active" aria-current="page">@name</li>
         </ol>
     </nav>
 
     <header class="mb-4 pb-3 border-bottom">
-        <span class="kicker">Section</span>
-        <h1 class="page-title mt-1">@name news</h1>
-        @if (!string.IsNullOrWhiteSpace(category?.Description))
+        <span class="kicker">@L["Section"]</span>
+        <h1 class="page-title mt-1">@meta.Title</h1>
+        @if (!string.IsNullOrWhiteSpace(description))
         {
-            <p class="page-intro mb-0">@category.Description</p>
+            <p class="page-intro mb-0">@description</p>
         }
     </header>
 
@@ -58,13 +61,13 @@
     {
         <div class="empty-state">
             <i class="bi bi-folder2-open"></i>
-            <h2 class="h5 mt-3">No @name stories yet</h2>
-            <p class="mb-0"><a href="/">Read the latest news</a></p>
+            <h2 class="h5 mt-3">@L["No {0} stories yet", name]</h2>
+            <p class="mb-0"><a href="@SeoUrls.Page("/")">@L["Read the latest news"]</a></p>
         </div>
     }
     else
     {
-        <section class="mb-5" aria-label="Top @name story">
+        <section class="mb-5" aria-label="@L["Top story"]">
             <partial name="_StoryLead" model="lead" />
         </section>
 
@@ -72,7 +75,7 @@
         {
             <section aria-labelledby="more-heading">
                 <div class="section-head">
-                    <h2 id="more-heading">More @name stories</h2>
+                    <h2 id="more-heading">@L["More {0} stories", name]</h2>
                 </div>
                 <div class="row g-4">
                     @foreach (var item in Model.Skip(1))

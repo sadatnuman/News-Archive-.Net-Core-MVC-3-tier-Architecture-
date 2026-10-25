@@ -46,6 +46,35 @@ namespace DAL.Repos
             return db.Articles.Any(a => a.CategoryId == categoryId);
         }
 
+        public bool SlugExists(string slug, int excludeCategoryId)
+        {
+            return db.Categories.Any(c => c.Slug == slug && c.CategoryId != excludeCategoryId);
+        }
+
+        public bool NameExists(string name, int excludeCategoryId)
+        {
+            return db.Categories.Any(c => (c.Name == name || c.NameBn == name) && c.CategoryId != excludeCategoryId);
+        }
+
+        public int CountArticles(int categoryId)
+        {
+            return db.Articles.Count(a => a.CategoryId == categoryId);
+        }
+
+        public bool DeleteMovingArticles(int categoryId, int targetCategoryId)
+        {
+            if (categoryId == targetCategoryId || !db.Categories.Any(c => c.CategoryId == targetCategoryId))
+                return false;
+
+            using var transaction = db.Database.BeginTransaction();
+            db.Articles
+                .Where(a => a.CategoryId == categoryId)
+                .ExecuteUpdate(s => s.SetProperty(a => a.CategoryId, targetCategoryId));
+            var deleted = db.Categories.Where(c => c.CategoryId == categoryId).ExecuteDelete() > 0;
+            transaction.Commit();
+            return deleted;
+        }
+
         public List<Category> GetWithoutSlug()
         {
             return db.Categories.Where(c => c.Slug == null).ToList();

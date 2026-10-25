@@ -5,7 +5,7 @@ Update it whenever a layer, entity, endpoint or cross-cutting concern changes.
 
 ## Overview
 
-NewsArchive is an ASP.NET Core MVC application on .NET 10 with SQL Server, split into three projects:
+**The Meridian Newsfolio** (*News Preserved. Stories Rediscovered.*) is an ASP.NET Core MVC application on .NET 10 with SQL Server. The solution keeps its original project names and is split into three projects:
 
 ```
 NewsArchiveSolution/
@@ -57,6 +57,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 |---|---|
 | `InitialSchema` | Baseline of the original database (matches `NewsArchiveDB.bacpac`) |
 | `NormalizeSchemaAndApprovalWorkflow` | 3NF clean-up, approval workflow columns, slugs, keys, indexes and seed data |
+| `AddLanguages` | `Languages` lookup table, `Articles.LanguageCode` foreign key, Bangla names for sections |
 
 ### Tables (3NF)
 
@@ -65,8 +66,9 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `Roles` | `Id` | | `UX_Roles_RoleName` |
 | `Users` | `UserId` | `RoleId → Roles` | `UQ` on `Email` |
 | `ArticleStatuses` | `StatusId` | | `UX_ArticleStatuses_Name` |
-| `Categories` | `CategoryId` | | `UX_Categories_Name`, `UX_Categories_Slug` (filtered) |
-| `Articles` | `ArticleId` | `AuthorId → Users`, `CategoryId → Categories`, `StatusId → ArticleStatuses`, `ReviewedById → Users` | `CK_Articles_ViewsCount` (`>= 0`) |
+| `Languages` | `LanguageCode` (`en`, `bn`) | | |
+| `Categories` | `CategoryId` | | `UX_Categories_Name`, `UX_Categories_NameBn` (filtered), `UX_Categories_Slug` (filtered) |
+| `Articles` | `ArticleId` | `AuthorId → Users`, `CategoryId → Categories`, `StatusId → ArticleStatuses`, `LanguageCode → Languages`, `ReviewedById → Users` | `CK_Articles_ViewsCount` (`>= 0`) |
 | `Tags` | `TagId` | | `UX_Tags_Name` |
 | `ContentLabels` | `(ArticleId, TagId)` | `ArticleId → Articles` (cascade), `TagId → Tags` (cascade) | |
 | `Comments` | `CommentId` | `ArticleId → Articles` (cascade), `UserId → Users` | |
@@ -81,7 +83,8 @@ Normalization changes:
 
 | Index | Serves |
 |---|---|
-| `IX_Articles_StatusId_PublishDate` (PublishDate desc) | Home page, search, sitemap, RSS |
+| `IX_Articles_LanguageCode_StatusId_PublishDate` (PublishDate desc) | Home page, search and RSS for each language |
+| `IX_Articles_StatusId_PublishDate` (PublishDate desc) | Sitemap and cross-language listings |
 | `IX_Articles_CategoryId_StatusId_PublishDate` | Section pages |
 | `IX_Articles_IsBreakingNews_StatusId_PublishDate` | Breaking news and ticker |
 | `IX_Articles_AuthorId_StatusId` | "My articles" for authors |
@@ -115,6 +118,15 @@ Duplicate indexes from the original database (`IX_Users_Email`, `IX_ContentLabel
 | `MapperConfig.cs` | AutoMapper entity ↔ DTO maps |
 
 On startup `ArticleService.EnsureSlugs()` and `CategoryService.EnsureSlugs()` fill missing slugs for existing rows.
+
+## Sections (categories)
+
+Sections are not fixed. Admins can add, rename and delete any number of sections from **Account → Sections**:
+
+- Each section has an English name and an optional Bangla name and description; the Bangla site falls back to the English name.
+- Names must be unique; slugs are generated automatically and made unique with a numeric suffix.
+- Deleting a section that still has articles requires choosing a target section; the articles are moved in the same transaction (`CategoryRepo.DeleteMovingArticles`).
+- The navigation shows the first six sections and puts the rest under **More**.
 
 ## Presentation layer (NewsArchive)
 
@@ -157,6 +169,31 @@ All controllers except `Seo` and `Pages` inherit `Controllers/AppController.cs`,
 - Design tokens and components in `wwwroot/css/site.css` (Source Serif 4 and Inter, with Noto Bengali fallbacks).
 - Brand assets in `wwwroot/images/brand/` (1200×630 share image, icons) and `wwwroot/site.webmanifest`.
 
+## Languages (English and Bangla)
+
+| Concern | Implementation |
+|---|---|
+| UI text | `IStringLocalizer<SharedResource>` injected as `L` in every view; English text is the key, Bangla lives in `Resources/SharedResource.bn.resx` |
+| Validation and labels | DataAnnotations messages and `[Display]` names are localized through the same resource |
+| Long pages | Culture-specific views (`About.bn.cshtml`, `Privacy.bn.cshtml`, ...) through view localization |
+| Choosing a language | `?lang=bn` / `?lang=en` (query string provider), remembered in the culture cookie; header switcher keeps the current page |
+| Content | Every article has a `LanguageCode`; listings show the current language, article pages always render in the article's own language with a matching `lang` attribute |
+| SEO | `hreflang` alternates (en, bn, x-default) on listing pages, `og:locale` per language, sitemap entries for both languages, `/rss.xml?lang=bn` |
+| Encoding | `WebEncoderOptions` allow all Unicode ranges so Bangla text is output directly instead of as numeric entities |
+
+## Theme
+
+Light, dark and system themes use Bootstrap 5.3 `data-bs-theme`. An inline script in `<head>` applies the saved choice before the page paints, `wwwroot/js/site.js` handles the switcher in the top bar and follows the operating system when **System** is selected. Colour tokens for both themes are defined in `wwwroot/css/site.css`.
+
+## Brand
+
+| Asset | Path |
+|---|---|
+| Logo mark (SVG) | `wwwroot/images/brand/logo-mark.svg` |
+| Share image 1200×630 | `wwwroot/images/brand/og-default.png` |
+| Icons | `wwwroot/favicon.ico`, `wwwroot/images/brand/{favicon-32,apple-touch-icon,icon-192,icon-512}.png` |
+| Palette | Navy `#0b1a33`, gold `#d6b064` / text gold `#8a6516`, cream `#f3ead7`, breaking red `#c8102e` |
+
 ## SEO
 
 | Concern | Implementation |
@@ -186,6 +223,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | Password reset | 6-digit OTP in session, valid 1 minute, written to the server console in development |
 | Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*` |
 | Code style | No code comments; names must explain intent |
+| Responsive layout | Verified without horizontal overflow at 320, 375, 414, 768, 1024, 1366 and 1920 px in Chrome and Edge |
 
 ## Known limitations
 
@@ -200,6 +238,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 |---|---|---|
 | 1 | Foundation: `.gitignore`, remove duplicates, SQL-side queries, migrations, error pages | Done |
 | 1b | 3NF schema, roles (Admin/Author/Reader), approval workflow, SEO, new design | Done |
+| 1c | English + Bangla site, light/dark/system theme, flexible sections, brand, bilingual sample data | Done |
 | 2 | Course-aligned architecture: repository interfaces, generic repository, `DataAccessFactory`, AutoMapper profile via DI, cookie authentication with claims, stronger password hashing | Next |
 | 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger | Planned |
 | 4 | Rich text, image upload, tags UI, date archive, revisions, scheduling | Planned |

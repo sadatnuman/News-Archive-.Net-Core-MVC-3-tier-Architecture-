@@ -1,5 +1,7 @@
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
+using NewsArchive.Seo;
 
 namespace NewsArchive.Controllers
 {
@@ -8,6 +10,10 @@ namespace NewsArchive.Controllers
         protected int? CurrentRoleId => HttpContext.Session.GetInt32("RoleId");
 
         protected string? CurrentEmail => HttpContext.Session.GetString("Email");
+
+        protected string CurrentLanguage => UiLanguage.Current;
+
+        protected IStringLocalizer L => HttpContext.RequestServices.GetRequiredService<IStringLocalizer<SharedResource>>();
 
         protected int? CurrentUserId
         {
@@ -28,14 +34,14 @@ namespace NewsArchive.Controllers
             var services = HttpContext.RequestServices;
             var categories = services.GetRequiredService<CategoryService>().Get();
             ViewBag.AuthorNames = services.GetRequiredService<UserService>().GetNames(articles.Select(a => a.AuthorId));
-            ViewBag.CategoryNames = categories.ToDictionary(c => c.CategoryId, c => c.Name);
+            ViewBag.CategoryNames = categories.ToDictionary(c => c.CategoryId, c => c.LocalName(CurrentLanguage));
             ViewBag.CategorySlugs = categories.ToDictionary(c => c.CategoryId, c => c.Slug);
         }
 
         protected void Flash(string cssClass, string message)
         {
             TempData["Class"] = cssClass;
-            TempData["Msg"] = message;
+            TempData["Msg"] = L[message].Value;
         }
     }
 }

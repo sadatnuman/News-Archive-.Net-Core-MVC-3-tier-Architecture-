@@ -1,0 +1,9 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<SiteOptions> SiteConfig
+
+@if (SiteConfig.Value.ShowDemoNotice)
+{
+    <div class="demo-notice text-center small py-1" role="note">
+        <i class="bi bi-info-circle"></i> @L["Demo site: the stories shown here are sample content and are not real news."]
+    </div>
+}

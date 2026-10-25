@@ -67,6 +67,13 @@ namespace DAL.EF.Migrations
                     b.Property<bool>("IsBreakingNews")
                         .HasColumnType("bit");
 
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)")
+                        .HasDefaultValue("en");
+
                     b.Property<DateTime>("PublishDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
@@ -116,6 +123,9 @@ namespace DAL.EF.Migrations
                         .IsDescending(false, false, true);
 
                     b.HasIndex(new[] { "IsBreakingNews", "StatusId", "PublishDate" }, "IX_Articles_IsBreakingNews_StatusId_PublishDate")
+                        .IsDescending(false, false, true);
+
+                    b.HasIndex(new[] { "LanguageCode", "StatusId", "PublishDate" }, "IX_Articles_LanguageCode_StatusId_PublishDate")
                         .IsDescending(false, false, true);
 
                     b.HasIndex(new[] { "ReviewedById" }, "IX_Articles_ReviewedById");
@@ -184,8 +194,16 @@ namespace DAL.EF.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("DescriptionBn")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NameBn")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -198,6 +216,10 @@ namespace DAL.EF.Migrations
 
                     b.HasIndex(new[] { "Name" }, "UX_Categories_Name")
                         .IsUnique();
+
+                    b.HasIndex(new[] { "NameBn" }, "UX_Categories_NameBn")
+                        .IsUnique()
+                        .HasFilter("[NameBn] IS NOT NULL");
 
                     b.HasIndex(new[] { "Slug" }, "UX_Categories_Slug")
                         .IsUnique()
@@ -239,6 +261,42 @@ namespace DAL.EF.Migrations
                     b.HasIndex(new[] { "UserId" }, "IX_Comments_UserId");
 
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.Language", b =>
+                {
+                    b.Property<string>("LanguageCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NativeName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("LanguageCode")
+                        .HasName("PK_Languages");
+
+                    b.ToTable("Languages");
+
+                    b.HasData(
+                        new
+                        {
+                            LanguageCode = "en",
+                            Name = "English",
+                            NativeName = "English"
+                        },
+                        new
+                        {
+                            LanguageCode = "bn",
+                            Name = "Bangla",
+                            NativeName = "বাংলা"
+                        });
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.Role", b =>
@@ -375,6 +433,12 @@ namespace DAL.EF.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_Articles_Categories");
 
+                    b.HasOne("DAL.EF.Tables.Language", "Language")
+                        .WithMany("Articles")
+                        .HasForeignKey("LanguageCode")
+                        .IsRequired()
+                        .HasConstraintName("FK_Articles_Languages");
+
                     b.HasOne("DAL.EF.Tables.User", "ReviewedBy")
                         .WithMany("ReviewedArticles")
                         .HasForeignKey("ReviewedById")
@@ -389,6 +453,8 @@ namespace DAL.EF.Migrations
                     b.Navigation("Author");
 
                     b.Navigation("Category");
+
+                    b.Navigation("Language");
 
                     b.Navigation("ReviewedBy");
 
@@ -437,6 +503,11 @@ namespace DAL.EF.Migrations
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.Category", b =>
+                {
+                    b.Navigation("Articles");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.Language", b =>
                 {
                     b.Navigation("Articles");
                 });

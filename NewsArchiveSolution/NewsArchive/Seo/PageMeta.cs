@@ -24,6 +24,8 @@ namespace NewsArchive.Seo
 
         public string? Author { get; set; }
 
+        public string? ContentLanguage { get; set; }
+
         public List<(string Name, string Path)> Breadcrumbs { get; set; } = new();
 
         public List<object> JsonLd { get; set; } = new();

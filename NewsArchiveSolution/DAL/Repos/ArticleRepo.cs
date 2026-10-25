@@ -15,9 +15,10 @@ namespace DAL.Repos
             this.db = db;
         }
 
-        private IQueryable<Article> Published()
+        private IQueryable<Article> Published(string? language = null)
         {
-            return db.Articles.AsNoTracking().Where(a => a.StatusId == ArticleStatusIds.Published);
+            var query = db.Articles.AsNoTracking().Where(a => a.StatusId == ArticleStatusIds.Published);
+            return string.IsNullOrEmpty(language) ? query : query.Where(a => a.LanguageCode == language);
         }
 
         public bool Create(Article a)
@@ -48,9 +49,9 @@ namespace DAL.Repos
             return db.SaveChanges() > 0;
         }
 
-        public List<Article> GetByCategoryId(int categoryId)
+        public List<Article> GetByCategoryId(int categoryId, string? language = null)
         {
-            return Published()
+            return Published(language)
                 .Where(a => a.CategoryId == categoryId)
                 .OrderByDescending(a => a.PublishDate)
                 .ToList();
@@ -72,9 +73,9 @@ namespace DAL.Repos
                 .ExecuteUpdate(s => s.SetProperty(a => a.ViewsCount, a => a.ViewsCount + 1));
         }
 
-        public List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total)
+        public List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
         {
-            var query = Published();
+            var query = Published(language);
             if (!string.IsNullOrWhiteSpace(keyword))
                 query = query.Where(a => a.Title.Contains(keyword) || a.Summary.Contains(keyword) || a.Content.Contains(keyword));
             if (from.HasValue)
@@ -89,22 +90,22 @@ namespace DAL.Repos
                         .ToList();
         }
 
-        public List<Article> GetBreaking()
+        public List<Article> GetBreaking(string? language = null)
         {
-            return Published()
+            return Published(language)
                 .Where(a => a.IsBreakingNews)
                 .OrderByDescending(a => a.PublishDate)
                 .ToList();
         }
 
-        public bool HasBreakingNews()
+        public bool HasBreakingNews(string? language = null)
         {
-            return Published().Any(a => a.IsBreakingNews);
+            return Published(language).Any(a => a.IsBreakingNews);
         }
 
-        public List<Article> GetTrending(int count)
+        public List<Article> GetTrending(int count, string? language = null)
         {
-            return Published()
+            return Published(language)
                 .OrderByDescending(a => a.ViewsCount + a.Comments.Count() * 2)
                 .ThenByDescending(a => a.PublishDate)
                 .Take(count)
@@ -119,9 +120,9 @@ namespace DAL.Repos
                 .ToList();
         }
 
-        public List<Article> GetLatest(int count)
+        public List<Article> GetLatest(int count, string? language = null)
         {
-            return Published()
+            return Published(language)
                 .OrderByDescending(a => a.PublishDate)
                 .Take(count)
                 .ToList();
@@ -131,11 +132,11 @@ namespace DAL.Repos
         {
             var target = db.Articles.AsNoTracking()
                 .Where(a => a.ArticleId == articleId)
-                .Select(a => new { a.CategoryId, TagIds = a.Tags.Select(t => t.TagId).ToList() })
+                .Select(a => new { a.CategoryId, a.LanguageCode, TagIds = a.Tags.Select(t => t.TagId).ToList() })
                 .FirstOrDefault();
             if (target == null) return new List<Article>();
 
-            var result = Published()
+            var result = Published(target.LanguageCode)
                 .Where(a => a.ArticleId != articleId && a.CategoryId == target.CategoryId)
                 .OrderByDescending(a => a.PublishDate)
                 .Take(count)
@@ -144,7 +145,7 @@ namespace DAL.Repos
             if (result.Count < count && target.TagIds.Count > 0)
             {
                 var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(Published()
+                result.AddRange(Published(target.LanguageCode)
                     .Where(a => !excluded.Contains(a.ArticleId) && a.Tags.Any(t => target.TagIds.Contains(t.TagId)))
                     .OrderByDescending(a => a.PublishDate)
                     .Take(count - result.Count)
@@ -154,7 +155,7 @@ namespace DAL.Repos
             if (result.Count < count)
             {
                 var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(Published()
+                result.AddRange(Published(target.LanguageCode)
                     .Where(a => !excluded.Contains(a.ArticleId))
                     .OrderByDescending(a => a.ViewsCount)
                     .ThenByDescending(a => a.PublishDate)
@@ -187,6 +188,7 @@ namespace DAL.Repos
                 .Select(a => new Article
                 {
                     ArticleId = a.ArticleId,
+                    LanguageCode = a.LanguageCode,
                     Title = a.Title,
                     Slug = a.Slug,
                     PublishDate = a.PublishDate,

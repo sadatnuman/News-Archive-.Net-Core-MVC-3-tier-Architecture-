@@ -24,6 +24,8 @@ namespace BLL.Services
                 .Select(a => new ArticleDTO {
                     ArticleId = a.ArticleId,
                     Title = a.Title,
+                    Slug = a.Slug,
+                    LanguageCode = a.LanguageCode,
                     ViewsCount = a.ViewsCount
                 }).ToList();
         }

@@ -1,5 +1,4 @@
 ﻿@model List<BLL.DTOs.ArticleDTO>
-@using NewsArchive.Seo
 @inject SeoUrls Urls
 
 @{
@@ -9,10 +8,11 @@
     var totalPages = (int)Math.Ceiling(total / (double)pageSize);
     var trending = ViewBag.Trending as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
     var isFirstPage = page == 1;
+    string PagePath(int p) => SeoUrls.Page(p == 1 ? "/" : $"/?page={p}");
 
     var meta = ViewData.Meta();
-    meta.Title = isFirstPage ? null : $"Latest news – page {page}";
-    meta.CanonicalPath = isFirstPage ? "/" : $"/?page={page}";
+    meta.Title = isFirstPage ? null : L["Latest news – page {0}", page];
+    meta.CanonicalPath = PagePath(page);
     meta.JsonLd.Add(new Dictionary<string, object?>
     {
         ["@type"] = "ItemList",
@@ -20,7 +20,7 @@
         {
             ["@type"] = "ListItem",
             ["position"] = (page - 1) * pageSize + i + 1,
-            ["url"] = Urls.Absolute(SeoUrls.Article(a.ArticleId, a.Slug))
+            ["url"] = Urls.Absolute(SeoUrls.Article(a))
         }).ToList()
     });
 
@@ -32,30 +32,30 @@
 @section Head {
     @if (page > 1)
     {
-        <link rel="prev" href="@(page == 2 ? "/" : $"/?page={page - 1}")" />
+        <link rel="prev" href="@PagePath(page - 1)" />
     }
     @if (page < totalPages)
     {
-        <link rel="next" href="/?page=@(page + 1)" />
+        <link rel="next" href="@PagePath(page + 1)" />
     }
 }
 
 <div class="container py-4 py-lg-5">
-    <h1 class="page-title mb-4">@(isFirstPage ? "Latest news and breaking stories" : $"Latest news – page {page}")</h1>
+    <h1 class="page-title mb-4">@(isFirstPage ? L["Latest news and breaking stories"] : L["Latest news – page {0}", page])</h1>
 
     @if (Model.Count == 0)
     {
         <div class="empty-state">
             <i class="bi bi-newspaper"></i>
-            <h2 class="h5 mt-3">No stories published yet</h2>
-            <p class="mb-0">Check back soon for the latest reporting.</p>
+            <h2 class="h5 mt-3">@L["No stories published yet"]</h2>
+            <p class="mb-0">@L["Check back soon for the latest reporting."]</p>
         </div>
     }
     else
     {
         @if (lead != null)
         {
-            <section class="row g-4 g-lg-5 mb-5" aria-label="Top stories">
+            <section class="row g-4 g-lg-5 mb-5" aria-label="@L["Top stories"]">
                 <div class="col-lg-8">
                     <partial name="_StoryLead" model="lead" />
                 </div>
@@ -68,11 +68,11 @@
             </section>
         }
 
-        <div class="row g-5">
+        <div class="row g-4 g-lg-5">
             <section class="col-lg-8" aria-labelledby="latest-heading">
                 <div class="section-head">
-                    <h2 id="latest-heading">More stories</h2>
-                    <a href="/search">Search the archive <i class="bi bi-arrow-right"></i></a>
+                    <h2 id="latest-heading">@L["More stories"]</h2>
+                    <a href="@SeoUrls.Page("/search")">@L["Search the archive"] <i class="bi bi-arrow-right"></i></a>
                 </div>
                 @if (grid.Count > 0)
                 {
@@ -87,17 +87,17 @@
                 }
                 else
                 {
-                    <p class="text-muted">You're all caught up.</p>
+                    <p class="text-muted">@L["You're all caught up."]</p>
                 }
 
                 @if (totalPages > 1)
                 {
-                    <nav class="mt-5" aria-label="Pages">
+                    <nav class="mt-5" aria-label="@L["Pages"]">
                         <ul class="pagination justify-content-center">
                             @for (var i = 1; i <= totalPages; i++)
                             {
                                 <li class="page-item @(i == page ? "active" : "")">
-                                    <a class="page-link" href="@(i == 1 ? "/" : $"/?page={i}")" aria-current="@(i == page ? "page" : null)">@i</a>
+                                    <a class="page-link" href="@PagePath(i)" aria-current="@(i == page ? "page" : null)">@i</a>
                                 </li>
                             }
                         </ul>
@@ -110,19 +110,19 @@
                     @if (trending.Count > 0)
                     {
                         <div class="side-panel">
-                            <h2 class="side-panel-title">Trending now</h2>
+                            <h2 class="side-panel-title">@L["Trending now"]</h2>
                             <ol class="rank-list">
                                 @foreach (var t in trending)
                                 {
-                                    <li><a href="@SeoUrls.Article(t.ArticleId, t.Slug)">@t.Title</a></li>
+                                    <li lang="@t.LanguageCode"><a href="@SeoUrls.Article(t)">@t.Title</a></li>
                                 }
                             </ol>
                         </div>
                     }
                     <div class="side-panel">
-                        <h2 class="side-panel-title">Stay informed</h2>
-                        <p class="small text-muted mb-3">Follow every story as it is published with our RSS feed.</p>
-                        <a class="btn btn-dark btn-sm" href="/rss.xml"><i class="bi bi-rss"></i> Subscribe via RSS</a>
+                        <h2 class="side-panel-title">@L["Stay informed"]</h2>
+                        <p class="small text-muted mb-3">@L["Follow every story as it is published with our RSS feed."]</p>
+                        <a class="btn btn-dark btn-sm" href="@SeoUrls.Page("/rss.xml")"><i class="bi bi-rss"></i> @L["Subscribe via RSS"]</a>
                     </div>
                 </div>
             </aside>

@@ -1,6 +1,7 @@
 @model BLL.DTOs.ArticleFormDTO
 
 @{
+    var lang = UiLanguage.Current;
     var isAdmin = ViewBag.IsAdmin as bool? ?? false;
     var categories = ViewBag.Categories as List<BLL.DTOs.CategoryDTO> ?? new List<BLL.DTOs.CategoryDTO>();
     var isEdit = Model.ArticleId > 0;
@@ -9,48 +10,58 @@
 <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.ArticleId : null)" method="post" class="editor-form">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-    @if (Model.StatusId == BLL.ArticleStatus.Rejected && !string.IsNullOrEmpty(Model.ReviewNote))
+    @if (Model.StatusId == ArticleStatus.Rejected && !string.IsNullOrEmpty(Model.ReviewNote))
     {
         <div class="alert alert-warning">
-            <strong><i class="bi bi-exclamation-triangle"></i> Returned by the editor:</strong> @Model.ReviewNote
+            <strong><i class="bi bi-exclamation-triangle"></i> @L["Returned by the editor:"]</strong> @Model.ReviewNote
         </div>
     }
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label asp-for="LanguageCode" class="form-label fw-semibold"></label>
+            <select asp-for="LanguageCode" class="form-select">
+                @foreach (var code in AppLanguages.All)
+                {
+                    <option value="@code">@AppLanguages.NativeName(code)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="CategoryId" class="form-label fw-semibold"></label>
+            <select asp-for="CategoryId" class="form-select">
+                <option value="0">@L["Select a section"]</option>
+                @foreach (var item in categories)
+                {
+                    <option value="@item.CategoryId">@item.LocalName(lang)</option>
+                }
+            </select>
+            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+        </div>
+    </div>
+
     <div class="mb-4">
         <label asp-for="Title" class="form-label fw-semibold"></label>
-        <input asp-for="Title" class="form-control form-control-lg" placeholder="A clear, specific headline" maxlength="200" />
+        <input asp-for="Title" class="form-control form-control-lg" placeholder="@L["A clear, specific headline"]" maxlength="200" />
         <span asp-validation-for="Title" class="text-danger small"></span>
     </div>
 
     <div class="mb-4">
         <label asp-for="Summary" class="form-label fw-semibold"></label>
-        <textarea asp-for="Summary" class="form-control" rows="3" maxlength="500" placeholder="One or two sentences shown in listings and search results"></textarea>
+        <textarea asp-for="Summary" class="form-control" rows="3" maxlength="500" placeholder="@L["One or two sentences shown in listings and search results"]"></textarea>
         <span asp-validation-for="Summary" class="text-danger small"></span>
     </div>
 
     <div class="mb-4">
         <label asp-for="Content" class="form-label fw-semibold"></label>
-        <textarea asp-for="Content" class="form-control" rows="14" placeholder="Write the full story. Leave an empty line between paragraphs."></textarea>
+        <textarea asp-for="Content" class="form-control" rows="14" placeholder="@L["Write the full story. Leave an empty line between paragraphs."]"></textarea>
         <span asp-validation-for="Content" class="text-danger small"></span>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-6">
-            <label asp-for="CategoryId" class="form-label fw-semibold"></label>
-            <select asp-for="CategoryId" class="form-select">
-                <option value="0">Select a category</option>
-                @foreach (var item in categories)
-                {
-                    <option value="@item.CategoryId">@item.Name</option>
-                }
-            </select>
-            <span asp-validation-for="CategoryId" class="text-danger small"></span>
-        </div>
-        <div class="col-md-6">
-            <label asp-for="ImagePath" class="form-label fw-semibold"></label>
-            <input asp-for="ImagePath" class="form-control" placeholder="Article/picture/image-name.jpg" />
-            <span asp-validation-for="ImagePath" class="text-danger small"></span>
-        </div>
+    <div class="mb-4">
+        <label asp-for="ImagePath" class="form-label fw-semibold"></label>
+        <input asp-for="ImagePath" class="form-control" placeholder="images/articles/image-name.jpg" />
+        <span asp-validation-for="ImagePath" class="text-danger small"></span>
     </div>
 
     @if (isAdmin)
@@ -65,18 +76,18 @@
         @if (isAdmin)
         {
             <button type="submit" name="submitAction" value="publish" class="btn btn-primary btn-lg">
-                <i class="bi bi-check2-circle"></i> @(isEdit ? "Save changes" : "Publish")
+                <i class="bi bi-check2-circle"></i> @L[isEdit ? "Save changes" : "Publish"]
             </button>
         }
         else
         {
             <button type="submit" name="submitAction" value="submit" class="btn btn-primary btn-lg">
-                <i class="bi bi-send"></i> Submit for approval
+                <i class="bi bi-send"></i> @L["Submit for approval"]
             </button>
             <button type="submit" name="submitAction" value="draft" class="btn btn-outline-secondary btn-lg">
-                <i class="bi bi-save"></i> Save draft
+                <i class="bi bi-save"></i> @L["Save draft"]
             </button>
         }
-        <a asp-action="@(isAdmin ? "Index" : "MyArticles")" class="btn btn-link btn-lg">Cancel</a>
+        <a asp-action="@(isAdmin ? "Index" : "MyArticles")" class="btn btn-link btn-lg">@L["Cancel"]</a>
     </div>
 </form>

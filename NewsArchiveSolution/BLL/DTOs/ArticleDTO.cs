@@ -26,6 +26,8 @@
 
         public int StatusId { get; set; }
 
+        public string LanguageCode { get; set; } = AppLanguages.English;
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }

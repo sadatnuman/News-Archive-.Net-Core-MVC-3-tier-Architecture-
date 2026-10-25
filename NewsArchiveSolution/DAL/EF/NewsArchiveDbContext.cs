@@ -20,6 +20,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<Language> Languages { get; set; }
+
     public virtual DbSet<Comment> Comments { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
@@ -52,9 +54,25 @@ public partial class NewsArchiveDbContext : DbContext
                 new ArticleStatus { StatusId = ArticleStatusIds.Rejected, Name = "Rejected" });
         });
 
+        modelBuilder.Entity<Language>(entity =>
+        {
+            entity.HasKey(e => e.LanguageCode).HasName("PK_Languages");
+
+            entity.Property(e => e.LanguageCode).HasMaxLength(5);
+            entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.NativeName).HasMaxLength(50);
+
+            entity.HasData(
+                new Language { LanguageCode = LanguageCodes.English, Name = "English", NativeName = "English" },
+                new Language { LanguageCode = LanguageCodes.Bangla, Name = "Bangla", NativeName = "বাংলা" });
+        });
+
         modelBuilder.Entity<Article>(entity =>
         {
             entity.HasKey(e => e.ArticleId).HasName("PK__Articles__9C6270E827220E8D");
+
+            entity.HasIndex(e => new { e.LanguageCode, e.StatusId, e.PublishDate }, "IX_Articles_LanguageCode_StatusId_PublishDate")
+                .IsDescending(false, false, true);
 
             entity.HasIndex(e => new { e.StatusId, e.PublishDate }, "IX_Articles_StatusId_PublishDate")
                 .IsDescending(false, true);
@@ -81,6 +99,7 @@ public partial class NewsArchiveDbContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(200);
             entity.Property(e => e.Slug).HasMaxLength(200);
             entity.Property(e => e.StatusId).HasDefaultValue(ArticleStatusIds.Draft);
+            entity.Property(e => e.LanguageCode).HasMaxLength(5).HasDefaultValue(LanguageCodes.English);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -102,6 +121,11 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.StatusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Articles_ArticleStatuses");
+
+            entity.HasOne(d => d.Language).WithMany(p => p.Articles)
+                .HasForeignKey(d => d.LanguageCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Articles_Languages");
 
             entity.HasOne(d => d.ReviewedBy).WithMany(p => p.ReviewedArticles)
                 .HasForeignKey(d => d.ReviewedById)
@@ -136,6 +160,10 @@ public partial class NewsArchiveDbContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.Name).HasMaxLength(100);
             entity.Property(e => e.Slug).HasMaxLength(120);
+            entity.Property(e => e.NameBn).HasMaxLength(100);
+            entity.Property(e => e.DescriptionBn).HasMaxLength(255);
+
+            entity.HasIndex(e => e.NameBn, "UX_Categories_NameBn").IsUnique().HasFilter("[NameBn] IS NOT NULL");
         });
 
         modelBuilder.Entity<Comment>(entity =>

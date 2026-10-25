@@ -1,17 +1,17 @@
 ﻿@model BLL.DTOs.ArticleFormDTO
 
 @{
-    ViewData["Title"] = "Write an article";
+    ViewData["Title"] = L["Write an article"];
     ViewData["NoIndex"] = true;
     var isAdmin = ViewBag.IsAdmin as bool? ?? false;
 }
 
 <div class="container py-5">
-    <div class="row g-5">
+    <div class="row g-4 g-lg-5">
         <div class="col-lg-8">
-            <h1 class="page-title mb-2">Write an article</h1>
+            <h1 class="page-title mb-2">@L["Write an article"]</h1>
             <p class="text-muted mb-4">
-                @(isAdmin ? "Articles you publish go live immediately." : "Your article is published after an admin approves it.")
+                @(isAdmin ? L["Articles you publish go live immediately."] : L["Your article is published after an admin approves it."])
             </p>
             <partial name="_ArticleForm" model="Model" />
         </div>

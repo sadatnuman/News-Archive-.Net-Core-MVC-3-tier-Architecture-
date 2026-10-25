@@ -1,61 +1,36 @@
 ﻿@model BLL.DTOs.UserDTO
 
 @{
-    ViewData["Title"] = "Create Member";
-
-    var roles = ViewBag.Roles as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    ViewData["Title"] = L["Add user"];
+    ViewData["NoIndex"] = true;
+    var roles = ViewBag.Roles as IEnumerable<BLL.DTOs.RoleDTO> ?? Enumerable.Empty<BLL.DTOs.RoleDTO>();
 }
 
-<h2>Create Member</h2>
-
-<form asp-action="Create" method="post">
-    @Html.AntiForgeryToken()
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+<div class="container">
+    <div class="auth-card">
+        <h1 class="h3 mb-4">@L["Add user"]</h1>
+        <form asp-action="Create" method="post">
+            <input type="hidden" asp-for="CreatedAt" value="@DateTime.Now.ToString("s")" />
+            <partial name="_UserFields" model="Model" />
+            <div class="mb-4">
+                <label asp-for="RoleId" class="form-label fw-semibold"></label>
+                <select asp-for="RoleId" class="form-select">
+                    <option value="">@L["Select a role"]</option>
+                    @foreach (var r in roles)
+                    {
+                        <option value="@r.Id">@L[r.RoleName]</option>
+                    }
+                </select>
+                <span asp-validation-for="RoleId" class="text-danger small"></span>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">@L["Add user"]</button>
+                <a asp-action="AllUser" class="btn btn-link">@L["Cancel"]</a>
+            </div>
+        </form>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input asp-for="PasswordHash" type="password" class="form-control" />
-        <span asp-validation-for="PasswordHash" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Confirm Password</label>
-        <input asp-for="ConfPassword" type="password" class="form-control" />
-        <span asp-validation-for="ConfPassword" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="RoleId" class="form-label">Role</label>
-        <select asp-for="RoleId" class="form-select">
-            <option value="">-- Select Role --</option>
-            @foreach (var r in roles)
-            {
-                <option value="@r.Id">@r.RoleName</option>
-            }
-        </select>
-        <span asp-validation-for="RoleId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <input type="submit" value="Create" class="btn btn-primary" />
-        <a asp-controller="Admin" a asp-action="AllUser" class="btn btn-secondary ms-2">Back to List</a>
-    </div>
-</form>
+</div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

@@ -1,48 +1,26 @@
 ﻿@{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = L["Sign in"];
+    ViewData["NoIndex"] = true;
 }
-    <style>
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-box {
-            padding: 2rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            min-width: 350px;
-        }
-        .login-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-            justify-content: center;
-        }
-    </style>
-    <div class="login-container">
-        <div class="login-box">
-            <h2>Login</h2>
-            <form asp-action="Login" method="post">
-                <div>
-                    <label>Email</label>
-                    <input type="text" name="Uname" class="form-control" required />
-                </div>
-                <div>
-                    <label>Password</label>
-                    <input type="password" name="Pass" class="form-control" required />
-                </div>
-                <div style="text-align: center;">
-                    <button type="submit" class="btn btn-primary mt-3">Login</button>
-                </div>
-            </form>
-            <div class="login-actions">
-                <a asp-action="Create" asp-controller="Auth" class="btn btn-secondary">Sign Up</a>
-                <a asp-action="ForgetPassword" asp-controller="Auth" class="btn btn-warning">Forgot Password</a>
-                <a asp-action="Index" asp-controller="Article" class="btn btn-secondary">Back to Home</a>
+
+<div class="container">
+    <div class="auth-card">
+        <h1 class="h3 mb-1">@L["Sign in"]</h1>
+        <p class="text-muted mb-4">@L["Welcome back. Sign in to comment, write and manage your account."]</p>
+        <form asp-action="Login" method="post">
+            <div class="mb-3">
+                <label for="Uname" class="form-label fw-semibold">@L["Email"]</label>
+                <input id="Uname" type="email" name="Uname" class="form-control" autocomplete="username" required />
             </div>
-        </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between">
+                    <label for="Pass" class="form-label fw-semibold">@L["Password"]</label>
+                    <a asp-action="ForgetPassword" class="small">@L["Forgot password?"]</a>
+                </div>
+                <input id="Pass" type="password" name="Pass" class="form-control" autocomplete="current-password" required />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">@L["Sign in"]</button>
+        </form>
+        <p class="text-center small mt-4 mb-0">@L["New here?"] <a asp-action="Create">@L["Create an account"]</a></p>
     </div>
+</div>

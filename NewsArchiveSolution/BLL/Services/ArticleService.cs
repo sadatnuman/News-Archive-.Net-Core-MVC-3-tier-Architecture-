@@ -45,6 +45,7 @@ namespace BLL.Services
                 ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim(),
                 CategoryId = form.CategoryId,
                 IsBreakingNews = isAdmin && form.IsBreakingNews,
+                LanguageCode = AppLanguages.Normalize(form.LanguageCode),
                 AuthorId = authorId,
                 CreatedAt = now,
                 PublishDate = now,
@@ -77,6 +78,7 @@ namespace BLL.Services
             article.Content = form.Content;
             article.ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim();
             article.CategoryId = form.CategoryId;
+            article.LanguageCode = AppLanguages.Normalize(form.LanguageCode);
             article.UpdatedAt = DateTime.Now;
 
             if (isAdmin)
@@ -160,6 +162,7 @@ namespace BLL.Services
                 ImagePath = a.ImagePath,
                 CategoryId = a.CategoryId,
                 IsBreakingNews = a.IsBreakingNews,
+                LanguageCode = a.LanguageCode,
                 StatusId = a.StatusId,
                 ReviewNote = a.ReviewNote
             };
@@ -180,9 +183,9 @@ namespace BLL.Services
             return repo.CountByStatus(ArticleStatus.Pending);
         }
 
-        public List<ArticleDTO> GetByCategoryId(int categoryId)
+        public List<ArticleDTO> GetByCategoryId(int categoryId, string? language = null)
         {
-            var data = repo.GetByCategoryId(categoryId);
+            var data = repo.GetByCategoryId(categoryId, language);
             var res = mapper.Map<List<ArticleDTO>>(data);
             return res;
         }
@@ -198,27 +201,27 @@ namespace BLL.Services
             repo.IncrementViewCount(articleId);
         }
 
-        public List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total)
+        public List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 50) pageSize = 9;
-            var data = repo.Search(keyword, from, to, page, pageSize, out total);
+            var data = repo.Search(keyword, from, to, page, pageSize, out total, language);
             return mapper.Map<List<ArticleDTO>>(data);
         }
 
-        public List<ArticleDTO> GetBreakingNews()
+        public List<ArticleDTO> GetBreakingNews(string? language = null)
         {
-            return mapper.Map<List<ArticleDTO>>(repo.GetBreaking());
+            return mapper.Map<List<ArticleDTO>>(repo.GetBreaking(language));
         }
 
-        public List<ArticleDTO> GetTrendingArticles(int count)
+        public List<ArticleDTO> GetTrendingArticles(int count, string? language = null)
         {
-            return mapper.Map<List<ArticleDTO>>(repo.GetTrending(count));
+            return mapper.Map<List<ArticleDTO>>(repo.GetTrending(count, language));
         }
 
-        public List<ArticleDTO> GetLatest(int count)
+        public List<ArticleDTO> GetLatest(int count, string? language = null)
         {
-            return mapper.Map<List<ArticleDTO>>(repo.GetLatest(count));
+            return mapper.Map<List<ArticleDTO>>(repo.GetLatest(count, language));
         }
 
         public List<ArticleDTO> GetRecommendedArticles(int articleId, int count = 4)
@@ -236,9 +239,9 @@ namespace BLL.Services
             return repo.GetCommentCount(articleId);
         }
 
-        public bool HasBreakingNews()
+        public bool HasBreakingNews(string? language = null)
         {
-            return repo.HasBreakingNews();
+            return repo.HasBreakingNews(language);
         }
 
         public void EnsureSlugs()

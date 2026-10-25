@@ -117,13 +117,11 @@ namespace NewsArchive.Controllers
             var updated = _userService.Update(existing);
             if (updated)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User updated";
+                Flash("success", "User updated");
                 return RedirectToAction("Profile", "Admin");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(existing);
         }
 
@@ -166,13 +164,11 @@ namespace NewsArchive.Controllers
             var updated = _userService.Update(existing);
             if (updated)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "Password updated";
+                Flash("success", "Password updated");
                 return RedirectToAction("Profile", "Admin");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(obj);
         }
 
@@ -207,13 +203,11 @@ namespace NewsArchive.Controllers
             var created = _userService.Create(userDto);
             if (created)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User created successfully";
+                Flash("success", "User created successfully");
                 return RedirectToAction("AllUser", "Admin");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Failed to create user";
+            Flash("danger", "Failed to create user");
             return View(obj);
         }
 
@@ -241,13 +235,11 @@ namespace NewsArchive.Controllers
             var updated = _userService.Update(existing);
             if (updated)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User updated";
+                Flash("success", "User updated");
                 return RedirectToAction("AllUser");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(existing);
         }
 

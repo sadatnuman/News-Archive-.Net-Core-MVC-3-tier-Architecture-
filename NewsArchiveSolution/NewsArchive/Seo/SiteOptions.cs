@@ -2,11 +2,11 @@ namespace NewsArchive.Seo
 {
     public class SiteOptions
     {
-        public string Name { get; set; } = "NewsArchive";
+        public string Name { get; set; } = "The Meridian Newsfolio";
 
-        public string Tagline { get; set; } = "Breaking news, trusted reporting and a searchable archive";
+        public string Tagline { get; set; } = "News Preserved. Stories Rediscovered.";
 
-        public string Description { get; set; } = "Latest news, breaking stories and an archive of reporting on technology, politics, business, sports and more.";
+        public string Description { get; set; } = "The Meridian Newsfolio publishes reviewed news from Bangladesh and around the world, in English and Bangla, and keeps every story in a searchable archive.";
 
         public string BaseUrl { get; set; } = string.Empty;
 
@@ -23,5 +23,7 @@ namespace NewsArchive.Seo
         public string? ContactEmail { get; set; }
 
         public string[] SocialProfiles { get; set; } = Array.Empty<string>();
+
+        public bool ShowDemoNotice { get; set; }
     }
 }

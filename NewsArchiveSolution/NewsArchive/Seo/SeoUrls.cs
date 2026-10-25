@@ -25,11 +25,20 @@ namespace NewsArchive.Seo
             }
         }
 
-        public static string Article(int id, string? slug) =>
+        public static string ArticlePath(int id, string? slug) =>
             string.IsNullOrEmpty(slug) ? $"/news/{id}" : $"/news/{id}/{Uri.EscapeDataString(slug)}";
 
-        public static string Category(int id, string? slug) =>
+        public static string Article(BLL.DTOs.ArticleDTO article) =>
+            UiLanguage.WithLanguage(ArticlePath(article.ArticleId, article.Slug), article.LanguageCode);
+
+        public static string CategoryPath(int id, string? slug) =>
             string.IsNullOrEmpty(slug) ? $"/category/{id}" : $"/category/{id}/{Uri.EscapeDataString(slug)}";
+
+        public static string Category(int id, string? slug, string? language = null) =>
+            UiLanguage.WithLanguage(CategoryPath(id, slug), language ?? UiLanguage.Current);
+
+        public static string Page(string path, string? language = null) =>
+            UiLanguage.WithLanguage(path, language ?? UiLanguage.Current);
 
         public static string? Image(string? path)
         {

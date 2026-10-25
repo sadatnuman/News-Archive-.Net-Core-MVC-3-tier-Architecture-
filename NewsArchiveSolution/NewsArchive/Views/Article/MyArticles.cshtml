@@ -1,9 +1,7 @@
 @model List<BLL.DTOs.ArticleDTO>
-@using BLL
-@using NewsArchive.Seo
 
 @{
-    ViewData["Title"] = "My articles";
+    ViewData["Title"] = L["My articles"];
     ViewData["NoIndex"] = true;
     var categories = ViewBag.CategoryNames as Dictionary<int, string> ?? new Dictionary<int, string>();
 }
@@ -11,10 +9,10 @@
 <div class="container py-4 py-lg-5">
     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
         <header>
-            <h1 class="page-title">My articles</h1>
-            <p class="page-intro mb-0">Drafts, articles waiting for approval and everything you have published.</p>
+            <h1 class="page-title">@L["My articles"]</h1>
+            <p class="page-intro mb-0">@L["Drafts, articles waiting for approval and everything you have published."]</p>
         </header>
-        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Write an article</a>
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-pencil-square"></i> @L["Write an article"]</a>
     </div>
 
     <div class="row g-3 mb-4">
@@ -22,7 +20,7 @@
         {
             <div class="col-6 col-md-3">
                 <div class="data-card">
-                    <div class="label">@ArticleStatus.Name(status)</div>
+                    <div class="label">@L[ArticleStatus.Name(status)]</div>
                     <div class="value">@Model.Count(a => a.StatusId == status)</div>
                 </div>
             </div>
@@ -33,8 +31,8 @@
     {
         <div class="empty-state">
             <i class="bi bi-journal-text"></i>
-            <h2 class="h5 mt-3">You haven't written anything yet</h2>
-            <p><a asp-action="Create">Start your first article</a></p>
+            <h2 class="h5 mt-3">@L["You haven't written anything yet"]</h2>
+            <p><a asp-action="Create">@L["Start your first article"]</a></p>
         </div>
     }
     else
@@ -43,42 +41,44 @@
             <table class="table table-clean">
                 <thead>
                     <tr>
-                        <th>Article</th>
-                        <th>Section</th>
-                        <th>Status</th>
-                        <th>Last change</th>
-                        <th class="text-end">Actions</th>
+                        <th>@L["Article"]</th>
+                        <th>@L["Section"]</th>
+                        <th>@L["Language"]</th>
+                        <th>@L["Status"]</th>
+                        <th>@L["Last change"]</th>
+                        <th class="text-end">@L["Actions"]</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var a in Model)
                     {
                         <tr>
-                            <td>
-                                <a class="fw-semibold" href="@SeoUrls.Article(a.ArticleId, a.Slug)">@a.Title</a>
+                            <td lang="@a.LanguageCode">
+                                <a class="fw-semibold" href="@SeoUrls.Article(a)">@a.Title</a>
                                 @if (a.StatusId == ArticleStatus.Rejected && !string.IsNullOrEmpty(a.ReviewNote))
                                 {
                                     <div class="small text-danger mt-1"><i class="bi bi-chat-square-text"></i> @a.ReviewNote</div>
                                 }
                             </td>
                             <td>@(categories.TryGetValue(a.CategoryId, out var c) ? c : "")</td>
-                            <td><span class="status-pill s-@a.StatusId">@a.StatusName</span></td>
-                            <td class="text-nowrap">@((a.UpdatedAt ?? a.CreatedAt).ToString("MMM d, yyyy"))</td>
+                            <td>@AppLanguages.NativeName(a.LanguageCode)</td>
+                            <td><span class="status-pill s-@a.StatusId">@L[a.StatusName]</span></td>
+                            <td class="text-nowrap">@((a.UpdatedAt ?? a.CreatedAt).ToString("d MMM yyyy"))</td>
                             <td class="text-end text-nowrap">
                                 @if (a.StatusId != ArticleStatus.Published)
                                 {
-                                    <a asp-action="Edit" asp-route-id="@a.ArticleId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                    <a asp-action="Edit" asp-route-id="@a.ArticleId" class="btn btn-sm btn-outline-secondary">@L["Edit"]</a>
                                     @if (a.StatusId == ArticleStatus.Draft || a.StatusId == ArticleStatus.Rejected)
                                     {
                                         <form asp-action="Submit" asp-route-id="@a.ArticleId" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-primary">Submit</button>
+                                            <button type="submit" class="btn btn-sm btn-primary">@L["Submit"]</button>
                                         </form>
                                     }
-                                    <a asp-action="Delete" asp-route-id="@a.ArticleId" class="btn btn-sm btn-link text-danger">Delete</a>
+                                    <a asp-action="Delete" asp-route-id="@a.ArticleId" class="btn btn-sm btn-link text-danger">@L["Delete"]</a>
                                 }
                                 else
                                 {
-                                    <a href="@SeoUrls.Article(a.ArticleId, a.Slug)" class="btn btn-sm btn-outline-secondary">View</a>
+                                    <a href="@SeoUrls.Article(a)" class="btn btn-sm btn-outline-secondary">@L["View"]</a>
                                 }
                             </td>
                         </tr>

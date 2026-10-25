@@ -38,8 +38,8 @@ namespace NewsArchive.Controllers
                 return RedirectPermanent("/search" + Request.QueryString);
 
             int total;
-            var data = articleService.Search(keyword, from, to, page, pageSize, out total);
-            var trending = isSearch ? new List<ArticleDTO>() : articleService.GetTrendingArticles(5);
+            var data = articleService.Search(keyword, from, to, page, pageSize, out total, CurrentLanguage);
+            var trending = isSearch ? new List<ArticleDTO>() : articleService.GetTrendingArticles(5, CurrentLanguage);
             SetArticleLookups(data.Concat(trending));
 
             ViewBag.IsSearch = isSearch;
@@ -58,12 +58,12 @@ namespace NewsArchive.Controllers
         [HttpGet("Article/BreakingNews", Order = 1)]
         public IActionResult BreakingNews()
         {
-            var data = articleService.GetBreakingNews();
+            var data = articleService.GetBreakingNews(CurrentLanguage);
             SetArticleLookups(data);
 
             ViewBag.Heading = "Breaking News";
             ViewBag.Intro = "The most important developing stories, updated as they happen.";
-            ViewBag.CanonicalPath = "/breaking-news";
+            ViewBag.CanonicalPath = Seo.SeoUrls.Page("/breaking-news");
             return View("List", data);
         }
 
@@ -71,12 +71,12 @@ namespace NewsArchive.Controllers
         [HttpGet("Article/TrendingNews", Order = 1)]
         public IActionResult TrendingNews()
         {
-            var trending = articleService.GetTrendingArticles(12);
+            var trending = articleService.GetTrendingArticles(12, CurrentLanguage);
             SetArticleLookups(trending);
 
             ViewBag.Heading = "Trending News";
             ViewBag.Intro = "The stories readers are viewing and discussing the most right now.";
-            ViewBag.CanonicalPath = "/trending";
+            ViewBag.CanonicalPath = Seo.SeoUrls.Page("/trending");
             return View("List", trending);
         }
 
@@ -91,7 +91,7 @@ namespace NewsArchive.Controllers
                 return NotFound();
 
             if (article.IsPublished && slug != article.Slug)
-                return RedirectPermanent(Seo.SeoUrls.Article(article.ArticleId, article.Slug));
+                return RedirectPermanent(Seo.SeoUrls.Article(article));
 
             if (article.IsPublished && userId.HasValue)
                 articleService.IncrementViewCount(id);
@@ -100,18 +100,18 @@ namespace NewsArchive.Controllers
             var users = userService.GetNames(comments.Select(c => c.UserId).Append(article.AuthorId));
 
             ViewBag.Comments = comments;
-            ViewBag.AuthorName = users.TryGetValue(article.AuthorId, out var authorName) ? authorName : "Unknown Author";
+            ViewBag.AuthorName = users.TryGetValue(article.AuthorId, out var authorName) ? authorName : L["Staff reporter"].Value;
             ViewBag.Category = categoryService.Get(article.CategoryId);
             ViewBag.CommentUserNames = comments.ToDictionary(
                 c => c.CommentId,
-                c => users.TryGetValue(c.UserId, out var name) ? name : "Unknown User");
+                c => users.TryGetValue(c.UserId, out var name) ? name : L["Reader"].Value);
             ViewBag.UserId = userId;
             ViewBag.RoleId = roleId;
             ViewBag.CanEdit = ArticleService.CanEdit(article.AuthorId, article.StatusId, userId ?? 0, roleId);
             var recommendations = article.IsPublished
                 ? articleService.GetRecommendedArticles(id, 4)
                 : new List<ArticleDTO>();
-            var latest = articleService.GetLatest(6).Where(a => a.ArticleId != id).Take(5).ToList();
+            var latest = articleService.GetLatest(6, article.LanguageCode).Where(a => a.ArticleId != id).Take(5).ToList();
             SetArticleLookups(recommendations.Concat(latest));
             ViewBag.Recommendations = recommendations;
             ViewBag.Latest = latest;
@@ -124,7 +124,7 @@ namespace NewsArchive.Controllers
         public IActionResult Create()
         {
             SetFormData();
-            return View(new ArticleFormDTO());
+            return View(new ArticleFormDTO { LanguageCode = CurrentLanguage });
         }
 
         [RoleAccess(AppRoles.Admin, AppRoles.Author)]
@@ -146,7 +146,7 @@ namespace NewsArchive.Controllers
                     Flash("success", submitAction == "submit" ? "Article sent to the admin for approval." : "Draft saved.");
                     return RedirectToAction("MyArticles");
                 }
-                ModelState.AddModelError(string.Empty, "The article could not be saved.");
+                ModelState.AddModelError(string.Empty, L["The article could not be saved."]);
             }
 
             SetFormData();
@@ -186,7 +186,7 @@ namespace NewsArchive.Controllers
                     Flash("success", submitAction == "submit" ? "Changes sent to the admin for approval." : "Draft saved.");
                     return RedirectToAction("MyArticles");
                 }
-                ModelState.AddModelError(string.Empty, "You cannot edit this article.");
+                ModelState.AddModelError(string.Empty, L["You cannot edit this article."]);
             }
 
             form.ArticleId = id;

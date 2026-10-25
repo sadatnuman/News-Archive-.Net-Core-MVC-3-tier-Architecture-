@@ -1,27 +1,24 @@
 @model BLL.DTOs.ArticleDTO
-@using BLL
-@using NewsArchive.Seo
-@using Microsoft.Extensions.Options
 @inject SeoUrls Urls
-@inject IOptions<SiteOptions> SiteConfig
 
 @{
-    var site = SiteConfig.Value;
+    var lang = UiLanguage.Current;
     var roleId = ViewBag.RoleId as int?;
     var userId = ViewBag.UserId as int?;
     var isAdmin = roleId == AppRoles.Admin;
     var isLoggedIn = userId.HasValue;
     var canEdit = ViewBag.CanEdit as bool? == true;
     var category = ViewBag.Category as BLL.DTOs.CategoryDTO;
-    var categoryName = category?.Name ?? "News";
-    var categoryUrl = category != null ? SeoUrls.Category(category.CategoryId, category.Slug) : "/";
-    var authorName = ViewBag.AuthorName as string ?? "Staff reporter";
+    var categoryName = category?.LocalName(lang) ?? L["News"].Value;
+    var sectionForSchema = category?.LocalName(Model.LanguageCode) ?? categoryName;
+    var categoryUrl = category != null ? SeoUrls.Category(category.CategoryId, category.Slug) : SeoUrls.Page("/");
+    var authorName = ViewBag.AuthorName as string ?? L["Staff reporter"].Value;
     var comments = ViewBag.Comments as List<BLL.DTOs.CommentDTO> ?? new List<BLL.DTOs.CommentDTO>();
     var commentNames = ViewBag.CommentUserNames as Dictionary<int, string> ?? new Dictionary<int, string>();
     var recommendations = ViewBag.Recommendations as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
     var latest = ViewBag.Latest as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
 
-    var path = SeoUrls.Article(Model.ArticleId, Model.Slug);
+    var path = SeoUrls.Article(Model);
     var absoluteUrl = Urls.Absolute(path);
     var image = SeoUrls.Image(Model.ImagePath);
     var paragraphs = (Model.Content ?? string.Empty)
@@ -30,17 +27,19 @@
     var wordCount = (Model.Content ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
     var readingMinutes = Math.Max(1, (int)Math.Round(wordCount / 220.0));
     var modified = Model.UpdatedAt.HasValue && Model.UpdatedAt > Model.PublishDate ? Model.UpdatedAt : null;
+    string Iso(DateTime d) => d.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
 
     var meta = ViewData.Meta();
     meta.Title = Model.Title;
     meta.Description = Model.Summary;
     meta.CanonicalPath = path;
+    meta.ContentLanguage = Model.LanguageCode;
     meta.Image = Model.ImagePath;
     meta.ImageAlt = Model.Title;
     meta.Type = "article";
     meta.PublishedTime = Model.PublishDate;
     meta.ModifiedTime = modified ?? Model.PublishDate;
-    meta.Section = categoryName;
+    meta.Section = sectionForSchema;
     meta.Author = authorName;
     meta.NoIndex = !Model.IsPublished;
     meta.Breadcrumbs.Add((categoryName, categoryUrl));
@@ -53,26 +52,27 @@
         ["headline"] = Model.Title.Length > 110 ? Model.Title[..110] : Model.Title,
         ["description"] = Model.Summary,
         ["image"] = new[] { Urls.AbsoluteImage(Model.ImagePath) },
-        ["datePublished"] = Model.PublishDate.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-        ["dateModified"] = (modified ?? Model.PublishDate).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+        ["datePublished"] = Iso(Model.PublishDate),
+        ["dateModified"] = Iso(modified ?? Model.PublishDate),
         ["author"] = new[] { new Dictionary<string, object?> { ["@type"] = "Person", ["name"] = authorName } },
         ["publisher"] = new Dictionary<string, object?> { ["@id"] = Urls.Absolute("/#organization") },
-        ["articleSection"] = categoryName,
+        ["articleSection"] = sectionForSchema,
         ["wordCount"] = wordCount,
-        ["inLanguage"] = site.Language,
+        ["inLanguage"] = Model.LanguageCode,
         ["isAccessibleForFree"] = true
     });
 
     var shareUrl = Uri.EscapeDataString(absoluteUrl);
     var shareText = Uri.EscapeDataString(Model.Title);
+    var statusLabel = L[Model.StatusName].Value;
 }
 
 <div class="container py-4 py-lg-5">
-    <nav class="crumbs" aria-label="Breadcrumb">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
             <li class="breadcrumb-item"><a href="@categoryUrl">@categoryName</a></li>
-            <li class="breadcrumb-item active text-truncate" aria-current="page" style="max-width: 32rem;">@Model.Title</li>
+            <li class="breadcrumb-item active text-truncate" aria-current="page" style="max-width: 32rem;" lang="@Model.LanguageCode">@Model.Title</li>
         </ol>
     </nav>
 
@@ -82,22 +82,22 @@
         <div class="status-banner @bannerClass">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                    <span class="status-pill s-@Model.StatusId">@Model.StatusName</span>
-                    <span class="ms-2">This article is not public. Only the author and admins can see it.</span>
+                    <span class="status-pill s-@Model.StatusId">@statusLabel</span>
+                    <span class="ms-2">@L["This article is not public. Only the author and admins can see it."]</span>
                     @if (!string.IsNullOrEmpty(Model.ReviewNote))
                     {
-                        <div class="mt-2"><strong>Editor's note:</strong> @Model.ReviewNote</div>
+                        <div class="mt-2"><strong>@L["Editor's note:"]</strong> @Model.ReviewNote</div>
                     }
                 </div>
                 @if (isAdmin && Model.StatusId == ArticleStatus.Pending)
                 {
                     <div class="d-flex flex-wrap gap-2">
                         <form asp-controller="Admin" asp-action="Approve" asp-route-id="@Model.ArticleId" method="post">
-                            <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Approve &amp; publish</button>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> @L["Approve & publish"]</button>
                         </form>
                         <form asp-controller="Admin" asp-action="Reject" asp-route-id="@Model.ArticleId" method="post" class="d-flex gap-2">
-                            <input type="text" name="note" class="form-control" placeholder="Reason for rejection" maxlength="500" required aria-label="Reason for rejection" />
-                            <button type="submit" class="btn btn-outline-danger">Reject</button>
+                            <input type="text" name="note" class="form-control" placeholder="@L["Reason for rejection"]" maxlength="500" required aria-label="@L["Reason for rejection"]" />
+                            <button type="submit" class="btn btn-outline-danger">@L["Reject"]</button>
                         </form>
                     </div>
                 }
@@ -105,15 +105,15 @@
         </div>
     }
 
-    <div class="row g-5">
+    <div class="row g-4 g-lg-5">
         <article class="col-lg-8">
-            <header class="article-header">
+            <header class="article-header" lang="@Model.LanguageCode">
                 <div class="d-flex align-items-center gap-2">
                     @if (Model.IsBreakingNews)
                     {
-                        <span class="badge-breaking">Breaking</span>
+                        <span class="badge-breaking" lang="@lang">@L["Breaking"]</span>
                     }
-                    <a class="kicker" href="@categoryUrl">@categoryName</a>
+                    <a class="kicker" href="@categoryUrl" lang="@lang">@categoryName</a>
                 </div>
                 <h1 class="article-title">@Model.Title</h1>
                 <p class="article-standfirst">@Model.Summary</p>
@@ -122,24 +122,24 @@
             <div class="byline">
                 <span class="avatar" aria-hidden="true">@(authorName.Length > 0 ? authorName[0] : 'N')</span>
                 <div>
-                    <div>By <strong>@authorName</strong></div>
+                    <div>@L["By"] <strong>@authorName</strong></div>
                     <div>
-                        <time datetime="@Model.PublishDate.ToString("yyyy-MM-ddTHH:mm:sszzz")">@Model.PublishDate.ToString("MMMM d, yyyy 'at' h:mm tt")</time>
+                        <time datetime="@Iso(Model.PublishDate)">@Model.PublishDate.ToString("d MMMM yyyy, h:mm tt")</time>
                         @if (modified.HasValue)
                         {
-                            <span class="sep">&bull;</span><span>Updated <time datetime="@modified.Value.ToString("yyyy-MM-ddTHH:mm:sszzz")">@modified.Value.ToString("MMM d, yyyy")</time></span>
+                            <span class="sep">&bull;</span><span>@L["Updated"] <time datetime="@Iso(modified.Value)">@modified.Value.ToString("d MMM yyyy")</time></span>
                         }
-                        <span class="sep">&bull;</span><span>@readingMinutes min read</span>
+                        <span class="sep">&bull;</span><span>@L["{0} min read", readingMinutes]</span>
                     </div>
                 </div>
                 @if (Model.IsPublished)
                 {
-                    <div class="share" aria-label="Share this article">
-                        <a href="https://www.linkedin.com/sharing/share-offsite/?url=@shareUrl" target="_blank" rel="noopener" aria-label="Share on LinkedIn"><i class="bi bi-linkedin"></i></a>
-                        <a href="https://twitter.com/intent/tweet?url=@shareUrl&text=@shareText" target="_blank" rel="noopener" aria-label="Share on X"><i class="bi bi-twitter-x"></i></a>
-                        <a href="https://www.facebook.com/sharer/sharer.php?u=@shareUrl" target="_blank" rel="noopener" aria-label="Share on Facebook"><i class="bi bi-facebook"></i></a>
-                        <a href="https://wa.me/?text=@shareText%20@shareUrl" target="_blank" rel="noopener" aria-label="Share on WhatsApp"><i class="bi bi-whatsapp"></i></a>
-                        <button type="button" data-copy-link="@absoluteUrl" aria-label="Copy link"><i class="bi bi-link-45deg"></i></button>
+                    <div class="share" aria-label="@L["Share this article"]">
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url=@shareUrl" target="_blank" rel="noopener" aria-label="@L["Share on {0}", "LinkedIn"]"><i class="bi bi-linkedin"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url=@shareUrl&text=@shareText" target="_blank" rel="noopener" aria-label="@L["Share on {0}", "X"]"><i class="bi bi-twitter-x"></i></a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=@shareUrl" target="_blank" rel="noopener" aria-label="@L["Share on {0}", "Facebook"]"><i class="bi bi-facebook"></i></a>
+                        <a href="https://wa.me/?text=@shareText%20@shareUrl" target="_blank" rel="noopener" aria-label="@L["Share on {0}", "WhatsApp"]"><i class="bi bi-whatsapp"></i></a>
+                        <button type="button" data-copy-link="@absoluteUrl" aria-label="@L["Copy link"]"><i class="bi bi-link-45deg"></i></button>
                     </div>
                 }
             </div>
@@ -153,7 +153,7 @@
                 </figure>
             }
 
-            <div class="article-body">
+            <div class="article-body" lang="@Model.LanguageCode">
                 @foreach (var p in paragraphs)
                 {
                     var lines = p.Split('\n');
@@ -171,51 +171,51 @@
             </div>
 
             <div class="d-flex flex-wrap gap-2 mt-4">
-                <a class="btn btn-outline-secondary btn-sm" href="@categoryUrl"><i class="bi bi-arrow-left"></i> More in @categoryName</a>
+                <a class="btn btn-outline-secondary btn-sm" href="@categoryUrl"><i class="bi bi-arrow-left"></i> @L["More in {0}", categoryName]</a>
                 @if (canEdit)
                 {
-                    <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@Model.ArticleId"><i class="bi bi-pencil"></i> Edit</a>
-                    <a class="btn btn-outline-danger btn-sm" asp-action="Delete" asp-route-id="@Model.ArticleId"><i class="bi bi-trash"></i> Delete</a>
+                    <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@Model.ArticleId"><i class="bi bi-pencil"></i> @L["Edit"]</a>
+                    <a class="btn btn-outline-danger btn-sm" asp-action="Delete" asp-route-id="@Model.ArticleId"><i class="bi bi-trash"></i> @L["Delete"]</a>
                 }
             </div>
 
             @if (Model.IsPublished)
             {
                 <section class="comments" aria-labelledby="comments-heading">
-                    <h2 id="comments-heading" class="h4 mb-3">Comments (@comments.Count)</h2>
+                    <h2 id="comments-heading" class="h4 mb-3">@L["Comments ({0})", comments.Count]</h2>
 
                     @if (isLoggedIn)
                     {
                         <form asp-controller="Article" asp-action="AddComment" method="post" class="mb-4">
                             <input type="hidden" name="articleId" value="@Model.ArticleId" />
-                            <label for="commentText" class="visually-hidden">Your comment</label>
-                            <textarea id="commentText" name="commentText" class="form-control mb-2" rows="3" minlength="2" maxlength="500" placeholder="Join the conversation" required></textarea>
-                            <button type="submit" class="btn btn-dark"><i class="bi bi-chat-left-text"></i> Post comment</button>
+                            <label for="commentText" class="visually-hidden">@L["Your comment"]</label>
+                            <textarea id="commentText" name="commentText" class="form-control mb-2" rows="3" minlength="2" maxlength="500" placeholder="@L["Join the conversation"]" required></textarea>
+                            <button type="submit" class="btn btn-dark"><i class="bi bi-chat-left-text"></i> @L["Post comment"]</button>
                         </form>
                     }
                     else
                     {
-                        <p class="mb-4"><a asp-controller="Auth" asp-action="Login" rel="nofollow">Sign in</a> to join the conversation.</p>
+                        <p class="mb-4"><a asp-controller="Auth" asp-action="Login" rel="nofollow">@L["Sign in"]</a> @L["to join the conversation."]</p>
                     }
 
                     @if (comments.Count == 0)
                     {
-                        <p class="text-muted">No comments yet. Be the first to share your view.</p>
+                        <p class="text-muted">@L["No comments yet. Be the first to share your view."]</p>
                     }
                     @foreach (var comment in comments)
                     {
                         <div class="comment">
                             <div class="d-flex justify-content-between align-items-start gap-3">
                                 <div>
-                                    <span class="comment-author">@(commentNames.TryGetValue(comment.CommentId, out var n) ? n : "Reader")</span>
-                                    <span class="meta ms-2"><time datetime="@comment.CreatedDate.ToString("yyyy-MM-ddTHH:mm")">@comment.CreatedDate.ToString("MMM d, yyyy h:mm tt")</time></span>
+                                    <span class="comment-author">@(commentNames.TryGetValue(comment.CommentId, out var n) ? n : L["Reader"])</span>
+                                    <span class="meta ms-2"><time datetime="@comment.CreatedDate.ToString("yyyy-MM-ddTHH:mm")">@comment.CreatedDate.ToString("d MMM yyyy, h:mm tt")</time></span>
                                 </div>
                                 @if (isAdmin || userId == comment.UserId)
                                 {
                                     <form asp-controller="Comment" asp-action="Delete" method="post">
                                         <input type="hidden" name="id" value="@comment.CommentId" />
                                         <input type="hidden" name="articleId" value="@Model.ArticleId" />
-                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">Delete</button>
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">@L["Delete"]</button>
                                     </form>
                                 }
                             </div>
@@ -229,7 +229,7 @@
             {
                 <section class="mt-5" aria-labelledby="related-heading">
                     <div class="section-head">
-                        <h2 id="related-heading">Related stories</h2>
+                        <h2 id="related-heading">@L["Related stories"]</h2>
                     </div>
                     <div class="row g-4">
                         @foreach (var rec in recommendations)
@@ -248,19 +248,19 @@
                 @if (latest.Count > 0)
                 {
                     <div class="side-panel">
-                        <h2 class="side-panel-title">Latest news</h2>
+                        <h2 class="side-panel-title">@L["Latest news"]</h2>
                         @foreach (var item in latest)
                         {
                             <partial name="_StoryCompact" model="item" />
                         }
                     </div>
                 }
-                @if (category != null && !string.IsNullOrEmpty(category.Description))
+                @if (category != null && !string.IsNullOrEmpty(category.LocalDescription(lang)))
                 {
                     <div class="side-panel">
-                        <h2 class="side-panel-title">About @categoryName</h2>
-                        <p class="small text-muted">@category.Description</p>
-                        <a class="btn btn-outline-primary btn-sm" href="@categoryUrl">View all @categoryName news</a>
+                        <h2 class="side-panel-title">@L["About {0}", categoryName]</h2>
+                        <p class="small text-muted">@category.LocalDescription(lang)</p>
+                        <a class="btn btn-outline-primary btn-sm" href="@categoryUrl">@L["View all {0} news", categoryName]</a>
                     </div>
                 }
             </div>

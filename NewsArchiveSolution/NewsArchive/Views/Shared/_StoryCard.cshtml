@@ -1,11 +1,11 @@
 @model BLL.DTOs.ArticleDTO
 @using NewsArchive.Seo
 
-<article class="story story-card h-100">
+<article class="story story-card h-100" lang="@Model.LanguageCode">
     <partial name="_StoryMedia" model="Model" />
     <div class="pt-3">
         <partial name="_StoryKicker" model="Model" />
-        <h3 class="story-title"><a href="@SeoUrls.Article(Model.ArticleId, Model.Slug)">@Model.Title</a></h3>
+        <h3 class="story-title"><a href="@SeoUrls.Article(Model)">@Model.Title</a></h3>
         <p class="story-summary mb-2">@PageMeta.Shorten(Model.Summary, 150)</p>
         <partial name="_StoryMeta" model="Model" />
     </div>

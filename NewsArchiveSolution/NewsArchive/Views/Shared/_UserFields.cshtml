@@ -1,0 +1,27 @@
+@model BLL.DTOs.UserDTO
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="mb-3">
+    <label asp-for="Name" class="form-label fw-semibold"></label>
+    <input asp-for="Name" class="form-control" autocomplete="name" />
+    <span asp-validation-for="Name" class="text-danger small"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Email" class="form-label fw-semibold"></label>
+    <input asp-for="Email" type="email" class="form-control" autocomplete="email" />
+    <span asp-validation-for="Email" class="text-danger small"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="PasswordHash" class="form-label fw-semibold"></label>
+    <input asp-for="PasswordHash" type="password" class="form-control" autocomplete="new-password" />
+    <span asp-validation-for="PasswordHash" class="text-danger small"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="ConfPassword" class="form-label fw-semibold"></label>
+    <input asp-for="ConfPassword" type="password" class="form-control" autocomplete="new-password" />
+    <span asp-validation-for="ConfPassword" class="text-danger small"></span>
+</div>

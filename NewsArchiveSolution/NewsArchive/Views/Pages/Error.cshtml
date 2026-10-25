@@ -2,24 +2,28 @@
     var code = ViewBag.Code as int? ?? 500;
     var notFound = code == 404;
     var meta = ViewData.Meta();
-    meta.Title = notFound ? "Page not found" : "Something went wrong";
+    meta.Title = notFound ? L["Page not found"] : L["Something went wrong"];
     meta.NoIndex = true;
 }
 
 <div class="container py-5">
     <div class="text-center py-5 mx-auto" style="max-width: 36rem;">
-        <div class="display-1 fw-bold serif text-danger">@code</div>
+        <div class="display-1 fw-bold serif text-accent">@code</div>
         <h1 class="page-title mt-2">@meta.Title</h1>
         <p class="page-intro mx-auto">
             @(notFound
-                ? "The page you are looking for has moved or no longer exists."
-                : "We couldn't load this page. Please try again in a moment.")
+                ? L["The page you are looking for has moved or no longer exists."]
+                : L["We couldn't load this page. Please try again in a moment."])
         </p>
-        <form class="header-search mx-auto my-4" action="/search" method="get" role="search">
-            <label for="error-search" class="visually-hidden">Search news</label>
-            <i class="bi bi-search" aria-hidden="true"></i>
-            <input id="error-search" type="search" name="keyword" class="form-control" placeholder="Search the archive" />
+        <form class="search-panel mx-auto my-4 d-flex gap-2" action="/search" method="get" role="search">
+            @if (UiLanguage.IsBangla)
+            {
+                <input type="hidden" name="lang" value="bn" />
+            }
+            <label for="error-search" class="visually-hidden">@L["Search news"]</label>
+            <input id="error-search" type="search" name="keyword" class="form-control" placeholder="@L["Search the archive"]" />
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
         </form>
-        <a href="/" class="btn btn-dark">Go to the homepage</a>
+        <a href="@SeoUrls.Page("/")" class="btn btn-dark">@L["Go to the homepage"]</a>
     </div>
 </div>

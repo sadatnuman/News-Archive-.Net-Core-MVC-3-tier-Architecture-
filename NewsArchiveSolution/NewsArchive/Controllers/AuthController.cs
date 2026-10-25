@@ -12,7 +12,7 @@ using System.Text;
 
 namespace NewsArchive.Controllers
 {
-    public class AuthController : Controller
+    public class AuthController : AppController
     {
         private readonly UserService _userService;
         private readonly RoleService _role_service;
@@ -53,8 +53,7 @@ namespace NewsArchive.Controllers
                 return RedirectToAction("Index", "Article");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Invalid username/email or password";
+            Flash("danger", "Invalid username/email or password");
             return View();
         }
 
@@ -90,13 +89,11 @@ namespace NewsArchive.Controllers
             var created = _userService.Create(userDto);
             if (created)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User created successfully";
+                Flash("success", "User created successfully");
                 return RedirectToAction("Login", "Auth");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Failed to create user";
+            Flash("danger", "Failed to create user");
             return View(obj);
         }
 
@@ -119,8 +116,7 @@ namespace NewsArchive.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            TempData["Class"] = "success";
-            TempData["Msg"] = "Logged out successfully";
+            Flash("success", "Logged out successfully");
             return RedirectToAction("Index", "Article");
         }
 
@@ -135,16 +131,14 @@ namespace NewsArchive.Controllers
         {
             if (string.IsNullOrEmpty(email))
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "Email is required";
+                Flash("danger", "Email is required");
                 return View();
             }
 
             var user = _userService.Get().FirstOrDefault(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
             if (user == null)
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "No user found with that email";
+                Flash("danger", "No user found with that email");
                 return View();
             }
 
@@ -159,8 +153,7 @@ namespace NewsArchive.Controllers
 
             Console.WriteLine("OTP: " + otpString);
 
-            TempData["Class"] = "success";
-            TempData["Msg"] = "OTP sent (check console for dev).";
+            Flash("success", "OTP sent (check console for dev).");
 
             return RedirectToAction("VerifyOtp", new { email = email });
         }
@@ -177,8 +170,7 @@ namespace NewsArchive.Controllers
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "Email and OTP are required";
+                Flash("danger", "Email and OTP are required");
                 return View();
             }
 
@@ -189,36 +181,31 @@ namespace NewsArchive.Controllers
 
             if (string.IsNullOrEmpty(sessionOtp) || string.IsNullOrEmpty(expiryString) || userId == null)
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "No OTP request found for this email";
+                Flash("danger", "No OTP request found for this email");
                 return View();
             }
 
             if (usedFlag != null && usedFlag.Value == 1)
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "OTP already used";
+                Flash("danger", "OTP already used");
                 return View();
             }
 
             if (!DateTime.TryParse(expiryString, null, System.Globalization.DateTimeStyles.RoundtripKind, out var expiry))
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "Invalid OTP data";
+                Flash("danger", "Invalid OTP data");
                 return View();
             }
 
             if (DateTime.UtcNow > expiry)
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "OTP expired";
+                Flash("danger", "OTP expired");
                 return View();
             }
 
             if (!string.Equals(sessionOtp, otp, StringComparison.Ordinal))
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "Invalid OTP";
+                Flash("danger", "Invalid OTP");
                 return View();
             }
 
@@ -227,8 +214,7 @@ namespace NewsArchive.Controllers
             var user = _userService.Get(userId.Value);
             if (user == null)
             {
-                TempData["Class"] = "danger";
-                TempData["Msg"] = "User not found";
+                Flash("danger", "User not found");
                 return View();
             }
 

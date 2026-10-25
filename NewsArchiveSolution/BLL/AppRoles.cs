@@ -17,6 +17,18 @@ namespace BLL
         };
     }
 
+    public static class AppLanguages
+    {
+        public const string English = LanguageCodes.English;
+        public const string Bangla = LanguageCodes.Bangla;
+
+        public static readonly string[] All = { English, Bangla };
+
+        public static string Normalize(string? code) => code == Bangla ? Bangla : English;
+
+        public static string NativeName(string code) => code == Bangla ? "বাংলা" : "English";
+    }
+
     public static class ArticleStatus
     {
         public const int Draft = ArticleStatusIds.Draft;

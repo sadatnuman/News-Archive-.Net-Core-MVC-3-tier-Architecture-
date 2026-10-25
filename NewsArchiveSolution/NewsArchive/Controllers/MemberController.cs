@@ -13,7 +13,7 @@ namespace NewsArchive.Controllers
 {
     [RoleAccess(AppRoles.Reader, AppRoles.Author)]
     [Logged]
-    public class MemberController : Controller
+    public class MemberController : AppController
     {
         private readonly UserService _userService;
         private readonly RoleService _roleService;
@@ -48,13 +48,11 @@ namespace NewsArchive.Controllers
             var updated = _userService.Update(existing);
             if (updated)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User updated";
+                Flash("success", "User updated");
                 return RedirectToAction("Profile","Member");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(existing);
         }
 
@@ -97,13 +95,11 @@ namespace NewsArchive.Controllers
             var updated = _userService.Update(existing);
             if (updated)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "Password updated";
+                Flash("success", "Password updated");
                 return RedirectToAction("Profile", "Member");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(obj);
         }
 
