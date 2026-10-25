@@ -22,6 +22,6 @@
 
 <form asp-action="Delete" method="post">
     <input type="hidden" asp-for="UserId" />
-    <button type="submit" class="btn btn-danger">Delete</button>
+    <button type="submit" name="Decision" value="Yes" class="btn btn-danger">Delete</button>
     <a asp-action="AllUser" class="btn btn-secondary">Cancel</a>
 </form>

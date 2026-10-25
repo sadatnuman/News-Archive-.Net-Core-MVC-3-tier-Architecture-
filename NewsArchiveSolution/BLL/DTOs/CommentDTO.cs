@@ -16,7 +16,7 @@ namespace BLL.DTOs
         public int UserId { get; set; }
 
         [Required(ErrorMessage = "Comment text is required")]
-        [StringLength(2000, MinimumLength = 5, ErrorMessage = "Comment must be between 5 and 2000 characters")]
+        [StringLength(500, MinimumLength = 2, ErrorMessage = "Comment must be between 2 and 500 characters")]
         public string Text { get; set; } = null!;
 
         [Required(ErrorMessage = "Created date is required")]

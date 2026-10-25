@@ -26,7 +26,7 @@ namespace DAL.Repos
         }
         public List<Category> Get()
         {
-            return db.Categories.ToList();
+            return db.Categories.AsNoTracking().OrderBy(c => c.Name).ToList();
         }
         public bool Update(Category c)
         {
@@ -41,11 +41,19 @@ namespace DAL.Repos
             return db.SaveChanges() > 0;
         }
 
-        public Category GetWithArticles(int categoryId)
+        public bool HasArticles(int categoryId)
         {
-            return db.Categories
-                .Include(c => c.Articles.OrderByDescending(a => a.PublishDate))
-                .FirstOrDefault(c => c.CategoryId == categoryId);
+            return db.Articles.Any(a => a.CategoryId == categoryId);
+        }
+
+        public List<Category> GetWithoutSlug()
+        {
+            return db.Categories.Where(c => c.Slug == null).ToList();
+        }
+
+        public void SaveChanges()
+        {
+            db.SaveChanges();
         }
     }
 }

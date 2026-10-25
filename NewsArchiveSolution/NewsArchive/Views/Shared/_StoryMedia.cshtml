@@ -1,0 +1,18 @@
+@model BLL.DTOs.ArticleDTO
+@using NewsArchive.Seo
+
+@{
+    var img = SeoUrls.Image(Model.ImagePath);
+    var eager = ViewData["Eager"] as bool? == true;
+}
+
+<a class="story-media d-block" href="@SeoUrls.Article(Model.ArticleId, Model.Slug)" tabindex="-1" aria-hidden="true">
+    @if (img != null)
+    {
+        <img src="@img" alt="@Model.Title" width="800" height="450" loading="@(eager ? "eager" : "lazy")" decoding="async" fetchpriority="@(eager ? "high" : null)" />
+    }
+    else
+    {
+        <span class="placeholder-icon"><i class="bi bi-newspaper"></i></span>
+    }
+</a>

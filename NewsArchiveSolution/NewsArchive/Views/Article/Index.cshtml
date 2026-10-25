@@ -1,172 +1,131 @@
 ﻿@model List<BLL.DTOs.ArticleDTO>
+@using NewsArchive.Seo
+@inject SeoUrls Urls
 
 @{
-    ViewData["Title"] = "Home - Latest Articles";
-    var roleId = Context.Session.GetInt32("RoleId");
-    var isAdmin = roleId == 1;
-    var keyword = ViewBag.Keyword as string;
-    var from = ViewBag.From as DateTime?;
-    var to = ViewBag.To as DateTime?;
     var page = (int)(ViewBag.Page ?? 1);
     var pageSize = (int)(ViewBag.PageSize ?? 9);
     var total = (int)(ViewBag.Total ?? 0);
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    var trending = ViewBag.Trending as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
+    var isFirstPage = page == 1;
+
+    var meta = ViewData.Meta();
+    meta.Title = isFirstPage ? null : $"Latest news – page {page}";
+    meta.CanonicalPath = isFirstPage ? "/" : $"/?page={page}";
+    meta.JsonLd.Add(new Dictionary<string, object?>
+    {
+        ["@type"] = "ItemList",
+        ["itemListElement"] = Model.Select((a, i) => new Dictionary<string, object?>
+        {
+            ["@type"] = "ListItem",
+            ["position"] = (page - 1) * pageSize + i + 1,
+            ["url"] = Urls.Absolute(SeoUrls.Article(a.ArticleId, a.Slug))
+        }).ToList()
+    });
+
+    var lead = isFirstPage ? Model.FirstOrDefault() : null;
+    var secondary = isFirstPage ? Model.Skip(1).Take(3).ToList() : new List<BLL.DTOs.ArticleDTO>();
+    var grid = isFirstPage ? Model.Skip(4).ToList() : Model;
 }
 
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <div>
-            <h1 class="display-4">News Archive</h1>
-            <p class="text-muted">Stay updated with the latest news and stories</p>
-        </div>
-        @if (isAdmin)
-        {
-            <a href="@Url.Action("Create", "Article")" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-circle"></i> Create Article
-            </a>
-        }
-    </div>
-
-    <form method="get" class="mb-4">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">Keyword</label>
-                <input type="text" name="keyword" value="@keyword" class="form-control" placeholder="Title or Content" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">From Date</label>
-                <input type="date" name="from" value="@(from?.ToString("yyyy-MM-dd"))" class="form-control" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">To Date</label>
-                <input type="date" name="to" value="@(to?.ToString("yyyy-MM-dd"))" class="form-control" />
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Search</button>
-            </div>
-        </div>
-    </form>
-
-    @if (Model != null && Model.Count > 0)
+@section Head {
+    @if (page > 1)
     {
-        <div class="row g-4">
-            @foreach (var article in Model)
-            {
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm hover-shadow transition">
-                        @{
-                            string imgUrl = null;
-                            if (!string.IsNullOrEmpty(article.ImagePath))
-                            {
-                                if (article.ImagePath.StartsWith("~") || article.ImagePath.StartsWith("http"))
-                                {
-                                    imgUrl = Url.Content(article.ImagePath);
-                                }
-                                else if (article.ImagePath.StartsWith("/"))
-                                {
-                                    imgUrl = article.ImagePath;
-                                }
-                                else
-                                {
-                                    imgUrl = "/" + article.ImagePath;
-                                }
-                            }
-                        }
+        <link rel="prev" href="@(page == 2 ? "/" : $"/?page={page - 1}")" />
+    }
+    @if (page < totalPages)
+    {
+        <link rel="next" href="/?page=@(page + 1)" />
+    }
+}
 
-                        @if (!string.IsNullOrEmpty(imgUrl))
-                        {
-                            <img src="@imgUrl" class="card-img-top" alt="@article.Title" style="height: 250px; object-fit: cover;">
-                        }
-                        else
-                        {
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
-                                <i class="bi bi-image" style="font-size: 3rem; color: #ccc;"></i>
-                            </div>
-                        }
+<div class="container py-4 py-lg-5">
+    <h1 class="page-title mb-4">@(isFirstPage ? "Latest news and breaking stories" : $"Latest news – page {page}")</h1>
 
-                        <div class="card-body d-flex flex-column">
-                            <div class="mb-2">
-                                @{
-                                    var categoryName = "Unknown";
-                                    if (ViewBag.CategoryNames is Dictionary<int, string> catNames && catNames.TryGetValue(article.CategoryId, out var name))
-                                        categoryName = name;
-                                }
-                                <span class="badge bg-info text-dark">@categoryName</span>
-                            </div>
-
-                            <h5 class="card-title fw-bold">@article.Title</h5>
-
-                            <div class="text-muted small mb-2">
-                                @{
-                                    var authorName = "Unknown";
-                                    if (ViewBag.AuthorNames is Dictionary<int, string> authors && authors.TryGetValue(article.ArticleId, out var author))
-                                        authorName = author;
-                                }
-                                <i class="bi bi-person"></i>
-                                <span>By @authorName</span>
-                            </div>
-
-                            <p class="card-text text-muted small flex-grow-1">
-                                @article.Summary
-                            </p>
-
-                            <div class="text-muted small mb-3">
-                                <i class="bi bi-calendar"></i> 
-                                <span>@article.PublishDate.ToString("MMM dd, yyyy")</span>
-                            </div>
-
-                            <a href="@Url.Action("Details", "Article", new { id = article.ArticleId })" class="btn btn-sm btn-outline-primary">
-                                Read More →
-                            </a>
-                        </div>
-
-                        @if (isAdmin)
-                        {
-                            <div class="card-footer bg-white border-top">
-                                <div class="btn-group btn-group-sm w-100" role="group">
-                                    <a href="@Url.Action("Edit", "Article", new { id = article.ArticleId })" class="btn btn-outline-warning">
-                                        <i class="bi bi-pencil"></i> Edit
-                                    </a>
-                                    <a href="@Url.Action("Delete", "Article", new { id = article.ArticleId })" class="btn btn-outline-danger">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </a>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-newspaper"></i>
+            <h2 class="h5 mt-3">No stories published yet</h2>
+            <p class="mb-0">Check back soon for the latest reporting.</p>
         </div>
     }
     else
     {
-        <div class="alert alert-info text-center py-5">
-            <h5>No articles found</h5>
-            <p class="mb-0">Check back soon for new content</p>
+        @if (lead != null)
+        {
+            <section class="row g-4 g-lg-5 mb-5" aria-label="Top stories">
+                <div class="col-lg-8">
+                    <partial name="_StoryLead" model="lead" />
+                </div>
+                <div class="col-lg-4">
+                    @foreach (var item in secondary)
+                    {
+                        <partial name="_StoryCompact" model="item" />
+                    }
+                </div>
+            </section>
+        }
+
+        <div class="row g-5">
+            <section class="col-lg-8" aria-labelledby="latest-heading">
+                <div class="section-head">
+                    <h2 id="latest-heading">More stories</h2>
+                    <a href="/search">Search the archive <i class="bi bi-arrow-right"></i></a>
+                </div>
+                @if (grid.Count > 0)
+                {
+                    <div class="row g-4">
+                        @foreach (var item in grid)
+                        {
+                            <div class="col-md-6">
+                                <partial name="_StoryCard" model="item" />
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">You're all caught up.</p>
+                }
+
+                @if (totalPages > 1)
+                {
+                    <nav class="mt-5" aria-label="Pages">
+                        <ul class="pagination justify-content-center">
+                            @for (var i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(i == page ? "active" : "")">
+                                    <a class="page-link" href="@(i == 1 ? "/" : $"/?page={i}")" aria-current="@(i == page ? "page" : null)">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </section>
+
+            <aside class="col-lg-4">
+                <div class="sticky-aside">
+                    @if (trending.Count > 0)
+                    {
+                        <div class="side-panel">
+                            <h2 class="side-panel-title">Trending now</h2>
+                            <ol class="rank-list">
+                                @foreach (var t in trending)
+                                {
+                                    <li><a href="@SeoUrls.Article(t.ArticleId, t.Slug)">@t.Title</a></li>
+                                }
+                            </ol>
+                        </div>
+                    }
+                    <div class="side-panel">
+                        <h2 class="side-panel-title">Stay informed</h2>
+                        <p class="small text-muted mb-3">Follow every story as it is published with our RSS feed.</p>
+                        <a class="btn btn-dark btn-sm" href="/rss.xml"><i class="bi bi-rss"></i> Subscribe via RSS</a>
+                    </div>
+                </div>
+            </aside>
         </div>
     }
-
-    @if (total > pageSize)
-    {
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center mt-4">
-                @for (int i = 1; i <= (int)Math.Ceiling((double)total / pageSize); i++)
-                {
-                    <li class="page-item @(i == page ? "active" : "")">
-                        <a class="page-link" href="?keyword=@keyword&from=@(from?.ToString("yyyy-MM-dd"))&to=@(to?.ToString("yyyy-MM-dd"))&page=@i&pageSize=@pageSize">@i</a>
-                    </li>
-                }
-            </ul>
-        </nav>
-    }
 </div>
-
-<style>
-    .hover-shadow {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .hover-shadow:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
-    }
-</style>

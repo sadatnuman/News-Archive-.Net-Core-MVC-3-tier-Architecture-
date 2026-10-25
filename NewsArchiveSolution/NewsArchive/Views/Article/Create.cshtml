@@ -1,132 +1,26 @@
-﻿@model BLL.DTOs.ArticleDTO
+﻿@model BLL.DTOs.ArticleFormDTO
 
 @{
-    ViewData["Title"] = "Create New Article";
-
-    bool CheckCategory(int id)
-    {
-        return Model != null && Model.CategoryId == id;
-    }
-
-    var userEmail = ViewBag.UserEmail as string ?? string.Empty;
-    var userName = ViewBag.UserName as string ?? string.Empty;
-    var userId = ViewBag.UserId as int? ?? null;
-    var roleId = ViewBag.RoleId as int? ?? null;
-
-    var categories = ViewBag.Categories as List<BLL.DTOs.CategoryDTO> ?? new List<BLL.DTOs.CategoryDTO>();
+    ViewData["Title"] = "Write an article";
+    ViewData["NoIndex"] = true;
+    var isAdmin = ViewBag.IsAdmin as bool? ?? false;
 }
 
 <div class="container py-5">
-    <div class="mb-5">
-        <h1 class="display-5 fw-bold mb-2">Create New Article</h1>
-        <p class="text-muted">Add a new article to the news archive</p>
-    </div>
-
-    <div class="row">
+    <div class="row g-5">
         <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-                    <form asp-action="Create" method="post">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-                        @Html.AntiForgeryToken()
-
-                        <div class="form-group mb-4">
-                            <label asp-for="Title" class="form-label fw-semibold"></label>
-                            <input asp-for="Title" class="form-control form-control-lg" placeholder="Enter article title" />
-                            <span asp-validation-for="Title" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label asp-for="Summary" class="form-label fw-semibold"></label>
-                            <textarea asp-for="Summary" class="form-control" rows="3" placeholder="Enter a brief summary (10-500 characters)"></textarea>
-                            <span asp-validation-for="Summary" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label asp-for="Content" class="form-label fw-semibold"></label>
-                            <textarea asp-for="Content" class="form-control" rows="8" placeholder="Enter the full article content (20-5000 characters)"></textarea>
-                            <span asp-validation-for="Content" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label asp-for="PublishDate" class="form-label fw-semibold"></label>
-                            <input asp-for="PublishDate" type="datetime-local" class="form-control" />
-                            <span asp-validation-for="PublishDate" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label class="form-label fw-semibold">Category</label>
-                            <select name="CategoryId" class="form-select" required>
-                                <option value="">-- Select a Category --</option>
-                                @foreach (var item in categories)
-                                {
-                                    <option value="@item.CategoryId" selected="@(CheckCategory(item.CategoryId) ? "selected" : null)">
-                                        @item.Name
-                                    </option>
-                                }
-                            </select>
-                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label class="form-label fw-semibold">Author</label>
-                            <input type="text" class="form-control" value="@userName" disabled />
-                            <small class="text-muted d-block mt-2">
-                                <i class="bi bi-envelope"></i> @userEmail
-                            </small>
-                            <input type="hidden" name="AuthorId" value="@userId" />
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label asp-for="ImagePath" class="form-label fw-semibold"></label>
-                            <input asp-for="ImagePath" class="form-control" placeholder="e.g., Article/picture/imagename.jpg" />
-                            <small class="text-muted d-block mt-2">
-                                <i class="bi bi-info-circle"></i> Format: <code>Article/picture/imagename.jpg</code>
-                            </small>
-                            <span asp-validation-for="ImagePath" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-check mb-4">
-                            <input asp-for="IsBreakingNews" class="form-check-input" id="breakingNews" />
-                            <label asp-for="IsBreakingNews" class="form-check-label fw-semibold">
-                                <i class="bi bi-lightning"></i> Mark as Breaking News
-                            </label>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-check-circle"></i> Create Article
-                            </button>
-                            <a asp-action="Index" class="btn btn-secondary btn-lg">
-                                <i class="bi bi-x-circle"></i> Cancel
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+            <h1 class="page-title mb-2">Write an article</h1>
+            <p class="text-muted mb-4">
+                @(isAdmin ? "Articles you publish go live immediately." : "Your article is published after an admin approves it.")
+            </p>
+            <partial name="_ArticleForm" model="Model" />
         </div>
-
-        <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">
-                        <i class="bi bi-lightbulb"></i> Tips
-                    </h6>
-                </div>
-                <div class="card-body small">
-                    <p><strong>Title:</strong> Be clear and descriptive (5-200 chars)</p>
-                    <p><strong>Summary:</strong> Catch reader attention (10-500 chars)</p>
-                    <p><strong>Content:</strong> Provide detailed information (20-5000 chars)</p>
-                    <p><strong>Image:</strong> Place images in <code>wwwroot\Article\picture\</code> folder</p>
-                    <p><strong>Category:</strong> Select the most relevant category</p>
-                </div>
-            </div>
-        </div>
+        <aside class="col-lg-4">
+            <partial name="_WritingTips" />
+        </aside>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

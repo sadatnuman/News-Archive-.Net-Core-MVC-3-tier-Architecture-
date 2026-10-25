@@ -4,7 +4,7 @@ using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
-namespace App.Controllers
+namespace NewsArchive.Controllers
 {
     public class CommentController : Controller
     {

@@ -1,0 +1,20 @@
+@model BLL.DTOs.ArticleDTO
+@using NewsArchive.Seo
+
+@{
+    var names = ViewBag.CategoryNames as Dictionary<int, string>;
+    var slugs = ViewBag.CategorySlugs as Dictionary<int, string?>;
+    var category = names != null && names.TryGetValue(Model.CategoryId, out var n) ? n : null;
+    var slug = slugs != null && slugs.TryGetValue(Model.CategoryId, out var s) ? s : null;
+}
+
+<div class="d-flex align-items-center gap-2">
+    @if (Model.IsBreakingNews)
+    {
+        <span class="badge-breaking">Breaking</span>
+    }
+    @if (category != null)
+    {
+        <a class="kicker" href="@SeoUrls.Category(Model.CategoryId, slug)">@category</a>
+    }
+</div>

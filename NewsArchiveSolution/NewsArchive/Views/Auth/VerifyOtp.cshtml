@@ -10,11 +10,6 @@
                 <div class="card-body">
                     <h4 class="card-title mb-3">Verify OTP</h4>
 
-                    @if (TempData["Msg"] != null)
-                    {
-                        <div class="alert alert-@TempData["Class"]">@TempData["Msg"]</div>
-                    }
-
                     <form method="post" asp-action="VerifyOtp">
                         <input type="hidden" name="email" value="@email" />
                         <div class="mb-3">
@@ -26,14 +21,6 @@
                             <button type="submit" class="btn btn-primary">Verify OTP</button>
                         </div>
                     </form>
-                    <script>
-                        (function () {
-                            var otp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Context.Session.GetString($"PwdReset:Otp:{email}") ?? ""));
-                            if (otp) {
-                                console.log('OTP: ' + otp);
-                            }
-                        })();
-                    </script>
                 </div>
             </div>
         </div>

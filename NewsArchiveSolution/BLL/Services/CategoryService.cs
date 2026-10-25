@@ -33,25 +33,35 @@ namespace BLL.Services
         }
         public bool Create(CategoryDTO c)
         {
+            c.Slug = SlugHelper.Generate(c.Name);
             var converted = mapper.Map<Category>(c);
             return repo.Create(converted);
         }
 
         public bool Update(CategoryDTO c)
         {
+            c.Slug = SlugHelper.Generate(c.Name);
             var converted = mapper.Map<Category>(c);
             return repo.Update(converted);
         }
         public bool Delete(int id)
         {
+            if (repo.HasArticles(id)) return false;
             return repo.Delete(id);
         }
 
-        public CategoryDTO GetWithArticles(int categoryId)
+        public bool HasArticles(int id)
         {
-            var data = repo.GetWithArticles(categoryId);
-            var res = mapper.Map<CategoryDTO>(data);
-            return res;
+            return repo.HasArticles(id);
+        }
+
+        public void EnsureSlugs()
+        {
+            var missing = repo.GetWithoutSlug();
+            if (missing.Count == 0) return;
+            foreach (var c in missing)
+                c.Slug = SlugHelper.Generate(c.Name);
+            repo.SaveChanges();
         }
     }
 }

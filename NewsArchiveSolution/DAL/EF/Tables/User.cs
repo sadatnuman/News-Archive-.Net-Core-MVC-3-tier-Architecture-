@@ -17,9 +17,9 @@ public partial class User
 
     public DateTime CreatedAt { get; set; }
 
-    public string ConfPassword { get; set; } = null!;
-
     public virtual ICollection<Article> Articles { get; set; } = new List<Article>();
+
+    public virtual ICollection<Article> ReviewedArticles { get; set; } = new List<Article>();
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 

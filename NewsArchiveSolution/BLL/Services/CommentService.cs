@@ -33,6 +33,8 @@ namespace BLL.Services
         }
         public bool Create(CommentDTO c)
         {
+            c.Text = c.Text?.Trim() ?? string.Empty;
+            if (c.Text.Length < 2 || c.Text.Length > 500) return false;
             var converted = mapper.Map<Comment>(c);
             return repo.Create(converted);
         }

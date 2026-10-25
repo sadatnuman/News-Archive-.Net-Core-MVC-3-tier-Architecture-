@@ -1,0 +1,33 @@
+@{
+    Layout = "_Layout";
+    var heading = ViewData["Heading"] as string ?? "";
+    var path = Context.Request.Path.Value ?? "/";
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@heading</li>
+        </ol>
+    </nav>
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <h1 class="page-title mb-4">@heading</h1>
+            <div class="prose">
+                @RenderBody()
+            </div>
+        </div>
+        <aside class="col-lg-4">
+            <div class="side-panel">
+                <h2 class="side-panel-title">About NewsArchive</h2>
+                <ul class="list-unstyled mb-0">
+                    @foreach (var (href, label) in new[] { ("/about", "About us"), ("/contact", "Contact"), ("/editorial-policy", "Editorial policy"), ("/privacy", "Privacy policy"), ("/terms", "Terms of use") })
+                    {
+                        <li class="py-2 border-bottom"><a href="@href" class="@(path == href ? "fw-bold text-danger" : "")">@label</a></li>
+                    }
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>

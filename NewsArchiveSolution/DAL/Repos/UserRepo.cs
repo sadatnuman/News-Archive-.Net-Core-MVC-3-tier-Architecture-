@@ -36,6 +36,10 @@ namespace DAL.Repos
         public bool Delete(int id)
         {
             var exobj = Get(id);
+            if (exobj == null) return false;
+            if (db.Articles.Any(a => a.AuthorId == id || a.ReviewedById == id)) return false;
+
+            db.Comments.Where(c => c.UserId == id).ExecuteDelete();
             db.Users.Remove(exobj);
             return db.SaveChanges() > 0;
         }

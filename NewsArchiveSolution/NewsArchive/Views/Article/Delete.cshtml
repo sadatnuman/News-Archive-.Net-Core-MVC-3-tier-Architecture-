@@ -1,16 +1,21 @@
 ﻿@model BLL.DTOs.ArticleDTO
 
 @{
-    ViewData["Title"] = "Delete Article";
+    ViewData["Title"] = "Delete article";
+    ViewData["NoIndex"] = true;
 }
 
-<h1>Are you sure to delete?</h1>
-<h3>@Model.Title</h3>
-<h3>@Model.ViewsCount</h3>
-
-<form method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="id" value="@Model.ArticleId" />
-    <input type="submit" value="Yes" name="Decision" class="btn btn-danger" />
-    <input type="submit" value="No" name="Decision" class="btn btn-primary" />
-</form>
+<div class="container py-5">
+    <div class="auth-card">
+        <h1 class="h3 mb-3">Delete this article?</h1>
+        <p class="mb-1 fw-semibold">@Model.Title</p>
+        <p class="text-muted small mb-4">@Model.StatusName &bull; @Model.ViewsCount views. This cannot be undone.</p>
+        <form method="post">
+            <input type="hidden" name="id" value="@Model.ArticleId" />
+            <div class="d-flex gap-2">
+                <button type="submit" value="Yes" name="Decision" class="btn btn-danger">Yes, delete</button>
+                <button type="submit" value="No" name="Decision" class="btn btn-outline-secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,244 +1,269 @@
 @model BLL.DTOs.ArticleDTO
+@using BLL
+@using NewsArchive.Seo
+@using Microsoft.Extensions.Options
+@inject SeoUrls Urls
+@inject IOptions<SiteOptions> SiteConfig
 
 @{
-    ViewData["Title"] = Model?.Title ?? "Article Details";
-    var roleId = Context.Session.GetInt32("RoleId");
-    var isAdmin = roleId == 1;
-    var isMember = roleId == 2;
-    var isLoggedIn = roleId.HasValue;
-    var comments = ViewBag.Comments as List<BLL.DTOs.CommentDTO>;
+    var site = SiteConfig.Value;
+    var roleId = ViewBag.RoleId as int?;
     var userId = ViewBag.UserId as int?;
-    var recommendations = ViewBag.Recommendations as List<BLL.DTOs.ArticleDTO>;
+    var isAdmin = roleId == AppRoles.Admin;
+    var isLoggedIn = userId.HasValue;
+    var canEdit = ViewBag.CanEdit as bool? == true;
+    var category = ViewBag.Category as BLL.DTOs.CategoryDTO;
+    var categoryName = category?.Name ?? "News";
+    var categoryUrl = category != null ? SeoUrls.Category(category.CategoryId, category.Slug) : "/";
+    var authorName = ViewBag.AuthorName as string ?? "Staff reporter";
+    var comments = ViewBag.Comments as List<BLL.DTOs.CommentDTO> ?? new List<BLL.DTOs.CommentDTO>();
+    var commentNames = ViewBag.CommentUserNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var recommendations = ViewBag.Recommendations as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
+    var latest = ViewBag.Latest as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
+
+    var path = SeoUrls.Article(Model.ArticleId, Model.Slug);
+    var absoluteUrl = Urls.Absolute(path);
+    var image = SeoUrls.Image(Model.ImagePath);
+    var paragraphs = (Model.Content ?? string.Empty)
+        .Replace("\r\n", "\n")
+        .Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var wordCount = (Model.Content ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+    var readingMinutes = Math.Max(1, (int)Math.Round(wordCount / 220.0));
+    var modified = Model.UpdatedAt.HasValue && Model.UpdatedAt > Model.PublishDate ? Model.UpdatedAt : null;
+
+    var meta = ViewData.Meta();
+    meta.Title = Model.Title;
+    meta.Description = Model.Summary;
+    meta.CanonicalPath = path;
+    meta.Image = Model.ImagePath;
+    meta.ImageAlt = Model.Title;
+    meta.Type = "article";
+    meta.PublishedTime = Model.PublishDate;
+    meta.ModifiedTime = modified ?? Model.PublishDate;
+    meta.Section = categoryName;
+    meta.Author = authorName;
+    meta.NoIndex = !Model.IsPublished;
+    meta.Breadcrumbs.Add((categoryName, categoryUrl));
+    meta.Breadcrumbs.Add((Model.Title, path));
+    meta.JsonLd.Add(new Dictionary<string, object?>
+    {
+        ["@type"] = "NewsArticle",
+        ["@id"] = absoluteUrl + "#article",
+        ["mainEntityOfPage"] = absoluteUrl,
+        ["headline"] = Model.Title.Length > 110 ? Model.Title[..110] : Model.Title,
+        ["description"] = Model.Summary,
+        ["image"] = new[] { Urls.AbsoluteImage(Model.ImagePath) },
+        ["datePublished"] = Model.PublishDate.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+        ["dateModified"] = (modified ?? Model.PublishDate).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+        ["author"] = new[] { new Dictionary<string, object?> { ["@type"] = "Person", ["name"] = authorName } },
+        ["publisher"] = new Dictionary<string, object?> { ["@id"] = Urls.Absolute("/#organization") },
+        ["articleSection"] = categoryName,
+        ["wordCount"] = wordCount,
+        ["inLanguage"] = site.Language,
+        ["isAccessibleForFree"] = true
+    });
+
+    var shareUrl = Uri.EscapeDataString(absoluteUrl);
+    var shareText = Uri.EscapeDataString(Model.Title);
 }
 
-<div class="container py-5">
-    <nav aria-label="breadcrumb" class="mb-4">
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="Breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Article")">Articles</a></li>
-            <li class="breadcrumb-item active">@Model?.Title</li>
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="@categoryUrl">@categoryName</a></li>
+            <li class="breadcrumb-item active text-truncate" aria-current="page" style="max-width: 32rem;">@Model.Title</li>
         </ol>
     </nav>
 
-    <article class="row g-4">
-        <div class="col-lg-8">
-            @{
-                string imgUrl = null;
-                var imagePath = Model?.ImagePath;
-                if (!string.IsNullOrEmpty(imagePath))
+    @if (!Model.IsPublished)
+    {
+        var bannerClass = Model.StatusId == ArticleStatus.Pending ? "status-pending" : Model.StatusId == ArticleStatus.Rejected ? "status-rejected" : "status-draft";
+        <div class="status-banner @bannerClass">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <span class="status-pill s-@Model.StatusId">@Model.StatusName</span>
+                    <span class="ms-2">This article is not public. Only the author and admins can see it.</span>
+                    @if (!string.IsNullOrEmpty(Model.ReviewNote))
+                    {
+                        <div class="mt-2"><strong>Editor's note:</strong> @Model.ReviewNote</div>
+                    }
+                </div>
+                @if (isAdmin && Model.StatusId == ArticleStatus.Pending)
                 {
-                    if (imagePath.StartsWith("~") || imagePath.StartsWith("http"))
-                    {
-                        imgUrl = Url.Content(imagePath);
-                    }
-                    else if (imagePath.StartsWith("/"))
-                    {
-                        imgUrl = imagePath;
-                    }
-                    else
-                    {
-                        imgUrl = "/" + imagePath;
-                    }
-                }
-            }
-
-            @if (!string.IsNullOrEmpty(imgUrl))
-            {
-                <img src="@imgUrl" class="card-img-top" alt="@Model?.Title" style="height: 250px; object-fit: cover;">
-            }
-            else
-            {
-                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
-                    <i class="bi bi-image" style="font-size: 3rem; color: #ccc;"></i>
-                </div>
-            }
-
-            <div class="mb-4">
-                <h1 class="display-5 fw-bold mb-3">@Model?.Title</h1>
-
-                <div class="text-muted mb-2">
-                    <i class="bi bi-person"></i>
-                    <span>By <strong>@(ViewBag.AuthorName ?? "Unknown Author")</strong></span>
-                </div>
-
-                <div class="d-flex flex-wrap gap-3 align-items-center border-bottom pb-3 mb-3">
-                    <span class="badge bg-info text-dark fs-6">@(ViewBag.CategoryName ?? "Unknown")</span>
-
-                    <span class="text-muted">
-                        <i class="bi bi-calendar-event"></i>
-                        @Model?.PublishDate.ToString("MMMM dd, yyyy")
-                    </span>
-
-
-                    @if (Model?.IsBreakingNews == true)
-                    {
-                        <span class="badge bg-danger">
-                            <i class="bi bi-lightning"></i> Breaking News
-                        </span>
-                    }
-                </div>
-            </div>
-
-            <div class="alert alert-light border mb-4 p-4">
-                <p class="lead fw-semibold mb-0">@Model?.Summary</p>
-            </div>
-
-            <div class="article-content mb-5">
-                @Html.Raw(Model?.Content ?? "")
-            </div>
-
-            @if (isAdmin)
-            {
-                <div class="d-flex gap-2 mb-5">
-                    <a href="@Url.Action("Edit", "Article", new { id = Model?.ArticleId })" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Edit Article
-                    </a>
-                    <a href="@Url.Action("Delete", "Article", new { id = Model?.ArticleId })" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Delete Article
-                    </a>
-                </div>
-            }
-
-            <section class="comments-section">
-                <h3 class="mb-4 fw-bold">Comments (@(comments?.Count ?? 0))</h3>
-
-                @if (isLoggedIn && (isAdmin || isMember))
-                {
-                    <div class="card mb-4 border-primary">
-                        <div class="card-body">
-                            <h5 class="card-title">Add Your Comment</h5>
-                            <form method="post" action="@Url.Action("AddComment", "Article")">
-                                <input type="hidden" name="articleId" value="@Model?.ArticleId" />
-                                
-                                <div class="mb-3">
-                                    <textarea class="form-control" name="commentText" rows="3" placeholder="Share your thoughts..." required></textarea>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-chat-left-text"></i> Post Comment
-                                </button>
-                            </form>
-                        </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <form asp-controller="Admin" asp-action="Approve" asp-route-id="@Model.ArticleId" method="post">
+                            <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Approve &amp; publish</button>
+                        </form>
+                        <form asp-controller="Admin" asp-action="Reject" asp-route-id="@Model.ArticleId" method="post" class="d-flex gap-2">
+                            <input type="text" name="note" class="form-control" placeholder="Reason for rejection" maxlength="500" required aria-label="Reason for rejection" />
+                            <button type="submit" class="btn btn-outline-danger">Reject</button>
+                        </form>
                     </div>
                 }
-                else if (!isLoggedIn)
-                {
-                    <div class="alert alert-info mb-4">
-                        <i class="bi bi-info-circle"></i>
-                        <a href="@Url.Action("Login", "Auth")">Sign in</a> to leave a comment
-                    </div>
-                }
+            </div>
+        </div>
+    }
 
-                <div class="comments-list">
-                    @if (comments != null && comments.Count > 0)
+    <div class="row g-5">
+        <article class="col-lg-8">
+            <header class="article-header">
+                <div class="d-flex align-items-center gap-2">
+                    @if (Model.IsBreakingNews)
                     {
-                        @foreach (var comment in comments)
+                        <span class="badge-breaking">Breaking</span>
+                    }
+                    <a class="kicker" href="@categoryUrl">@categoryName</a>
+                </div>
+                <h1 class="article-title">@Model.Title</h1>
+                <p class="article-standfirst">@Model.Summary</p>
+            </header>
+
+            <div class="byline">
+                <span class="avatar" aria-hidden="true">@(authorName.Length > 0 ? authorName[0] : 'N')</span>
+                <div>
+                    <div>By <strong>@authorName</strong></div>
+                    <div>
+                        <time datetime="@Model.PublishDate.ToString("yyyy-MM-ddTHH:mm:sszzz")">@Model.PublishDate.ToString("MMMM d, yyyy 'at' h:mm tt")</time>
+                        @if (modified.HasValue)
                         {
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <div>
-                                            @{
-                                                var commentUserName = "Unknown User";
-                                                if (ViewBag.CommentUserNames is Dictionary<int, string> commentUsers && commentUsers.TryGetValue(comment.CommentId, out var userName))
-                                                    commentUserName = userName;
-                                            }
-                                            <h6 class="mb-0 fw-semibold">@commentUserName</h6>
-                                            <small class="text-muted">@comment.CreatedDate.ToString("MMMM dd, yyyy h:mm tt")</small>
-                                        </div>
-                                        
-                                        @if (isAdmin || userId == comment.UserId)
-                                        {
-                                            <form method="post" action="@Url.Action("Delete", "Comment")" style="display:inline;">
-                                                <input type="hidden" name="id" value="@comment.CommentId" />
-                                                <input type="hidden" name="articleId" value="@Model?.ArticleId" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this comment?');">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
-                                            </form>
-                                        }
-                                    </div>
-                                    
-                                    <p class="card-text">@comment.Text</p>
-                                </div>
-                            </div>
+                            <span class="sep">&bull;</span><span>Updated <time datetime="@modified.Value.ToString("yyyy-MM-ddTHH:mm:sszzz")">@modified.Value.ToString("MMM d, yyyy")</time></span>
                         }
+                        <span class="sep">&bull;</span><span>@readingMinutes min read</span>
+                    </div>
+                </div>
+                @if (Model.IsPublished)
+                {
+                    <div class="share" aria-label="Share this article">
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url=@shareUrl" target="_blank" rel="noopener" aria-label="Share on LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url=@shareUrl&text=@shareText" target="_blank" rel="noopener" aria-label="Share on X"><i class="bi bi-twitter-x"></i></a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=@shareUrl" target="_blank" rel="noopener" aria-label="Share on Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="https://wa.me/?text=@shareText%20@shareUrl" target="_blank" rel="noopener" aria-label="Share on WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                        <button type="button" data-copy-link="@absoluteUrl" aria-label="Copy link"><i class="bi bi-link-45deg"></i></button>
+                    </div>
+                }
+            </div>
+
+            @if (image != null)
+            {
+                <figure class="article-figure">
+                    <div class="story-media">
+                        <img src="@image" alt="@Model.Title" width="1200" height="675" fetchpriority="high" />
+                    </div>
+                </figure>
+            }
+
+            <div class="article-body">
+                @foreach (var p in paragraphs)
+                {
+                    var lines = p.Split('\n');
+                    <p>
+                        @for (var i = 0; i < lines.Length; i++)
+                        {
+                            @lines[i]
+                            if (i < lines.Length - 1)
+                            {
+                                <br />
+                            }
+                        }
+                    </p>
+                }
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a class="btn btn-outline-secondary btn-sm" href="@categoryUrl"><i class="bi bi-arrow-left"></i> More in @categoryName</a>
+                @if (canEdit)
+                {
+                    <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@Model.ArticleId"><i class="bi bi-pencil"></i> Edit</a>
+                    <a class="btn btn-outline-danger btn-sm" asp-action="Delete" asp-route-id="@Model.ArticleId"><i class="bi bi-trash"></i> Delete</a>
+                }
+            </div>
+
+            @if (Model.IsPublished)
+            {
+                <section class="comments" aria-labelledby="comments-heading">
+                    <h2 id="comments-heading" class="h4 mb-3">Comments (@comments.Count)</h2>
+
+                    @if (isLoggedIn)
+                    {
+                        <form asp-controller="Article" asp-action="AddComment" method="post" class="mb-4">
+                            <input type="hidden" name="articleId" value="@Model.ArticleId" />
+                            <label for="commentText" class="visually-hidden">Your comment</label>
+                            <textarea id="commentText" name="commentText" class="form-control mb-2" rows="3" minlength="2" maxlength="500" placeholder="Join the conversation" required></textarea>
+                            <button type="submit" class="btn btn-dark"><i class="bi bi-chat-left-text"></i> Post comment</button>
+                        </form>
                     }
                     else
                     {
-                        <div class="alert alert-secondary">
-                            No comments yet. Be the first to comment!
+                        <p class="mb-4"><a asp-controller="Auth" asp-action="Login" rel="nofollow">Sign in</a> to join the conversation.</p>
+                    }
+
+                    @if (comments.Count == 0)
+                    {
+                        <p class="text-muted">No comments yet. Be the first to share your view.</p>
+                    }
+                    @foreach (var comment in comments)
+                    {
+                        <div class="comment">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <span class="comment-author">@(commentNames.TryGetValue(comment.CommentId, out var n) ? n : "Reader")</span>
+                                    <span class="meta ms-2"><time datetime="@comment.CreatedDate.ToString("yyyy-MM-ddTHH:mm")">@comment.CreatedDate.ToString("MMM d, yyyy h:mm tt")</time></span>
+                                </div>
+                                @if (isAdmin || userId == comment.UserId)
+                                {
+                                    <form asp-controller="Comment" asp-action="Delete" method="post">
+                                        <input type="hidden" name="id" value="@comment.CommentId" />
+                                        <input type="hidden" name="articleId" value="@Model.ArticleId" />
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">Delete</button>
+                                    </form>
+                                }
+                            </div>
+                            <p class="mb-0 mt-1">@comment.Text</p>
                         </div>
                     }
-                </div>
-            </section>
+                </section>
+            }
 
-            @if (recommendations != null && recommendations.Count > 0)
+            @if (recommendations.Count > 0)
             {
-                <div class="mt-5">
-                    <h4>Related Articles</h4>
-                    <div class="row g-3">
+                <section class="mt-5" aria-labelledby="related-heading">
+                    <div class="section-head">
+                        <h2 id="related-heading">Related stories</h2>
+                    </div>
+                    <div class="row g-4">
                         @foreach (var rec in recommendations)
                         {
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title">@rec.Title</h6>
-                                        <a href="@Url.Action("Details", "Article", new { id = rec.ArticleId })" class="btn btn-sm btn-outline-primary">Read More</a>
-                                    </div>
-                                </div>
+                            <div class="col-md-6">
+                                <partial name="_StoryCard" model="rec" />
                             </div>
                         }
                     </div>
-                </div>
+                </section>
             }
-        </div>
+        </article>
 
         <aside class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">More Articles</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted small">Check out other articles in this category.</p>
-                    <a href="@Url.Action("ArticlesByCategory", "Category", new { id = Model?.CategoryId })" class="btn btn-sm btn-outline-primary w-100">
-                        View Category →
-                    </a>
-                </div>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">Article Info</h5>
-                </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-6">Category:</dt>
-                        <dd class="col-6">@(ViewBag.CategoryName ?? "Unknown")</dd>
-                        <dt class="col-6">Published:</dt>
-                        <dd class="col-6">@Model?.PublishDate.ToString("MMM dd, yyyy")</dd>
-
-
-                        <dt class="col-6">Comments:</dt>
-                        <dd class="col-6">@(comments?.Count ?? 0)</dd>
-                    </dl>
-                </div>
+            <div class="sticky-aside">
+                @if (latest.Count > 0)
+                {
+                    <div class="side-panel">
+                        <h2 class="side-panel-title">Latest news</h2>
+                        @foreach (var item in latest)
+                        {
+                            <partial name="_StoryCompact" model="item" />
+                        }
+                    </div>
+                }
+                @if (category != null && !string.IsNullOrEmpty(category.Description))
+                {
+                    <div class="side-panel">
+                        <h2 class="side-panel-title">About @categoryName</h2>
+                        <p class="small text-muted">@category.Description</p>
+                        <a class="btn btn-outline-primary btn-sm" href="@categoryUrl">View all @categoryName news</a>
+                    </div>
+                }
             </div>
         </aside>
-    </article>
+    </div>
 </div>
-
-<style>
-    .article-content {
-        font-size: 1.1rem;
-        line-height: 1.8;
-    }
-    
-    .article-content p {
-        margin-bottom: 1.5rem;
-    }
-    
-    .comments-section {
-        border-top: 2px solid #dee2e6;
-        padding-top: 2rem;
-    }
-</style>

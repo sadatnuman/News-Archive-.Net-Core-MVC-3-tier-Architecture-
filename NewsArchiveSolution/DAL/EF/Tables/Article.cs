@@ -9,6 +9,8 @@ public partial class Article
 
     public string Title { get; set; } = null!;
 
+    public string? Slug { get; set; }
+
     public string Summary { get; set; } = null!;
 
     public string Content { get; set; } = null!;
@@ -25,9 +27,25 @@ public partial class Article
 
     public int AuthorId { get; set; }
 
+    public int StatusId { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public int? ReviewedById { get; set; }
+
+    public DateTime? ReviewedAt { get; set; }
+
+    public string? ReviewNote { get; set; }
+
     public virtual User Author { get; set; } = null!;
 
     public virtual Category Category { get; set; } = null!;
+
+    public virtual ArticleStatus Status { get; set; } = null!;
+
+    public virtual User? ReviewedBy { get; set; }
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 

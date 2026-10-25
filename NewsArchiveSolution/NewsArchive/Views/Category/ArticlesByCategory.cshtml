@@ -1,128 +1,88 @@
 @model List<BLL.DTOs.ArticleDTO>
+@using NewsArchive.Seo
+@inject SeoUrls Urls
 
 @{
-    ViewData["Title"] = ViewBag.Category?.Name + " - Articles";
     var category = ViewBag.Category as BLL.DTOs.CategoryDTO;
-    var roleId = Context.Session.GetInt32("RoleId");
-    var isAdmin = roleId == 1;
+    var name = category?.Name ?? "News";
+    var path = SeoUrls.Category(category?.CategoryId ?? 0, category?.Slug);
+
+    var meta = ViewData.Meta();
+    meta.Title = $"{name} news";
+    meta.Description = string.IsNullOrWhiteSpace(category?.Description)
+        ? $"The latest {name} news, analysis and reporting from NewsArchive."
+        : category!.Description;
+    meta.CanonicalPath = path;
+    meta.Image = Model.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagePath))?.ImagePath;
+    meta.Breadcrumbs.Add((name, path));
+    meta.JsonLd.Add(new Dictionary<string, object?>
+    {
+        ["@type"] = "CollectionPage",
+        ["name"] = $"{name} news",
+        ["url"] = Urls.Absolute(path),
+        ["description"] = meta.Description,
+        ["mainEntity"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "ItemList",
+            ["itemListElement"] = Model.Select((a, i) => new Dictionary<string, object?>
+            {
+                ["@type"] = "ListItem",
+                ["position"] = i + 1,
+                ["url"] = Urls.Absolute(SeoUrls.Article(a.ArticleId, a.Slug))
+            }).ToList()
+        }
+    });
+
+    var lead = Model.FirstOrDefault();
 }
 
-<div class="container py-5">
-    <nav aria-label="breadcrumb" class="mb-4">
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="Breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Article")">Home</a></li>
-            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Category")">Categories</a></li>
-            <li class="breadcrumb-item active">@category?.Name</li>
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/Category">Sections</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@name</li>
         </ol>
     </nav>
 
-    <div class="mb-5">
-        <h1 class="display-4 fw-bold mb-2">@category?.Name</h1>
-        @if (!string.IsNullOrEmpty(category?.Description))
+    <header class="mb-4 pb-3 border-bottom">
+        <span class="kicker">Section</span>
+        <h1 class="page-title mt-1">@name news</h1>
+        @if (!string.IsNullOrWhiteSpace(category?.Description))
         {
-            <p class="lead text-muted">@category.Description</p>
+            <p class="page-intro mb-0">@category.Description</p>
         }
-        <p class="text-muted">
-            <i class="bi bi-newspaper"></i>
-            @(Model?.Count ?? 0) article(s) in this category
-        </p>
-    </div>
+    </header>
 
-    @if (Model != null && Model.Count > 0)
+    @if (lead == null)
     {
-        <div class="row g-4">
-            @foreach (var article in Model)
-            {
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm hover-shadow transition">
-                        @{
-                            string imgUrl = null;
-                            var imagePath = article.ImagePath;
-                            if (!string.IsNullOrEmpty(imagePath))
-                            {
-                                if (imagePath.StartsWith("~") || imagePath.StartsWith("http"))
-                                {
-                                    imgUrl = Url.Content(imagePath);
-                                }
-                                else if (imagePath.StartsWith("/"))
-                                {
-                                    imgUrl = imagePath;
-                                }
-                                else
-                                {
-                                    imgUrl = "/" + imagePath;
-                                }
-                            }
-                        }
-
-                        @if (!string.IsNullOrEmpty(imgUrl))
-                        {
-                            <img src="@imgUrl" class="card-img-top" alt="@article.Title" style="height: 250px; object-fit: cover;">
-                        }
-                        else
-                        {
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
-                                <i class="bi bi-image" style="font-size: 3rem; color: #ccc;"></i>
-                            </div>
-                        }
-
-                        <div class="card-body d-flex flex-column">
-                            <div class="mb-2">
-                                <span class="badge bg-info text-dark">@category?.Name</span>
-                            </div>
-
-                            <h5 class="card-title fw-bold">@article.Title</h5>
-
-                            <p class="card-text text-muted small flex-grow-1">
-                                @article.Summary
-                            </p>
-
-                            <div class="text-muted small mb-3">
-                                <i class="bi bi-calendar"></i> 
-                                <span>@article.PublishDate.ToString("MMM dd, yyyy")</span>
-                            </div>
-
-                            <a href="@Url.Action("Details", "Article", new { id = article.ArticleId })" class="btn btn-sm btn-outline-primary">
-                                Read More →
-                            </a>
-                        </div>
-
-                        @if (isAdmin)
-                        {
-                            <div class="card-footer bg-white border-top">
-                                <div class="btn-group btn-group-sm w-100" role="group">
-                                    <a href="@Url.Action("Edit", "Article", new { id = article.ArticleId })" class="btn btn-outline-warning">
-                                        <i class="bi bi-pencil"></i> Edit
-                                    </a>
-                                    <a href="@Url.Action("Delete", "Article", new { id = article.ArticleId })" class="btn btn-outline-danger">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </a>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
+        <div class="empty-state">
+            <i class="bi bi-folder2-open"></i>
+            <h2 class="h5 mt-3">No @name stories yet</h2>
+            <p class="mb-0"><a href="/">Read the latest news</a></p>
         </div>
     }
     else
     {
-        <div class="alert alert-info text-center py-5">
-            <h5>No articles in this category yet</h5>
-            <p class="mb-0">
-                <a href="@Url.Action("Index", "Article")">Browse all articles →</a>
-            </p>
-        </div>
+        <section class="mb-5" aria-label="Top @name story">
+            <partial name="_StoryLead" model="lead" />
+        </section>
+
+        @if (Model.Count > 1)
+        {
+            <section aria-labelledby="more-heading">
+                <div class="section-head">
+                    <h2 id="more-heading">More @name stories</h2>
+                </div>
+                <div class="row g-4">
+                    @foreach (var item in Model.Skip(1))
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <partial name="_StoryCard" model="item" />
+                        </div>
+                    }
+                </div>
+            </section>
+        }
     }
 </div>
-
-<style>
-    .hover-shadow {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .hover-shadow:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
-    }
-</style>

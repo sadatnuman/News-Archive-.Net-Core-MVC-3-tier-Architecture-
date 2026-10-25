@@ -14,6 +14,12 @@ namespace DAL.Repos
         {
             this.db = db;
         }
+
+        private IQueryable<Article> Published()
+        {
+            return db.Articles.AsNoTracking().Where(a => a.StatusId == ArticleStatusIds.Published);
+        }
+
         public bool Create(Article a)
         {
             db.Articles.Add(a);
@@ -44,7 +50,7 @@ namespace DAL.Repos
 
         public List<Article> GetByCategoryId(int categoryId)
         {
-            return db.Articles.AsNoTracking()
+            return Published()
                 .Where(a => a.CategoryId == categoryId)
                 .OrderByDescending(a => a.PublishDate)
                 .ToList();
@@ -56,21 +62,19 @@ namespace DAL.Repos
                 .Include(a => a.Author)
                 .Include(a => a.Category)
                 .Include(a => a.Tags)
-                .Include(a => a.Comments)
-                .ThenInclude(c => c.User)
                 .FirstOrDefault(a => a.ArticleId == id);
         }
 
         public void IncrementViewCount(int articleId)
         {
             db.Articles
-                .Where(a => a.ArticleId == articleId)
+                .Where(a => a.ArticleId == articleId && a.StatusId == ArticleStatusIds.Published)
                 .ExecuteUpdate(s => s.SetProperty(a => a.ViewsCount, a => a.ViewsCount + 1));
         }
 
         public List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total)
         {
-            var query = db.Articles.AsNoTracking().AsQueryable();
+            var query = Published();
             if (!string.IsNullOrWhiteSpace(keyword))
                 query = query.Where(a => a.Title.Contains(keyword) || a.Summary.Contains(keyword) || a.Content.Contains(keyword));
             if (from.HasValue)
@@ -87,7 +91,7 @@ namespace DAL.Repos
 
         public List<Article> GetBreaking()
         {
-            return db.Articles.AsNoTracking()
+            return Published()
                 .Where(a => a.IsBreakingNews)
                 .OrderByDescending(a => a.PublishDate)
                 .ToList();
@@ -95,12 +99,12 @@ namespace DAL.Repos
 
         public bool HasBreakingNews()
         {
-            return db.Articles.Any(a => a.IsBreakingNews);
+            return Published().Any(a => a.IsBreakingNews);
         }
 
         public List<Article> GetTrending(int count)
         {
-            return db.Articles.AsNoTracking()
+            return Published()
                 .OrderByDescending(a => a.ViewsCount + a.Comments.Count() * 2)
                 .ThenByDescending(a => a.PublishDate)
                 .Take(count)
@@ -109,8 +113,16 @@ namespace DAL.Repos
 
         public List<Article> GetMostViewed(int count)
         {
-            return db.Articles.AsNoTracking()
+            return Published()
                 .OrderByDescending(a => a.ViewsCount)
+                .Take(count)
+                .ToList();
+        }
+
+        public List<Article> GetLatest(int count)
+        {
+            return Published()
+                .OrderByDescending(a => a.PublishDate)
                 .Take(count)
                 .ToList();
         }
@@ -123,7 +135,7 @@ namespace DAL.Repos
                 .FirstOrDefault();
             if (target == null) return new List<Article>();
 
-            var result = db.Articles.AsNoTracking()
+            var result = Published()
                 .Where(a => a.ArticleId != articleId && a.CategoryId == target.CategoryId)
                 .OrderByDescending(a => a.PublishDate)
                 .Take(count)
@@ -132,7 +144,7 @@ namespace DAL.Repos
             if (result.Count < count && target.TagIds.Count > 0)
             {
                 var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(db.Articles.AsNoTracking()
+                result.AddRange(Published()
                     .Where(a => !excluded.Contains(a.ArticleId) && a.Tags.Any(t => target.TagIds.Contains(t.TagId)))
                     .OrderByDescending(a => a.PublishDate)
                     .Take(count - result.Count)
@@ -142,7 +154,7 @@ namespace DAL.Repos
             if (result.Count < count)
             {
                 var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(db.Articles.AsNoTracking()
+                result.AddRange(Published()
                     .Where(a => !excluded.Contains(a.ArticleId))
                     .OrderByDescending(a => a.ViewsCount)
                     .ThenByDescending(a => a.PublishDate)
@@ -152,9 +164,58 @@ namespace DAL.Repos
             return result;
         }
 
+        public List<Article> GetByAuthor(int authorId)
+        {
+            return db.Articles.AsNoTracking()
+                .Where(a => a.AuthorId == authorId)
+                .OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt)
+                .ToList();
+        }
+
+        public List<Article> GetByStatus(int statusId)
+        {
+            return db.Articles.AsNoTracking()
+                .Where(a => a.StatusId == statusId)
+                .OrderBy(a => a.UpdatedAt ?? a.CreatedAt)
+                .ToList();
+        }
+
+        public List<Article> GetPublishedForSitemap()
+        {
+            return Published()
+                .OrderByDescending(a => a.PublishDate)
+                .Select(a => new Article
+                {
+                    ArticleId = a.ArticleId,
+                    Title = a.Title,
+                    Slug = a.Slug,
+                    PublishDate = a.PublishDate,
+                    UpdatedAt = a.UpdatedAt,
+                    ImagePath = a.ImagePath,
+                    Summary = a.Summary,
+                    Content = string.Empty
+                })
+                .ToList();
+        }
+
+        public List<Article> GetWithoutSlug()
+        {
+            return db.Articles.Where(a => a.Slug == null).ToList();
+        }
+
+        public void SaveChanges()
+        {
+            db.SaveChanges();
+        }
+
         public int Count()
         {
             return db.Articles.Count();
+        }
+
+        public int CountByStatus(int statusId)
+        {
+            return db.Articles.Count(a => a.StatusId == statusId);
         }
 
         public int GetCommentCount(int articleId)
@@ -164,7 +225,7 @@ namespace DAL.Repos
 
         public Dictionary<int, int> CountPerCategory()
         {
-            return db.Articles
+            return Published()
                 .GroupBy(a => a.CategoryId)
                 .Select(g => new { g.Key, Count = g.Count() })
                 .ToDictionary(x => x.Key, x => x.Count);

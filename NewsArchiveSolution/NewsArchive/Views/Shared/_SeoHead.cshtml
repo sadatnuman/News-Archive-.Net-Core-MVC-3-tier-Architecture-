@@ -1,0 +1,124 @@
+@using Microsoft.Extensions.Options
+@using NewsArchive.Seo
+@inject IOptions<SiteOptions> SiteConfig
+@inject SeoUrls Urls
+
+@{
+    var site = SiteConfig.Value;
+    var meta = ViewData.Meta();
+    var pageTitle = meta.Title ?? ViewData["Title"] as string;
+    var fullTitle = string.IsNullOrEmpty(pageTitle) ? $"{site.Name} – {site.Tagline}" : $"{pageTitle} | {site.Name}";
+    var description = PageMeta.Shorten(meta.Description ?? site.Description);
+    var canonical = Urls.Absolute(meta.CanonicalPath ?? Context.Request.Path.Value);
+    var isDefaultImage = string.IsNullOrEmpty(meta.Image);
+    var image = Urls.AbsoluteImage(meta.Image);
+    var imageAlt = meta.ImageAlt ?? pageTitle ?? site.Name;
+    var noIndex = meta.NoIndex || ViewData["NoIndex"] as bool? == true;
+
+    var graph = new List<object>
+    {
+        new Dictionary<string, object?>
+        {
+            ["@type"] = "NewsMediaOrganization",
+            ["@id"] = Urls.Absolute("/#organization"),
+            ["name"] = site.Name,
+            ["url"] = Urls.Absolute("/"),
+            ["logo"] = new Dictionary<string, object?> { ["@type"] = "ImageObject", ["url"] = Urls.Absolute(site.Logo), ["width"] = 512, ["height"] = 512 },
+            ["sameAs"] = site.SocialProfiles,
+            ["publishingPrinciples"] = Urls.Absolute("/editorial-policy")
+        },
+        new Dictionary<string, object?>
+        {
+            ["@type"] = "WebSite",
+            ["@id"] = Urls.Absolute("/#website"),
+            ["name"] = site.Name,
+            ["url"] = Urls.Absolute("/"),
+            ["inLanguage"] = site.Language,
+            ["publisher"] = new Dictionary<string, object?> { ["@id"] = Urls.Absolute("/#organization") },
+            ["potentialAction"] = new Dictionary<string, object?>
+            {
+                ["@type"] = "SearchAction",
+                ["target"] = new Dictionary<string, object?> { ["@type"] = "EntryPoint", ["urlTemplate"] = Urls.Absolute("/search?keyword={search_term_string}") },
+                ["query-input"] = "required name=search_term_string"
+            }
+        }
+    };
+
+    if (meta.Breadcrumbs.Count > 0)
+    {
+        var crumbs = new List<(string Name, string Path)> { ("Home", "/") };
+        crumbs.AddRange(meta.Breadcrumbs);
+        graph.Add(new Dictionary<string, object?>
+        {
+            ["@type"] = "BreadcrumbList",
+            ["itemListElement"] = crumbs.Select((c, i) => new Dictionary<string, object?>
+            {
+                ["@type"] = "ListItem",
+                ["position"] = i + 1,
+                ["name"] = c.Name,
+                ["item"] = Urls.Absolute(c.Path)
+            }).ToList()
+        });
+    }
+
+    graph.AddRange(meta.JsonLd);
+
+    var jsonLd = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@graph"] = graph
+    });
+}
+
+<title>@fullTitle</title>
+<meta name="description" content="@description" />
+<link rel="canonical" href="@canonical" />
+<meta name="robots" content="@(noIndex ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1")" />
+
+<meta property="og:site_name" content="@site.Name" />
+<meta property="og:locale" content="@site.Locale" />
+<meta property="og:type" content="@meta.Type" />
+<meta property="og:title" content="@(pageTitle ?? site.Name)" />
+<meta property="og:description" content="@description" />
+<meta property="og:url" content="@canonical" />
+<meta property="og:image" content="@image" />
+<meta property="og:image:secure_url" content="@image" />
+<meta property="og:image:alt" content="@imageAlt" />
+@if (isDefaultImage)
+{
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+}
+@if (meta.Type == "article")
+{
+    if (meta.PublishedTime.HasValue)
+    {
+        <meta property="article:published_time" content="@meta.PublishedTime.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")" />
+    }
+    if (meta.ModifiedTime.HasValue)
+    {
+        <meta property="article:modified_time" content="@meta.ModifiedTime.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")" />
+    }
+    if (!string.IsNullOrEmpty(meta.Section))
+    {
+        <meta property="article:section" content="@meta.Section" />
+    }
+    if (!string.IsNullOrEmpty(meta.Author))
+    {
+        <meta name="author" content="@meta.Author" />
+    }
+}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="@(pageTitle ?? site.Name)" />
+<meta name="twitter:description" content="@description" />
+<meta name="twitter:image" content="@image" />
+<meta name="twitter:image:alt" content="@imageAlt" />
+@if (!string.IsNullOrEmpty(site.TwitterHandle))
+{
+    <meta name="twitter:site" content="@site.TwitterHandle" />
+}
+
+<link rel="alternate" type="application/rss+xml" title="@site.Name RSS feed" href="@Urls.Absolute("/rss.xml")" />
+<script type="application/ld+json">@Html.Raw(jsonLd)</script>
