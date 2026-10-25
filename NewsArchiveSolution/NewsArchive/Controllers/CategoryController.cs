@@ -1,8 +1,9 @@
 using BLL;
-using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
+using NewsArchive.Filters;
+using NewsArchive.Seo;
 
 namespace NewsArchive.Controllers
 {
@@ -20,6 +21,7 @@ namespace NewsArchive.Controllers
         public IActionResult Index()
         {
             var data = categoryService.Get();
+            ViewBag.ArticleCounts = data.ToDictionary(c => c.CategoryId, c => categoryService.CountArticles(c.CategoryId));
             return View(data);
         }
 
@@ -32,102 +34,83 @@ namespace NewsArchive.Controllers
                 return NotFound();
 
             if (slug != category.Slug)
-                return RedirectPermanent(Seo.SeoUrls.Category(category.CategoryId, category.Slug));
+                return RedirectPermanent(SeoUrls.Category(category.CategoryId, category.Slug));
 
-            var articles = articleService.GetByCategoryId(id);
+            var articles = articleService.GetByCategoryId(id, CurrentLanguage);
             SetArticleLookups(articles);
 
             ViewBag.Category = category;
             return View(articles);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Create()
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
             return View(new CategoryDTO());
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Create(CategoryDTO c)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
+            if (!string.IsNullOrWhiteSpace(c.Name) && categoryService.NameExists(c.Name, 0))
+                ModelState.AddModelError(nameof(c.Name), L["A section with this name already exists."]);
 
-            if (ModelState.IsValid)
+            if (ModelState.IsValid && categoryService.Create(c))
             {
-                var res = categoryService.Create(c);
-                if (res == true)
-                {
-                    return RedirectToAction("Index");
-                }
+                Flash("success", "Section created.");
+                return RedirectToAction("Index");
             }
             return View(c);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
             var data = categoryService.Get(id);
+            if (data == null) return NotFound();
             return View(data);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Edit(CategoryDTO c)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
+            if (!string.IsNullOrWhiteSpace(c.Name) && categoryService.NameExists(c.Name, c.CategoryId))
+                ModelState.AddModelError(nameof(c.Name), L["A section with this name already exists."]);
 
-            if (ModelState.IsValid)
+            if (ModelState.IsValid && categoryService.Update(c))
             {
-                var res = categoryService.Update(c);
-                if (res == true)
-                {
-                    return RedirectToAction("Index");
-                }
+                Flash("success", "Section updated.");
+                return RedirectToAction("Index");
             }
             return View(c);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Delete(int id)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
             var data = categoryService.Get(id);
+            if (data == null) return NotFound();
+
+            ViewBag.ArticleCount = categoryService.CountArticles(id);
+            ViewBag.OtherCategories = categoryService.Get().Where(c => c.CategoryId != id).ToList();
             return View(data);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpPost]
-        public IActionResult Delete(int id, string Decision)
+        public IActionResult Delete(int id, string Decision, int? moveArticlesTo)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
             if (Decision == "Yes")
             {
-                if (categoryService.Delete(id))
-                    Flash("success", "Category deleted.");
+                if (categoryService.Delete(id, moveArticlesTo))
+                    Flash("success", "Section deleted.");
                 else
-                    Flash("danger", "This category still has articles. Move or delete them first.");
+                    Flash("danger", "Choose a section to move this section's articles to.");
             }
             return RedirectToAction("Index");
         }

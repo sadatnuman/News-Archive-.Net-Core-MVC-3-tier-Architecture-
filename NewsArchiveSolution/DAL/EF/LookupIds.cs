@@ -7,6 +7,12 @@ namespace DAL.EF
         public const int Author = 3;
     }
 
+    public static class LanguageCodes
+    {
+        public const string English = "en";
+        public const string Bangla = "bn";
+    }
+
     public static class ArticleStatusIds
     {
         public const int Draft = 1;

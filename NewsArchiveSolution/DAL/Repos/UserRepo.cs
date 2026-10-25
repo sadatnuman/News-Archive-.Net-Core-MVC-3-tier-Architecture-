@@ -1,47 +1,37 @@
-﻿using DAL.EF;
+using DAL.EF;
 using DAL.EF.Tables;
+using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DAL.Repos
 {
-    public class UserRepo
+    internal class UserRepo : Repository<User>, IUserRepository
     {
-        NewsArchiveDbContext db;
-        public UserRepo(NewsArchiveDbContext db)
+        public UserRepo(NewsArchiveDbContext db) : base(db)
         {
-            this.db = db;
         }
-        public bool Create(User c)
+
+        public override User? Get(int id)
         {
-            db.Users.Add(c);
-            return db.SaveChanges() > 0;
+            return db.Users.AsNoTracking().FirstOrDefault(u => u.UserId == id);
         }
-        public User Get(int id)
+
+        public override bool Delete(int id)
         {
-            return db.Users.Find(id);
-        }
-        public List<User> Get()
-        {
-            return db.Users.ToList();
-        }
-        public bool Update(User c)
-        {
-            var exobj = Get(c.UserId);
-            db.Entry(exobj).CurrentValues.SetValues(c);
-            return db.SaveChanges() > 0;
-        }
-        public bool Delete(int id)
-        {
-            var exobj = Get(id);
-            if (exobj == null) return false;
+            var existing = db.Users.Find(id);
+            if (existing == null) return false;
             if (db.Articles.Any(a => a.AuthorId == id || a.ReviewedById == id)) return false;
 
             db.Comments.Where(c => c.UserId == id).ExecuteDelete();
-            db.Users.Remove(exobj);
+            db.Users.Remove(existing);
             return db.SaveChanges() > 0;
+        }
+
+        public bool UpdatePasswordHash(int userId, string passwordHash)
+        {
+            return db.Users
+                .Where(u => u.UserId == userId)
+                .ExecuteUpdate(s => s.SetProperty(u => u.PasswordHash, passwordHash)) > 0;
         }
 
         public User? GetByEmail(string? email)
@@ -56,11 +46,6 @@ namespace DAL.Repos
             return db.Users.AsNoTracking()
                 .Where(u => idList.Contains(u.UserId))
                 .ToDictionary(u => u.UserId, u => u.Name);
-        }
-
-        public int Count()
-        {
-            return db.Users.Count();
         }
     }
 }

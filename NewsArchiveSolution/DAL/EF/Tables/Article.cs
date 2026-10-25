@@ -29,6 +29,8 @@ public partial class Article
 
     public int StatusId { get; set; }
 
+    public string LanguageCode { get; set; } = LanguageCodes.English;
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -44,6 +46,8 @@ public partial class Article
     public virtual Category Category { get; set; } = null!;
 
     public virtual ArticleStatus Status { get; set; } = null!;
+
+    public virtual Language Language { get; set; } = null!;
 
     public virtual User? ReviewedBy { get; set; }
 

@@ -1,18 +1,12 @@
-﻿using BLL;
-using NewsArchive.Filters;
+using BLL;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
+using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
 {
-    [RoleAccess(AppRoles.Admin)]
-    [Logged]
+    [CustomAuthorize(AppRoles.Admin)]
     public class AdminController : AppController
     {
         private readonly UserService _userService;
@@ -20,15 +14,18 @@ namespace NewsArchive.Controllers
         private readonly AnalyticsService analyticsService;
         private readonly ArticleService articleService;
         private readonly CategoryService categoryService;
+        private readonly AuthService authService;
 
-        public AdminController(UserService userService, RoleService roleService, AnalyticsService analyticsService, ArticleService articleService, CategoryService categoryService)
+        public AdminController(UserService userService, RoleService roleService, AnalyticsService analyticsService, ArticleService articleService, CategoryService categoryService, AuthService authService)
         {
+            this.authService = authService;
             _userService = userService;
             _roleService = roleService;
             this.analyticsService = analyticsService;
             this.articleService = articleService;
             this.categoryService = categoryService;
         }
+
         public IActionResult Index()
         {
             ViewBag.TotalArticles = analyticsService.GetTotalArticles();
@@ -49,7 +46,6 @@ namespace NewsArchive.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Approve(int id)
         {
             if (articleService.Approve(id, CurrentUserId ?? 0))
@@ -60,7 +56,6 @@ namespace NewsArchive.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Reject(int id, string? note)
         {
             if (articleService.Reject(id, CurrentUserId ?? 0, note))
@@ -69,110 +64,78 @@ namespace NewsArchive.Controllers
                 Flash("danger", "Only pending articles can be rejected.");
             return RedirectToAction("PendingArticles");
         }
+
         [HttpGet]
         public IActionResult AllUser()
         {
-            var users = _userService.Get() ?? new List<UserDTO>();
-            ViewBag.Roles = _roleService.Get();
-            ViewBag.CurrentAdminEmail = HttpContext.Session.GetString("Email");
-            return View(users);
+            ViewBag.CurrentAdminEmail = CurrentEmail;
+            return View(_userService.Get());
         }
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult AllUser(string searchTerm)
         {
-            var users = _userService.Get() ?? new List<UserDTO>();
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                users = users
-                    .Where(u => u.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-            ViewBag.Roles = _roleService.Get();
-            ViewBag.CurrentAdminEmail = HttpContext.Session.GetString("Email");
-            return View(users);
+            ViewBag.CurrentAdminEmail = CurrentEmail;
+            return View(_userService.Search(searchTerm));
         }
+
         [HttpGet]
         public IActionResult Profile()
         {
-            ViewBag.Roles = _roleService.Get();
-            var email = HttpContext.Session.GetString("Email");
-            var user = _userService.GetByEmail(email);
+            var user = _userService.GetByEmail(CurrentEmail);
             if (user == null) return NotFound();
-            ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
             return View(user);
         }
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Profile(UserDTO obj)
         {
-            ViewBag.Roles = _roleService.Get();
-
-            var existing = _userService.Get(obj.UserId);
+            var existing = _userService.Get(CurrentUserId ?? 0);
             if (existing == null) return NotFound();
 
-            existing.Name = obj.Name;
-
-            var updated = _userService.Update(existing);
-            if (updated)
+            if (string.IsNullOrWhiteSpace(obj.Name) || obj.Name.Trim().Length is < 2 or > 100)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User updated";
+                Flash("danger", "Name must be between 2 and 100 characters");
+                return View(existing);
+            }
+
+            existing.Name = obj.Name;
+            if (_userService.Update(existing))
+            {
+                Flash("success", "User updated");
                 return RedirectToAction("Profile", "Admin");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(existing);
         }
-
 
         [HttpGet]
         public IActionResult ChangePassword()
         {
-            ViewBag.Roles = _roleService.Get();
-            var email = HttpContext.Session.GetString("Email");
-            var user = _userService.GetByEmail(email);
+            var user = _userService.GetByEmail(CurrentEmail);
             if (user == null) return NotFound();
-            ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
-
-            var model = new BLL.DTOs.ChangePasswordDTO
-            {
-                UserId = user.UserId,
-                Email = user.Email
-            };
-
-            return View(model);
+            return View(new ChangePasswordDTO { UserId = user.UserId, Email = user.Email });
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult ChangePassword(BLL.DTOs.ChangePasswordDTO obj)
+        public async Task<IActionResult> ChangePassword(ChangePasswordDTO obj)
         {
-            ViewBag.Roles = _roleService.Get();
+            var userId = CurrentUserId ?? 0;
+            obj.UserId = userId;
+            obj.Email = CurrentEmail;
+            if (!ModelState.IsValid) return View(obj);
 
-            if (!ModelState.IsValid)
+            if (authService.ChangePassword(userId, obj.PasswordHash))
             {
-                return View(obj);
-            }
-
-            var existing = _userService.Get(obj.UserId);
-            if (existing == null) return NotFound();
-
-            existing.PasswordHash = GetMd5(obj.PasswordHash);
-            existing.ConfPassword = GetMd5(obj.ConfPassword);
-
-            var updated = _userService.Update(existing);
-            if (updated)
-            {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "Password updated";
+                await authService.RevokeAllAsync(userId);
+                var refreshed = authService.GetUser(userId);
+                if (refreshed != null) await SignInUserAsync(refreshed);
+                Flash("success", "Password updated");
                 return RedirectToAction("Profile", "Admin");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(obj);
         }
 
@@ -191,29 +154,19 @@ namespace NewsArchive.Controllers
             if (!ModelState.IsValid)
                 return View(obj);
 
-            var hashed1 = GetMd5(obj.PasswordHash ?? string.Empty);
-            var hashed2 = GetMd5(obj.ConfPassword ?? string.Empty);
-
-            var userDto = new UserDTO
+            if (_roleService.Get(obj.RoleId) == null)
             {
-                Name = obj.Name,
-                Email = obj.Email,
-                PasswordHash = hashed1,
-                ConfPassword = hashed2,
-                RoleId = obj.RoleId,
-                CreatedAt = DateTime.UtcNow
-            };
+                ModelState.AddModelError(nameof(obj.RoleId), L["Please choose a role"]);
+                return View(obj);
+            }
 
-            var created = _userService.Create(userDto);
-            if (created)
+            if (_userService.Create(obj))
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User created successfully";
+                Flash("success", "User created successfully");
                 return RedirectToAction("AllUser", "Admin");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Failed to create user";
+            Flash("danger", "Failed to create user");
             return View(obj);
         }
 
@@ -227,27 +180,28 @@ namespace NewsArchive.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Edit(UserDTO obj)
         {
             ViewBag.Roles = _roleService.Get();
 
             var existing = _userService.Get(obj.UserId);
             if (existing == null) return NotFound();
+            if (existing.UserId == CurrentUserId || _roleService.Get(obj.RoleId) == null)
+            {
+                Flash("danger", "Update failed");
+                return RedirectToAction("AllUser");
+            }
 
             existing.Name = obj.Name;
             existing.RoleId = obj.RoleId;
 
-            var updated = _userService.Update(existing);
-            if (updated)
+            if (_userService.Update(existing))
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User updated";
+                Flash("success", "User updated");
                 return RedirectToAction("AllUser");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(existing);
         }
 
@@ -264,7 +218,6 @@ namespace NewsArchive.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string Decision)
         {
             if (Decision != "Yes")
@@ -278,21 +231,6 @@ namespace NewsArchive.Controllers
                 Flash("danger", "This user has written articles. Reassign or delete them first.");
 
             return RedirectToAction("AllUser");
-        }
-
-        private static string GetMd5(string input)
-        {
-            using (MD5 md5 = MD5.Create())
-            {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(input ?? string.Empty);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                var sb = new StringBuilder();
-                foreach (byte b in hashBytes)
-                    sb.Append(b.ToString("x2"));
-
-                return sb.ToString();
-            }
         }
     }
 }

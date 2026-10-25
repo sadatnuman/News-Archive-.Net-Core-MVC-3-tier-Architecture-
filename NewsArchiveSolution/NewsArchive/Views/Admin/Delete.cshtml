@@ -1,27 +1,29 @@
 ﻿@model BLL.DTOs.UserDTO
 
 @{
-    ViewData["Title"] = "Delete User";
+    ViewData["Title"] = L["Delete user"];
+    ViewData["NoIndex"] = true;
 }
 
-<h2>Delete User</h2>
-
-<h3>Are you sure you want to delete this user?</h3>
-<div>
-    <dl class="row">
-        <dt class="col-sm-2">Name</dt>
-        <dd class="col-sm-10">@Model.Name</dd>
-
-        <dt class="col-sm-2">Email</dt>
-        <dd class="col-sm-10">@Model.Email</dd>
-
-        <dt class="col-sm-2">Role</dt>
-        <dd class="col-sm-10">@ViewBag.RoleName</dd>
-    </dl>
+<div class="container">
+    <div class="auth-card">
+        <h1 class="h3 mb-3">@L["Delete this user?"]</h1>
+        <dl class="row mb-4">
+            <dt class="col-4">@L["Name"]</dt>
+            <dd class="col-8">@Model.Name</dd>
+            <dt class="col-4">@L["Email"]</dt>
+            <dd class="col-8">@Model.Email</dd>
+            <dt class="col-4">@L["Role"]</dt>
+            <dd class="col-8">@L[AppRoles.Name(Model.RoleId)]</dd>
+        </dl>
+        <p class="small text-muted">@L["Their comments are deleted too. Users who have written articles cannot be deleted."]</p>
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" name="id" value="@Model.UserId" />
+            <div class="d-flex gap-2">
+                <button type="submit" name="Decision" value="Yes" class="btn btn-danger">@L["Yes, delete"]</button>
+                <a asp-action="AllUser" class="btn btn-outline-secondary">@L["Cancel"]</a>
+            </div>
+        </form>
+    </div>
 </div>
-
-<form asp-action="Delete" method="post">
-    <input type="hidden" asp-for="UserId" />
-    <button type="submit" name="Decision" value="Yes" class="btn btn-danger">Delete</button>
-    <a asp-action="AllUser" class="btn btn-secondary">Cancel</a>
-</form>

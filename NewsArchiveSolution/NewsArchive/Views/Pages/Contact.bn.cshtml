@@ -1,0 +1,28 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<SiteOptions> SiteConfig
+
+@{
+    Layout = "_PageShell";
+    ViewData["Heading"] = "যোগাযোগ";
+    var email = SiteConfig.Value.ContactEmail;
+    var meta = ViewData.Meta();
+    meta.Title = "দ্য মেরিডিয়ান নিউজফোলিওর সঙ্গে যোগাযোগ";
+    meta.Description = "দ্য মেরিডিয়ান নিউজফোলিওর নিউজরুমে সংবাদের তথ্য, সংশোধনী ও মতামত পাঠান।";
+    meta.Breadcrumbs.Add(("যোগাযোগ", SeoUrls.Page("/contact")));
+}
+
+<p class="lead">আমরা প্রতিটি বার্তা পড়ি। কোন সংবাদ আমাদের প্রকাশ করা উচিত, কোন ভুল সংশোধন করা দরকার, অথবা কীভাবে আমরা আরও ভালো করতে পারি তা জানান।</p>
+
+@if (!string.IsNullOrWhiteSpace(email))
+{
+    <div class="side-panel mb-4">
+        <h2 class="side-panel-title">নিউজরুমের ইমেইল</h2>
+        <p class="mb-0"><a href="mailto:@email" class="fs-5 fw-semibold">@email</a></p>
+    </div>
+}
+
+<h2>সংশোধনী</h2>
+<p>কোনো সংবাদে ভুল আছে মনে হলে সংবাদের লিংক ও সংশোধনের বিস্তারিত পাঠান। আমাদের সংশোধনী প্রক্রিয়ার বিবরণ <a href="/editorial-policy?lang=bn">সম্পাদকীয় নীতিতে</a> আছে।</p>
+
+<h2>আমাদের জন্য লিখুন</h2>
+<p>একটি অ্যাকাউন্ট খুলুন এবং অ্যাডমিনকে অনুরোধ করুন আপনার অ্যাকাউন্টে লেখকের ভূমিকা দিতে। লেখকেরা সংবাদ লিখে জমা দিতে পারেন, আর প্রকাশের আগে একজন সম্পাদক তা পর্যালোচনা করেন।</p>

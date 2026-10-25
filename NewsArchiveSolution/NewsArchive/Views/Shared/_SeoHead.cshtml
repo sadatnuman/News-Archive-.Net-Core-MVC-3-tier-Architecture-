@@ -6,10 +6,17 @@
 @{
     var site = SiteConfig.Value;
     var meta = ViewData.Meta();
-    var pageTitle = meta.Title ?? ViewData["Title"] as string;
-    var fullTitle = string.IsNullOrEmpty(pageTitle) ? $"{site.Name} – {site.Tagline}" : $"{pageTitle} | {site.Name}";
-    var description = PageMeta.Shorten(meta.Description ?? site.Description);
-    var canonical = Urls.Absolute(meta.CanonicalPath ?? Context.Request.Path.Value);
+    var lang = UiLanguage.Current;
+    var tagline = L[site.Tagline].Value;
+    var pageTitle = meta.Title ?? ViewData["Title"]?.ToString();
+    var fullTitle = string.IsNullOrEmpty(pageTitle) ? $"{site.Name} – {tagline}" : $"{pageTitle} | {site.Name}";
+    var description = PageMeta.Shorten(meta.Description ?? L[site.Description].Value);
+    var canonicalPath = meta.CanonicalPath ?? UiLanguage.WithLanguage(Context.Request.Path.Value ?? "/", lang);
+    var canonical = Urls.Absolute(canonicalPath);
+    List<(string Code, string Href)> alternates = meta.ContentLanguage != null
+        ? new List<(string Code, string Href)> { (meta.ContentLanguage, canonical) }
+        : AppLanguages.All.Select(code => (code, Urls.Absolute(UiLanguage.WithLanguage(canonicalPath, code)))).ToList();
+    var ogLocale = lang == AppLanguages.Bangla ? "bn_BD" : "en_US";
     var isDefaultImage = string.IsNullOrEmpty(meta.Image);
     var image = Urls.AbsoluteImage(meta.Image);
     var imageAlt = meta.ImageAlt ?? pageTitle ?? site.Name;
@@ -33,12 +40,12 @@
             ["@id"] = Urls.Absolute("/#website"),
             ["name"] = site.Name,
             ["url"] = Urls.Absolute("/"),
-            ["inLanguage"] = site.Language,
+            ["inLanguage"] = lang,
             ["publisher"] = new Dictionary<string, object?> { ["@id"] = Urls.Absolute("/#organization") },
             ["potentialAction"] = new Dictionary<string, object?>
             {
                 ["@type"] = "SearchAction",
-                ["target"] = new Dictionary<string, object?> { ["@type"] = "EntryPoint", ["urlTemplate"] = Urls.Absolute("/search?keyword={search_term_string}") },
+                ["target"] = new Dictionary<string, object?> { ["@type"] = "EntryPoint", ["urlTemplate"] = Urls.Absolute(lang == AppLanguages.Bangla ? "/search?lang=bn&keyword={search_term_string}" : "/search?keyword={search_term_string}") },
                 ["query-input"] = "required name=search_term_string"
             }
         }
@@ -46,7 +53,7 @@
 
     if (meta.Breadcrumbs.Count > 0)
     {
-        var crumbs = new List<(string Name, string Path)> { ("Home", "/") };
+        var crumbs = new List<(string Name, string Path)> { (L["Home"].Value, SeoUrls.Page("/")) };
         crumbs.AddRange(meta.Breadcrumbs);
         graph.Add(new Dictionary<string, object?>
         {
@@ -73,10 +80,19 @@
 <title>@fullTitle</title>
 <meta name="description" content="@description" />
 <link rel="canonical" href="@canonical" />
+@foreach (var alt in alternates)
+{
+    <link rel="alternate" hreflang="@alt.Code" href="@alt.Href" />
+}
+@if (meta.ContentLanguage == null)
+{
+    <link rel="alternate" hreflang="x-default" href="@Urls.Absolute(UiLanguage.WithLanguage(canonicalPath, AppLanguages.English))" />
+}
 <meta name="robots" content="@(noIndex ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1")" />
 
 <meta property="og:site_name" content="@site.Name" />
-<meta property="og:locale" content="@site.Locale" />
+<meta property="og:locale" content="@ogLocale" />
+<meta property="og:locale:alternate" content="@(lang == AppLanguages.Bangla ? "en_US" : "bn_BD")" />
 <meta property="og:type" content="@meta.Type" />
 <meta property="og:title" content="@(pageTitle ?? site.Name)" />
 <meta property="og:description" content="@description" />
@@ -120,5 +136,5 @@
     <meta name="twitter:site" content="@site.TwitterHandle" />
 }
 
-<link rel="alternate" type="application/rss+xml" title="@site.Name RSS feed" href="@Urls.Absolute("/rss.xml")" />
+<link rel="alternate" type="application/rss+xml" title="@site.Name RSS" href="@Urls.Absolute(SeoUrls.Page("/rss.xml"))" />
 <script type="application/ld+json">@Html.Raw(jsonLd)</script>

@@ -1,58 +1,77 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BLL.DTOs;
 using DAL.EF.Tables;
-using DAL.Repos;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class CategoryService
     {
-        CategoryRepo repo;
-        Mapper mapper;
-        public CategoryService(CategoryRepo repo)
+        private readonly ICategoryRepository repo;
+        private readonly IMapper mapper;
+
+        public CategoryService(DataAccessFactory factory, IMapper mapper)
         {
-            this.repo = repo;
-            mapper = MapperConfig.GetMapper();
+            repo = factory.GetCategoryRepository();
+            this.mapper = mapper;
         }
+
         public List<CategoryDTO> Get()
         {
             var data = repo.Get();
             var res = mapper.Map<List<CategoryDTO>>(data);
             return res;
-
         }
+
         public CategoryDTO Get(int id)
         {
             var data = repo.Get(id);
             var res = mapper.Map<CategoryDTO>(data);
             return res;
-
         }
+        private string UniqueSlug(string name, int categoryId)
+        {
+            var baseSlug = SlugHelper.Generate(name);
+            var slug = baseSlug;
+            var suffix = 2;
+            while (repo.SlugExists(slug, categoryId))
+                slug = $"{baseSlug}-{suffix++}";
+            return slug;
+        }
+
+        public bool NameExists(string name, int categoryId)
+        {
+            return repo.NameExists(name.Trim(), categoryId);
+        }
+
         public bool Create(CategoryDTO c)
         {
-            c.Slug = SlugHelper.Generate(c.Name);
+            c.Name = c.Name.Trim();
+            c.Slug = UniqueSlug(c.Name, 0);
             var converted = mapper.Map<Category>(c);
-            return repo.Create(converted);
+            if (!repo.Create(converted)) return false;
+            c.CategoryId = converted.CategoryId;
+            return true;
         }
 
         public bool Update(CategoryDTO c)
         {
-            c.Slug = SlugHelper.Generate(c.Name);
+            c.Name = c.Name.Trim();
+            c.Slug = UniqueSlug(c.Name, c.CategoryId);
             var converted = mapper.Map<Category>(c);
             return repo.Update(converted);
         }
-        public bool Delete(int id)
+
+        public bool Delete(int id, int? moveArticlesTo)
         {
-            if (repo.HasArticles(id)) return false;
-            return repo.Delete(id);
+            if (!repo.HasArticles(id)) return repo.Delete(id);
+            return moveArticlesTo.HasValue && repo.DeleteMovingArticles(id, moveArticlesTo.Value);
         }
 
-        public bool HasArticles(int id)
+        public int CountArticles(int id)
         {
-            return repo.HasArticles(id);
+            return repo.CountArticles(id);
         }
 
         public void EnsureSlugs()

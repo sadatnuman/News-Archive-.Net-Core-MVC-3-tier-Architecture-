@@ -21,6 +21,8 @@ public partial class User
 
     public virtual ICollection<Article> ReviewedArticles { get; set; } = new List<Article>();
 
+    public virtual ICollection<UserToken> Tokens { get; set; } = new List<UserToken>();
+
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual Role Role { get; set; } = null!;

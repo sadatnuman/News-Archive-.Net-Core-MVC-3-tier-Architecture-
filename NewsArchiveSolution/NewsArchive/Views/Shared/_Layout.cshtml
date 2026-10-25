@@ -1,25 +1,28 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="@UiLanguage.Current" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="~/js/theme-init.js" asp-append-version="true"></script>
     <partial name="_SeoHead" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#0b1a33" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="~/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="~/images/brand/favicon-32.png" />
     <link rel="apple-touch-icon" href="~/images/brand/apple-touch-icon.png" />
     <link rel="manifest" href="~/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;600&family=Noto+Serif+Bengali:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
-    <a class="skip-link" href="#main">Skip to main content</a>
+    <a class="skip-link" href="#main">@L["Skip to main content"]</a>
 
+    <partial name="_DemoNotice" />
     <partial name="_Navigation" />
 
     @if (TempData["Msg"] is string flashMessage)

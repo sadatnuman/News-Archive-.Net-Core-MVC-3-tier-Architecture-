@@ -1,3 +1,4 @@
+using BLL;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -7,7 +8,7 @@ using System.Xml.Linq;
 
 namespace NewsArchive.Controllers
 {
-    public class SeoController : Controller
+    public class SeoController : AppController
     {
         private static readonly XNamespace SitemapNs = "http://www.sitemaps.org/schemas/sitemap/0.9";
         private static readonly XNamespace NewsNs = "http://www.google.com/schemas/sitemap-news/0.9";
@@ -41,6 +42,8 @@ namespace NewsArchive.Controllers
             sb.AppendLine("Disallow: /Article/Delete/");
             sb.AppendLine("Disallow: /Article/MyArticles");
             sb.AppendLine("Disallow: /search?");
+            sb.AppendLine("Disallow: /api/");
+            sb.AppendLine("Disallow: /swagger/");
             sb.AppendLine();
             sb.AppendLine($"Sitemap: {urls.Absolute("/sitemap.xml")}");
             sb.AppendLine($"Sitemap: {urls.Absolute("/news-sitemap.xml")}");
@@ -60,7 +63,7 @@ namespace NewsArchive.Controllers
                 var url = new XElement(SitemapNs + "url",
                     new XElement(SitemapNs + "loc", urls.Absolute(path)));
                 if (modified.HasValue)
-                    url.Add(new XElement(SitemapNs + "lastmod", modified.Value.ToString("yyyy-MM-ddTHH:mm:sszzz")));
+                    url.Add(new XElement(SitemapNs + "lastmod", modified.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")));
                 url.Add(new XElement(SitemapNs + "changefreq", changeFreq));
                 url.Add(new XElement(SitemapNs + "priority", priority));
                 if (image != null) url.Add(image);
@@ -68,13 +71,16 @@ namespace NewsArchive.Controllers
             }
 
             var latest = articles.Count > 0 ? articles.Max(a => a.UpdatedAt ?? a.PublishDate) : (DateTime?)null;
-            AddUrl("/", latest, "hourly", "1.0");
-            AddUrl("/trending", latest, "hourly", "0.8");
-            AddUrl("/breaking-news", latest, "hourly", "0.8");
-            AddUrl("/Category", null, "weekly", "0.6");
-
-            foreach (var c in categoryService.Get())
-                AddUrl(SeoUrls.Category(c.CategoryId, c.Slug), null, "daily", "0.7");
+            var categories = categoryService.Get();
+            foreach (var lang in AppLanguages.All)
+            {
+                AddUrl(SeoUrls.Page("/", lang), latest, "hourly", "1.0");
+                AddUrl(SeoUrls.Page("/trending", lang), latest, "hourly", "0.8");
+                AddUrl(SeoUrls.Page("/breaking-news", lang), latest, "hourly", "0.8");
+                AddUrl(SeoUrls.Page("/Category", lang), null, "weekly", "0.6");
+                foreach (var c in categories)
+                    AddUrl(SeoUrls.Category(c.CategoryId, c.Slug, lang), null, "daily", "0.7");
+            }
 
             foreach (var a in articles)
             {
@@ -82,11 +88,12 @@ namespace NewsArchive.Controllers
                 if (!string.IsNullOrEmpty(a.ImagePath))
                     image = new XElement(ImageNs + "image",
                         new XElement(ImageNs + "loc", urls.AbsoluteImage(a.ImagePath)));
-                AddUrl(SeoUrls.Article(a.ArticleId, a.Slug), a.UpdatedAt ?? a.PublishDate, "weekly", "0.9", image);
+                AddUrl(SeoUrls.Article(a), a.UpdatedAt ?? a.PublishDate, "weekly", "0.9", image);
             }
 
-            foreach (var page in new[] { "/about", "/contact", "/editorial-policy", "/privacy", "/terms" })
-                AddUrl(page, null, "yearly", "0.3");
+            foreach (var lang in AppLanguages.All)
+                foreach (var page in new[] { "/about", "/contact", "/editorial-policy", "/privacy", "/terms" })
+                    AddUrl(SeoUrls.Page(page, lang), null, "yearly", "0.3");
 
             return Xml(root);
         }
@@ -102,12 +109,12 @@ namespace NewsArchive.Controllers
             foreach (var a in articleService.GetPublishedForSitemap().Where(a => a.PublishDate >= cutoff).Take(1000))
             {
                 root.Add(new XElement(SitemapNs + "url",
-                    new XElement(SitemapNs + "loc", urls.Absolute(SeoUrls.Article(a.ArticleId, a.Slug))),
+                    new XElement(SitemapNs + "loc", urls.Absolute(SeoUrls.Article(a))),
                     new XElement(NewsNs + "news",
                         new XElement(NewsNs + "publication",
                             new XElement(NewsNs + "name", site.Name),
-                            new XElement(NewsNs + "language", site.Language)),
-                        new XElement(NewsNs + "publication_date", a.PublishDate.ToString("yyyy-MM-ddTHH:mm:sszzz")),
+                            new XElement(NewsNs + "language", a.LanguageCode)),
+                        new XElement(NewsNs + "publication_date", a.PublishDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")),
                         new XElement(NewsNs + "title", a.Title))));
             }
 
@@ -119,20 +126,21 @@ namespace NewsArchive.Controllers
         public ContentResult Rss()
         {
             XNamespace atom = "http://www.w3.org/2005/Atom";
+            var language = UiLanguage.Current;
             var channel = new XElement("channel",
                 new XElement(atom + "link",
-                    new XAttribute("href", urls.Absolute("/rss.xml")),
+                    new XAttribute("href", urls.Absolute(SeoUrls.Page("/rss.xml", language))),
                     new XAttribute("rel", "self"),
                     new XAttribute("type", "application/rss+xml")),
                 new XElement("title", site.Name),
-                new XElement("link", urls.Absolute("/")),
-                new XElement("description", site.Description),
-                new XElement("language", site.Language),
+                new XElement("link", urls.Absolute(SeoUrls.Page("/", language))),
+                new XElement("description", L[site.Description].Value),
+                new XElement("language", language),
                 new XElement("lastBuildDate", DateTime.Now.ToString("R")));
 
-            foreach (var a in articleService.GetLatest(50))
+            foreach (var a in articleService.GetLatest(50, language))
             {
-                var link = urls.Absolute(SeoUrls.Article(a.ArticleId, a.Slug));
+                var link = urls.Absolute(SeoUrls.Article(a));
                 var item = new XElement("item",
                     new XElement("title", a.Title),
                     new XElement("link", link),

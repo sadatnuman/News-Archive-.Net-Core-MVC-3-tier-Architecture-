@@ -1,0 +1,960 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="10 to 500 characters. Used in listings, search results and social shares." xml:space="preserve">
+    <value>১০ থেকে ৫০০ অক্ষর। তালিকা, অনুসন্ধানের ফলাফল ও সোশ্যাল মিডিয়ায় শেয়ারে দেখানো হয়।</value>
+  </data>
+  <data name="5 to 200 characters. Put the main keyword near the start." xml:space="preserve">
+    <value>৫ থেকে ২০০ অক্ষর। মূল শব্দটি শুরুর দিকে রাখুন।</value>
+  </data>
+  <data name="A clear, specific headline" xml:space="preserve">
+    <value>স্পষ্ট ও নির্দিষ্ট একটি শিরোনাম</value>
+  </data>
+  <data name="A section with this name already exists." xml:space="preserve">
+    <value>এই নামে একটি বিভাগ আগে থেকেই আছে।</value>
+  </data>
+  <data name="About us" xml:space="preserve">
+    <value>আমাদের কথা</value>
+  </data>
+  <data name="About {0}" xml:space="preserve">
+    <value>{0} সম্পর্কে</value>
+  </data>
+  <data name="Access denied" xml:space="preserve">
+    <value>প্রবেশাধিকার নেই</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>অ্যাকাউন্ট</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>কার্যক্রম</value>
+  </data>
+  <data name="Add user" xml:space="preserve">
+    <value>ব্যবহারকারী যোগ করুন</value>
+  </data>
+  <data name="Admin" xml:space="preserve">
+    <value>অ্যাডমিন</value>
+  </data>
+  <data name="Admin dashboard" xml:space="preserve">
+    <value>অ্যাডমিন ড্যাশবোর্ড</value>
+  </data>
+  <data name="Admins approve or return articles with a note. You can edit drafts, pending and rejected articles." xml:space="preserve">
+    <value>অ্যাডমিন লেখা অনুমোদন দেন অথবা মন্তব্যসহ ফেরত পাঠান। খসড়া, অপেক্ষমাণ ও ফেরত আসা লেখা আপনি সম্পাদনা করতে পারবেন।</value>
+  </data>
+  <data name="All rights reserved." xml:space="preserve">
+    <value>সর্বস্বত্ব সংরক্ষিত।</value>
+  </data>
+  <data name="All sections" xml:space="preserve">
+    <value>সব বিভাগ</value>
+  </data>
+  <data name="Already have an account?" xml:space="preserve">
+    <value>আগে থেকেই অ্যাকাউন্ট আছে?</value>
+  </data>
+  <data name="Approve" xml:space="preserve">
+    <value>অনুমোদন</value>
+  </data>
+  <data name="Approve &amp; publish" xml:space="preserve">
+    <value>অনুমোদন ও প্রকাশ</value>
+  </data>
+  <data name="Article" xml:space="preserve">
+    <value>সংবাদ</value>
+  </data>
+  <data name="Article ID is required" xml:space="preserve">
+    <value>সংবাদের আইডি প্রয়োজন</value>
+  </data>
+  <data name="Article ID must be greater than 0" xml:space="preserve">
+    <value>সংবাদের আইডি ০-এর বেশি হতে হবে</value>
+  </data>
+  <data name="Article approved and published." xml:space="preserve">
+    <value>সংবাদটি অনুমোদিত ও প্রকাশিত হয়েছে।</value>
+  </data>
+  <data name="Article deleted." xml:space="preserve">
+    <value>সংবাদটি মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="Article published." xml:space="preserve">
+    <value>সংবাদটি প্রকাশিত হয়েছে।</value>
+  </data>
+  <data name="Article rejected and returned to the author." xml:space="preserve">
+    <value>সংবাদটি ফেরত পাঠানো হয়েছে এবং লেখককে জানানো হয়েছে।</value>
+  </data>
+  <data name="Article sent to the admin for approval." xml:space="preserve">
+    <value>সংবাদটি অনুমোদনের জন্য অ্যাডমিনের কাছে পাঠানো হয়েছে।</value>
+  </data>
+  <data name="Article updated." xml:space="preserve">
+    <value>সংবাদটি হালনাগাদ হয়েছে।</value>
+  </data>
+  <data name="Articles" xml:space="preserve">
+    <value>সংবাদ</value>
+  </data>
+  <data name="Articles awaiting approval" xml:space="preserve">
+    <value>অনুমোদনের অপেক্ষায় থাকা সংবাদ</value>
+  </data>
+  <data name="Articles you publish go live immediately." xml:space="preserve">
+    <value>আপনার প্রকাশ করা সংবাদ সঙ্গে সঙ্গে সাইটে চলে যাবে।</value>
+  </data>
+  <data name="Author" xml:space="preserve">
+    <value>লেখক</value>
+  </data>
+  <data name="Awaiting approval" xml:space="preserve">
+    <value>অনুমোদনের অপেক্ষায়</value>
+  </data>
+  <data name="Back to profile" xml:space="preserve">
+    <value>প্রোফাইলে ফিরুন</value>
+  </data>
+  <data name="Back to sign in" xml:space="preserve">
+    <value>লগ-ইনে ফিরুন</value>
+  </data>
+  <data name="Breadcrumb" xml:space="preserve">
+    <value>অবস্থান</value>
+  </data>
+  <data name="Breaking" xml:space="preserve">
+    <value>জরুরি</value>
+  </data>
+  <data name="Breaking News" xml:space="preserve">
+    <value>জরুরি সংবাদ</value>
+  </data>
+  <data name="Breaking news" xml:space="preserve">
+    <value>জরুরি সংবাদ</value>
+  </data>
+  <data name="Browse The Meridian Newsfolio coverage by section: {0}." xml:space="preserve">
+    <value>বিভাগ অনুযায়ী দ্য মেরিডিয়ান নিউজফোলিওর সংবাদ দেখুন: {0}।</value>
+  </data>
+  <data name="By" xml:space="preserve">
+    <value>লিখেছেন</value>
+  </data>
+  <data name="By {0}" xml:space="preserve">
+    <value>লিখেছেন {0}</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>বাতিল</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>বিভাগ</value>
+  </data>
+  <data name="Category name cannot exceed 100 characters" xml:space="preserve">
+    <value>বিভাগের নাম ১০০ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
+  <data name="Category name is required" xml:space="preserve">
+    <value>বিভাগের নাম প্রয়োজন</value>
+  </data>
+  <data name="Category name must be between 2 and 100 characters" xml:space="preserve">
+    <value>বিভাগের নাম ২ থেকে ১০০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Change password" xml:space="preserve">
+    <value>পাসওয়ার্ড বদলান</value>
+  </data>
+  <data name="Changes go live as soon as you save." xml:space="preserve">
+    <value>সংরক্ষণ করার সঙ্গে সঙ্গে পরিবর্তন সাইটে চলে যাবে।</value>
+  </data>
+  <data name="Changes sent to the admin for approval." xml:space="preserve">
+    <value>পরিবর্তনগুলো অনুমোদনের জন্য অ্যাডমিনের কাছে পাঠানো হয়েছে।</value>
+  </data>
+  <data name="Check back soon for the latest reporting." xml:space="preserve">
+    <value>সর্বশেষ সংবাদের জন্য শিগগির আবার দেখুন।</value>
+  </data>
+  <data name="Choose a section to move this section's articles to." xml:space="preserve">
+    <value>এই বিভাগের সংবাদগুলো কোন বিভাগে সরানো হবে তা বেছে নিন।</value>
+  </data>
+  <data name="Choose the language the story is written in. It appears on that language's edition of the site." xml:space="preserve">
+    <value>সংবাদটি যে ভাষায় লেখা তা বেছে নিন। সাইটের ওই ভাষার সংস্করণে এটি দেখানো হবে।</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>মুছুন</value>
+  </data>
+  <data name="Comment must be between 2 and 500 characters" xml:space="preserve">
+    <value>মন্তব্য ২ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Comment text is required" xml:space="preserve">
+    <value>মন্তব্য লিখুন</value>
+  </data>
+  <data name="Comments ({0})" xml:space="preserve">
+    <value>মন্তব্য ({0})</value>
+  </data>
+  <data name="Comments must be between 2 and 500 characters." xml:space="preserve">
+    <value>মন্তব্য ২ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে।</value>
+  </data>
+  <data name="Company" xml:space="preserve">
+    <value>প্রতিষ্ঠান</value>
+  </data>
+  <data name="Confirm new password" xml:space="preserve">
+    <value>নতুন পাসওয়ার্ড আবার লিখুন</value>
+  </data>
+  <data name="Confirm password" xml:space="preserve">
+    <value>পাসওয়ার্ড আবার লিখুন</value>
+  </data>
+  <data name="Confirm password is required" xml:space="preserve">
+    <value>পাসওয়ার্ড আবার লিখুন</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>যোগাযোগ</value>
+  </data>
+  <data name="Content" xml:space="preserve">
+    <value>বিস্তারিত</value>
+  </data>
+  <data name="Content is required" xml:space="preserve">
+    <value>সংবাদের বিস্তারিত লিখুন</value>
+  </data>
+  <data name="Content must be between 20 and 20000 characters" xml:space="preserve">
+    <value>বিস্তারিত ২০ থেকে ২০০০০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Copy link" xml:space="preserve">
+    <value>লিংক কপি করুন</value>
+  </data>
+  <data name="Create account" xml:space="preserve">
+    <value>অ্যাকাউন্ট খুলুন</value>
+  </data>
+  <data name="Create an account" xml:space="preserve">
+    <value>নতুন অ্যাকাউন্ট খুলুন</value>
+  </data>
+  <data name="Create section" xml:space="preserve">
+    <value>বিভাগ তৈরি করুন</value>
+  </data>
+  <data name="Created date is required" xml:space="preserve">
+    <value>তৈরির তারিখ প্রয়োজন</value>
+  </data>
+  <data name="Dark" xml:space="preserve">
+    <value>ডার্ক</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>ড্যাশবোর্ড</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>মুছুন</value>
+  </data>
+  <data name="Delete article" xml:space="preserve">
+    <value>সংবাদ মুছুন</value>
+  </data>
+  <data name="Delete section" xml:space="preserve">
+    <value>বিভাগ মুছুন</value>
+  </data>
+  <data name="Delete this article?" xml:space="preserve">
+    <value>সংবাদটি মুছে ফেলবেন?</value>
+  </data>
+  <data name="Delete this user?" xml:space="preserve">
+    <value>ব্যবহারকারীকে মুছে ফেলবেন?</value>
+  </data>
+  <data name="Delete user" xml:space="preserve">
+    <value>ব্যবহারকারী মুছুন</value>
+  </data>
+  <data name="Demo site: the stories shown here are sample content and are not real news." xml:space="preserve">
+    <value>ডেমো সাইট: এখানে দেখানো সংবাদগুলো নমুনা কনটেন্ট, বাস্তব সংবাদ নয়।</value>
+  </data>
+  <data name="Description (Bangla)" xml:space="preserve">
+    <value>বিবরণ (বাংলা)</value>
+  </data>
+  <data name="Description (English)" xml:space="preserve">
+    <value>বিবরণ (ইংরেজি)</value>
+  </data>
+  <data name="Description cannot exceed 255 characters" xml:space="preserve">
+    <value>বিবরণ ২৫৫ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
+  <data name="Draft" xml:space="preserve">
+    <value>খসড়া</value>
+  </data>
+  <data name="Draft saved." xml:space="preserve">
+    <value>খসড়া সংরক্ষিত হয়েছে।</value>
+  </data>
+  <data name="Drafts, articles waiting for approval and everything you have published." xml:space="preserve">
+    <value>আপনার খসড়া, অনুমোদনের অপেক্ষায় থাকা লেখা এবং প্রকাশিত সব সংবাদ।</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>সম্পাদনা</value>
+  </data>
+  <data name="Edit article" xml:space="preserve">
+    <value>সংবাদ সম্পাদনা</value>
+  </data>
+  <data name="Edit section" xml:space="preserve">
+    <value>বিভাগ সম্পাদনা</value>
+  </data>
+  <data name="Edit user" xml:space="preserve">
+    <value>ব্যবহারকারী সম্পাদনা</value>
+  </data>
+  <data name="Edited articles go back to the admin for approval." xml:space="preserve">
+    <value>সম্পাদিত লেখা আবার অ্যাডমিনের অনুমোদনের জন্য যাবে।</value>
+  </data>
+  <data name="Editor's note:" xml:space="preserve">
+    <value>সম্পাদকের মন্তব্য:</value>
+  </data>
+  <data name="Editorial policy" xml:space="preserve">
+    <value>সম্পাদকীয় নীতি</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>ইমেইল</value>
+  </data>
+  <data name="Email already exists. Please use a different email address." xml:space="preserve">
+    <value>এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে। অন্য ইমেইল ব্যবহার করুন।</value>
+  </data>
+  <data name="Email and OTP are required" xml:space="preserve">
+    <value>ইমেইল ও ওটিপি দুটোই প্রয়োজন</value>
+  </data>
+  <data name="Email is required" xml:space="preserve">
+    <value>ইমেইল প্রয়োজন</value>
+  </data>
+  <data name="Enter your account email and we will send you a one-time code." xml:space="preserve">
+    <value>অ্যাকাউন্টের ইমেইল লিখুন, আমরা আপনাকে একটি ওটিপি কোড পাঠাব।</value>
+  </data>
+  <data name="Enter your code" xml:space="preserve">
+    <value>কোড লিখুন</value>
+  </data>
+  <data name="Every story in the archive is filed under one of these sections." xml:space="preserve">
+    <value>আর্কাইভের প্রতিটি সংবাদ এই বিভাগগুলোর কোনো একটিতে রাখা আছে।</value>
+  </data>
+  <data name="Explore" xml:space="preserve">
+    <value>আরও দেখুন</value>
+  </data>
+  <data name="Failed to create user" xml:space="preserve">
+    <value>ব্যবহারকারী তৈরি করা যায়নি</value>
+  </data>
+  <data name="Follow every story as it is published with our RSS feed." xml:space="preserve">
+    <value>আমাদের আরএসএস ফিডে প্রতিটি সংবাদ প্রকাশের সঙ্গে সঙ্গে পান।</value>
+  </data>
+  <data name="Forgot password?" xml:space="preserve">
+    <value>পাসওয়ার্ড ভুলে গেছেন?</value>
+  </data>
+  <data name="From" xml:space="preserve">
+    <value>শুরু</value>
+  </data>
+  <data name="Give a user the Author role so they can write articles for review." xml:space="preserve">
+    <value>লেখকের ভূমিকা দিলে ব্যবহারকারী পর্যালোচনার জন্য সংবাদ লিখতে পারবেন।</value>
+  </data>
+  <data name="Go to the homepage" xml:space="preserve">
+    <value>প্রথম পাতায় যান</value>
+  </data>
+  <data name="Guest" xml:space="preserve">
+    <value>অতিথি</value>
+  </data>
+  <data name="Headline" xml:space="preserve">
+    <value>শিরোনাম</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>প্রচ্ছদ</value>
+  </data>
+  <data name="If an account exists for that email, a verification code has been sent." xml:space="preserve">
+    <value>এই ইমেইলে কোনো অ্যাকাউন্ট থাকলে একটি যাচাই কোড পাঠানো হয়েছে।</value>
+  </data>
+  <data name="If the Bangla name is empty, the English name is shown on the Bangla site." xml:space="preserve">
+    <value>বাংলা নাম না দিলে বাংলা সাইটে ইংরেজি নামই দেখানো হবে।</value>
+  </data>
+  <data name="Image" xml:space="preserve">
+    <value>ছবি</value>
+  </data>
+  <data name="Image path" xml:space="preserve">
+    <value>ছবির পাথ</value>
+  </data>
+  <data name="Image path cannot exceed 255 characters" xml:space="preserve">
+    <value>ছবির পাথ ২৫৫ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
+  <data name="Invalid OTP" xml:space="preserve">
+    <value>ওটিপি সঠিক নয়</value>
+  </data>
+  <data name="Invalid OTP data" xml:space="preserve">
+    <value>ওটিপির তথ্য সঠিক নয়</value>
+  </data>
+  <data name="Invalid email format" xml:space="preserve">
+    <value>ইমেইলের ধরন সঠিক নয়</value>
+  </data>
+  <data name="Invalid username/email or password" xml:space="preserve">
+    <value>ইমেইল বা পাসওয়ার্ড সঠিক নয়</value>
+  </data>
+  <data name="Join readers who follow, discuss and save the news." xml:space="preserve">
+    <value>সংবাদ পড়ুন, আলোচনা করুন আর সংরক্ষণ করুন, পাঠকদের সঙ্গে যুক্ত হোন।</value>
+  </data>
+  <data name="Join the conversation" xml:space="preserve">
+    <value>আলোচনায় অংশ নিন</value>
+  </data>
+  <data name="Joined" xml:space="preserve">
+    <value>যোগদান</value>
+  </data>
+  <data name="Keyword" xml:space="preserve">
+    <value>কীওয়ার্ড</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>ভাষা</value>
+  </data>
+  <data name="Last change" xml:space="preserve">
+    <value>সর্বশেষ পরিবর্তন</value>
+  </data>
+  <data name="Latest news" xml:space="preserve">
+    <value>সর্বশেষ সংবাদ</value>
+  </data>
+  <data name="Latest news and breaking stories" xml:space="preserve">
+    <value>সর্বশেষ ও জরুরি সংবাদ</value>
+  </data>
+  <data name="Latest news – page {0}" xml:space="preserve">
+    <value>সর্বশেষ সংবাদ – পাতা {0}</value>
+  </data>
+  <data name="Light" xml:space="preserve">
+    <value>লাইট</value>
+  </data>
+  <data name="Logged out successfully" xml:space="preserve">
+    <value>আপনি লগ-আউট করেছেন</value>
+  </data>
+  <data name="Main" xml:space="preserve">
+    <value>প্রধান মেনু</value>
+  </data>
+  <data name="More" xml:space="preserve">
+    <value>আরও</value>
+  </data>
+  <data name="More in {0}" xml:space="preserve">
+    <value>{0}-এর আরও সংবাদ</value>
+  </data>
+  <data name="More stories" xml:space="preserve">
+    <value>আরও সংবাদ</value>
+  </data>
+  <data name="More {0} stories" xml:space="preserve">
+    <value>{0}-এর আরও সংবাদ</value>
+  </data>
+  <data name="Most viewed" xml:space="preserve">
+    <value>সর্বাধিক পঠিত</value>
+  </data>
+  <data name="Move articles to" xml:space="preserve">
+    <value>সংবাদগুলো সরানো হবে</value>
+  </data>
+  <data name="My articles" xml:space="preserve">
+    <value>আমার লেখা</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>নাম</value>
+  </data>
+  <data name="Name (Bangla)" xml:space="preserve">
+    <value>নাম (বাংলা)</value>
+  </data>
+  <data name="Name (English)" xml:space="preserve">
+    <value>নাম (ইংরেজি)</value>
+  </data>
+  <data name="Name is required" xml:space="preserve">
+    <value>নাম প্রয়োজন</value>
+  </data>
+  <data name="Name must be between 2 and 100 characters" xml:space="preserve">
+    <value>নাম ২ থেকে ১০০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="New here?" xml:space="preserve">
+    <value>নতুন এসেছেন?</value>
+  </data>
+  <data name="New password" xml:space="preserve">
+    <value>নতুন পাসওয়ার্ড</value>
+  </data>
+  <data name="New section" xml:space="preserve">
+    <value>নতুন বিভাগ</value>
+  </data>
+  <data name="New submissions from authors will appear here." xml:space="preserve">
+    <value>লেখকদের জমা দেওয়া নতুন লেখা এখানে দেখা যাবে।</value>
+  </data>
+  <data name="News" xml:space="preserve">
+    <value>সংবাদ</value>
+  </data>
+  <data name="News Preserved. Stories Rediscovered." xml:space="preserve">
+    <value>সংবাদ সংরক্ষিত, গল্পের নতুন আবিষ্কার।</value>
+  </data>
+  <data name="News sections" xml:space="preserve">
+    <value>সংবাদ বিভাগ</value>
+  </data>
+  <data name="No OTP request found for this email" xml:space="preserve">
+    <value>এই ইমেইলের জন্য কোনো ওটিপি অনুরোধ পাওয়া যায়নি</value>
+  </data>
+  <data name="No comments yet. Be the first to share your view." xml:space="preserve">
+    <value>এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন।</value>
+  </data>
+  <data name="No sections yet" xml:space="preserve">
+    <value>এখনো কোনো বিভাগ নেই</value>
+  </data>
+  <data name="No stories match your search" xml:space="preserve">
+    <value>আপনার অনুসন্ধানের সঙ্গে মেলে এমন কোনো সংবাদ নেই</value>
+  </data>
+  <data name="No stories published yet" xml:space="preserve">
+    <value>এখনো কোনো সংবাদ প্রকাশিত হয়নি</value>
+  </data>
+  <data name="No user found with that email" xml:space="preserve">
+    <value>এই ইমেইলে কোনো ব্যবহারকারী পাওয়া যায়নি</value>
+  </data>
+  <data name="No {0} stories yet" xml:space="preserve">
+    <value>{0} বিভাগে এখনো কোনো সংবাদ নেই</value>
+  </data>
+  <data name="Note cannot exceed 500 characters" xml:space="preserve">
+    <value>মন্তব্য ৫০০ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
+  <data name="Nothing here right now" xml:space="preserve">
+    <value>এই মুহূর্তে এখানে কিছু নেই</value>
+  </data>
+  <data name="Nothing written by authors goes live until you approve it. Open an article to read it in full before deciding." xml:space="preserve">
+    <value>আপনার অনুমোদন ছাড়া লেখকদের কোনো লেখা প্রকাশিত হয় না। সিদ্ধান্ত নেওয়ার আগে সংবাদটি খুলে পুরোটা পড়ুন।</value>
+  </data>
+  <data name="OTP already used" xml:space="preserve">
+    <value>এই ওটিপি আগেই ব্যবহার করা হয়েছে</value>
+  </data>
+  <data name="OTP expired" xml:space="preserve">
+    <value>ওটিপির মেয়াদ শেষ হয়ে গেছে</value>
+  </data>
+  <data name="OTP sent (check console for dev)." xml:space="preserve">
+    <value>ওটিপি পাঠানো হয়েছে (ডেভেলপমেন্টে কনসোলে দেখুন)।</value>
+  </data>
+  <data name="One or two sentences shown in listings and search results" xml:space="preserve">
+    <value>তালিকা ও অনুসন্ধানে দেখানোর জন্য এক বা দুই বাক্যের সারাংশ</value>
+  </data>
+  <data name="One-time code" xml:space="preserve">
+    <value>ওটিপি কোড</value>
+  </data>
+  <data name="Only drafts and rejected articles can be submitted." xml:space="preserve">
+    <value>শুধু খসড়া ও ফেরত আসা লেখা জমা দেওয়া যায়।</value>
+  </data>
+  <data name="Only pending articles can be approved." xml:space="preserve">
+    <value>শুধু অপেক্ষমাণ লেখা অনুমোদন দেওয়া যায়।</value>
+  </data>
+  <data name="Only pending articles can be rejected." xml:space="preserve">
+    <value>শুধু অপেক্ষমাণ লেখা ফেরত পাঠানো যায়।</value>
+  </data>
+  <data name="Page not found" xml:space="preserve">
+    <value>পাতাটি পাওয়া যায়নি</value>
+  </data>
+  <data name="Pages" xml:space="preserve">
+    <value>পাতা</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>পাসওয়ার্ড</value>
+  </data>
+  <data name="Password is required" xml:space="preserve">
+    <value>পাসওয়ার্ড প্রয়োজন</value>
+  </data>
+  <data name="Password must be between 8 and 500 characters" xml:space="preserve">
+    <value>পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে</value>
+  </data>
+  <data name="Password must contain at least one letter and one number" xml:space="preserve">
+    <value>পাসওয়ার্ডে অন্তত একটি অক্ষর ও একটি সংখ্যা থাকতে হবে</value>
+  </data>
+  <data name="Password updated" xml:space="preserve">
+    <value>পাসওয়ার্ড বদলানো হয়েছে</value>
+  </data>
+  <data name="Passwords do not match" xml:space="preserve">
+    <value>দুটি পাসওয়ার্ড মেলেনি</value>
+  </data>
+  <data name="Pending articles" xml:space="preserve">
+    <value>অপেক্ষমাণ সংবাদ</value>
+  </data>
+  <data name="Pending review" xml:space="preserve">
+    <value>পর্যালোচনার অপেক্ষায়</value>
+  </data>
+  <data name="Please choose a role" xml:space="preserve">
+    <value>একটি ভূমিকা বেছে নিন</value>
+  </data>
+  <data name="Please select a category" xml:space="preserve">
+    <value>একটি বিভাগ বেছে নিন</value>
+  </data>
+  <data name="Post comment" xml:space="preserve">
+    <value>মন্তব্য করুন</value>
+  </data>
+  <data name="Privacy policy" xml:space="preserve">
+    <value>গোপনীয়তা নীতি</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>প্রোফাইল</value>
+  </data>
+  <data name="Publish" xml:space="preserve">
+    <value>প্রকাশ করুন</value>
+  </data>
+  <data name="Published" xml:space="preserve">
+    <value>প্রকাশিত</value>
+  </data>
+  <data name="Published articles per section" xml:space="preserve">
+    <value>বিভাগভিত্তিক প্রকাশিত সংবাদ</value>
+  </data>
+  <data name="Put the file in wwwroot/images/articles/. A 1200 × 630 image looks best when shared." xml:space="preserve">
+    <value>ফাইলটি wwwroot/images/articles/ ফোল্ডারে রাখুন। শেয়ারের জন্য ১২০০ × ৬৩০ মাপের ছবি সবচেয়ে ভালো দেখায়।</value>
+  </data>
+  <data name="RSS feed" xml:space="preserve">
+    <value>আরএসএস ফিড</value>
+  </data>
+  <data name="Read" xml:space="preserve">
+    <value>পড়ুন</value>
+  </data>
+  <data name="Read the latest news" xml:space="preserve">
+    <value>সর্বশেষ সংবাদ পড়ুন</value>
+  </data>
+  <data name="Read {0} news" xml:space="preserve">
+    <value>{0} সংবাদ পড়ুন</value>
+  </data>
+  <data name="Reader" xml:space="preserve">
+    <value>পাঠক</value>
+  </data>
+  <data name="Reason for rejection" xml:space="preserve">
+    <value>ফেরত পাঠানোর কারণ</value>
+  </data>
+  <data name="Reject" xml:space="preserve">
+    <value>ফেরত পাঠান</value>
+  </data>
+  <data name="Rejected" xml:space="preserve">
+    <value>ফেরত পাঠানো</value>
+  </data>
+  <data name="Related stories" xml:space="preserve">
+    <value>সম্পর্কিত সংবাদ</value>
+  </data>
+  <data name="Reset your password" xml:space="preserve">
+    <value>পাসওয়ার্ড পুনরুদ্ধার</value>
+  </data>
+  <data name="Returned by the editor:" xml:space="preserve">
+    <value>সম্পাদক ফেরত পাঠিয়েছেন:</value>
+  </data>
+  <data name="Review" xml:space="preserve">
+    <value>পর্যালোচনা</value>
+  </data>
+  <data name="Review queue" xml:space="preserve">
+    <value>পর্যালোচনার তালিকা</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>ভূমিকা</value>
+  </data>
+  <data name="Role ID must be greater than 0" xml:space="preserve">
+    <value>ভূমিকার আইডি ০-এর বেশি হতে হবে</value>
+  </data>
+  <data name="Role is required" xml:space="preserve">
+    <value>ভূমিকা বেছে নিন</value>
+  </data>
+  <data name="Role name is required" xml:space="preserve">
+    <value>ভূমিকার নাম প্রয়োজন</value>
+  </data>
+  <data name="Role name must be between 2 and 50 characters" xml:space="preserve">
+    <value>ভূমিকার নাম ২ থেকে ৫০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Save changes" xml:space="preserve">
+    <value>পরিবর্তন সংরক্ষণ</value>
+  </data>
+  <data name="Save draft" xml:space="preserve">
+    <value>খসড়া সংরক্ষণ</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>অনুসন্ধান</value>
+  </data>
+  <data name="Search by name or email" xml:space="preserve">
+    <value>নাম বা ইমেইল দিয়ে খুঁজুন</value>
+  </data>
+  <data name="Search every story in The Meridian Newsfolio by keyword and date." xml:space="preserve">
+    <value>কীওয়ার্ড ও তারিখ দিয়ে দ্য মেরিডিয়ান নিউজফোলিওর যেকোনো সংবাদ খুঁজুন।</value>
+  </data>
+  <data name="Search news" xml:space="preserve">
+    <value>সংবাদ খুঁজুন</value>
+  </data>
+  <data name="Search news, topics, people" xml:space="preserve">
+    <value>সংবাদ, বিষয় বা ব্যক্তি খুঁজুন</value>
+  </data>
+  <data name="Search results for “{0}”" xml:space="preserve">
+    <value>“{0}”-এর অনুসন্ধানের ফলাফল</value>
+  </data>
+  <data name="Search the archive" xml:space="preserve">
+    <value>আর্কাইভে খুঁজুন</value>
+  </data>
+  <data name="Search the news archive" xml:space="preserve">
+    <value>সংবাদ আর্কাইভে খুঁজুন</value>
+  </data>
+  <data name="Section" xml:space="preserve">
+    <value>বিভাগ</value>
+  </data>
+  <data name="Section created." xml:space="preserve">
+    <value>বিভাগ তৈরি হয়েছে।</value>
+  </data>
+  <data name="Section deleted." xml:space="preserve">
+    <value>বিভাগ মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="Section updated." xml:space="preserve">
+    <value>বিভাগ হালনাগাদ হয়েছে।</value>
+  </data>
+  <data name="Sections" xml:space="preserve">
+    <value>বিভাগসমূহ</value>
+  </data>
+  <data name="Select a role" xml:space="preserve">
+    <value>ভূমিকা বেছে নিন</value>
+  </data>
+  <data name="Select a section" xml:space="preserve">
+    <value>বিভাগ বেছে নিন</value>
+  </data>
+  <data name="Send a new code" xml:space="preserve">
+    <value>নতুন কোড পাঠান</value>
+  </data>
+  <data name="Send code" xml:space="preserve">
+    <value>কোড পাঠান</value>
+  </data>
+  <data name="Separate paragraphs with an empty line. HTML is not rendered." xml:space="preserve">
+    <value>অনুচ্ছেদের মাঝে একটি ফাঁকা লাইন রাখুন। এইচটিএমএল কাজ করবে না।</value>
+  </data>
+  <data name="Share on {0}" xml:space="preserve">
+    <value>{0}-এ শেয়ার করুন</value>
+  </data>
+  <data name="Share this article" xml:space="preserve">
+    <value>সংবাদটি শেয়ার করুন</value>
+  </data>
+  <data name="Sign in" xml:space="preserve">
+    <value>লগ-ইন</value>
+  </data>
+  <data name="Sign in with another account" xml:space="preserve">
+    <value>অন্য অ্যাকাউন্টে সাইন ইন করুন</value>
+  </data>
+  <data name="Sign out" xml:space="preserve">
+    <value>লগ-আউট</value>
+  </data>
+  <data name="Signed in as {0}" xml:space="preserve">
+    <value>{0} হিসেবে লগ-ইন</value>
+  </data>
+  <data name="Sitemap" xml:space="preserve">
+    <value>সাইটম্যাপ</value>
+  </data>
+  <data name="Skip to main content" xml:space="preserve">
+    <value>মূল কনটেন্টে যান</value>
+  </data>
+  <data name="Something went wrong" xml:space="preserve">
+    <value>কিছু একটা সমস্যা হয়েছে</value>
+  </data>
+  <data name="Staff reporter" xml:space="preserve">
+    <value>নিজস্ব প্রতিবেদক</value>
+  </data>
+  <data name="Start your first article" xml:space="preserve">
+    <value>প্রথম লেখাটি শুরু করুন</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>অবস্থা</value>
+  </data>
+  <data name="Stay informed" xml:space="preserve">
+    <value>খবরে থাকুন</value>
+  </data>
+  <data name="Submit" xml:space="preserve">
+    <value>জমা দিন</value>
+  </data>
+  <data name="Submit for approval" xml:space="preserve">
+    <value>অনুমোদনের জন্য জমা দিন</value>
+  </data>
+  <data name="Submitted {0}" xml:space="preserve">
+    <value>জমা দেওয়া হয়েছে {0}</value>
+  </data>
+  <data name="Subscribe via RSS" xml:space="preserve">
+    <value>আরএসএসে সাবস্ক্রাইব করুন</value>
+  </data>
+  <data name="Summary" xml:space="preserve">
+    <value>সারাংশ</value>
+  </data>
+  <data name="Summary is required" xml:space="preserve">
+    <value>সারাংশ প্রয়োজন</value>
+  </data>
+  <data name="Summary must be between 10 and 500 characters" xml:space="preserve">
+    <value>সারাংশ ১০ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>সিস্টেম</value>
+  </data>
+  <data name="Tag name is required" xml:space="preserve">
+    <value>ট্যাগের নাম প্রয়োজন</value>
+  </data>
+  <data name="Tag name must be between 2 and 50 characters" xml:space="preserve">
+    <value>ট্যাগের নাম ২ থেকে ৫০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Terms of use" xml:space="preserve">
+    <value>ব্যবহারের শর্তাবলি</value>
+  </data>
+  <data name="The Meridian Newsfolio publishes reviewed news from Bangladesh and around the world, in English and Bangla, and keeps every story in a searchable archive." xml:space="preserve">
+    <value>দ্য মেরিডিয়ান নিউজফোলিও বাংলাদেশ ও বিশ্বের যাচাই করা সংবাদ ইংরেজি ও বাংলায় প্রকাশ করে এবং প্রতিটি সংবাদ খোঁজার উপযোগী আর্কাইভে সংরক্ষণ করে।</value>
+  </data>
+  <data name="The article could not be deleted." xml:space="preserve">
+    <value>সংবাদটি মুছে ফেলা যায়নি।</value>
+  </data>
+  <data name="The article could not be saved." xml:space="preserve">
+    <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
+  </data>
+  <data name="The latest {0} news, analysis and reporting from The Meridian Newsfolio." xml:space="preserve">
+    <value>দ্য মেরিডিয়ান নিউজফোলিওর সর্বশেষ {0} সংবাদ, বিশ্লেষণ ও প্রতিবেদন।</value>
+  </data>
+  <data name="The most important developing stories, updated as they happen." xml:space="preserve">
+    <value>সবচেয়ে গুরুত্বপূর্ণ চলমান সংবাদ, ঘটনার সঙ্গে সঙ্গে হালনাগাদ।</value>
+  </data>
+  <data name="The page you are looking for has moved or no longer exists." xml:space="preserve">
+    <value>আপনি যে পাতাটি খুঁজছেন সেটি সরানো হয়েছে অথবা আর নেই।</value>
+  </data>
+  <data name="The review queue is empty" xml:space="preserve">
+    <value>পর্যালোচনার তালিকা খালি</value>
+  </data>
+  <data name="The stories readers are viewing and discussing the most right now." xml:space="preserve">
+    <value>এই মুহূর্তে পাঠকেরা যে সংবাদগুলো সবচেয়ে বেশি পড়ছেন ও আলোচনা করছেন।</value>
+  </data>
+  <data name="The {0} field is required." xml:space="preserve">
+    <value>{0} প্রয়োজন।</value>
+  </data>
+  <data name="Their comments are deleted too. Users who have written articles cannot be deleted." xml:space="preserve">
+    <value>তাঁর মন্তব্যগুলোও মুছে যাবে। যাঁরা সংবাদ লিখেছেন তাঁদের মুছে ফেলা যায় না।</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>থিম</value>
+  </data>
+  <data name="This article is not public. Only the author and admins can see it." xml:space="preserve">
+    <value>সংবাদটি এখনো প্রকাশিত নয়। শুধু লেখক ও অ্যাডমিন এটি দেখতে পারেন।</value>
+  </data>
+  <data name="This cannot be undone." xml:space="preserve">
+    <value>এটি আর ফেরানো যাবে না।</value>
+  </data>
+  <data name="This section has {0} articles. Choose where to move them before deleting." xml:space="preserve">
+    <value>এই বিভাগে {0}টি সংবাদ আছে। মোছার আগে সেগুলো কোথায় সরানো হবে তা বেছে নিন।</value>
+  </data>
+  <data name="This user has written articles. Reassign or delete them first." xml:space="preserve">
+    <value>এই ব্যবহারকারী সংবাদ লিখেছেন। আগে সেগুলো অন্য কাউকে দিন বা মুছে ফেলুন।</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>শিরোনাম</value>
+  </data>
+  <data name="Title is required" xml:space="preserve">
+    <value>শিরোনাম প্রয়োজন</value>
+  </data>
+  <data name="Title must be between 5 and 200 characters" xml:space="preserve">
+    <value>শিরোনাম ৫ থেকে ২০০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Title, summary or text" xml:space="preserve">
+    <value>শিরোনাম, সারাংশ বা লেখা</value>
+  </data>
+  <data name="To" xml:space="preserve">
+    <value>শেষ</value>
+  </data>
+  <data name="Toggle navigation" xml:space="preserve">
+    <value>মেনু খুলুন</value>
+  </data>
+  <data name="Too many failed attempts. Request a new code." xml:space="preserve">
+    <value>অনেকবার ভুল চেষ্টা হয়েছে। নতুন কোড চেয়ে নিন।</value>
+  </data>
+  <data name="Too many failed attempts. Try again in 15 minutes." xml:space="preserve">
+    <value>অনেকবার ভুল চেষ্টা হয়েছে। ১৫ মিনিট পরে আবার চেষ্টা করুন।</value>
+  </data>
+  <data name="Top stories" xml:space="preserve">
+    <value>প্রধান সংবাদ</value>
+  </data>
+  <data name="Top story" xml:space="preserve">
+    <value>প্রধান সংবাদ</value>
+  </data>
+  <data name="Trending" xml:space="preserve">
+    <value>আলোচিত</value>
+  </data>
+  <data name="Trending News" xml:space="preserve">
+    <value>আলোচিত সংবাদ</value>
+  </data>
+  <data name="Trending now" xml:space="preserve">
+    <value>এখন আলোচিত</value>
+  </data>
+  <data name="Try a different keyword or widen the date range." xml:space="preserve">
+    <value>অন্য কীওয়ার্ড দিয়ে চেষ্টা করুন বা তারিখের পরিসর বাড়ান।</value>
+  </data>
+  <data name="Uncategorised" xml:space="preserve">
+    <value>বিভাগহীন</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>অজানা</value>
+  </data>
+  <data name="Update failed" xml:space="preserve">
+    <value>হালনাগাদ করা যায়নি</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>হালনাগাদ</value>
+  </data>
+  <data name="Use a site path like /images/articles/photo.jpg or an https:// address" xml:space="preserve">
+    <value>/images/articles/photo.jpg এর মতো সাইটের পথ বা https:// ঠিকানা দিন</value>
+  </data>
+  <data name="User ID is required" xml:space="preserve">
+    <value>ব্যবহারকারীর আইডি প্রয়োজন</value>
+  </data>
+  <data name="User ID must be greater than 0" xml:space="preserve">
+    <value>ব্যবহারকারীর আইডি ০-এর বেশি হতে হবে</value>
+  </data>
+  <data name="User created successfully" xml:space="preserve">
+    <value>ব্যবহারকারী তৈরি হয়েছে</value>
+  </data>
+  <data name="User deleted." xml:space="preserve">
+    <value>ব্যবহারকারী মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="User not found" xml:space="preserve">
+    <value>ব্যবহারকারী পাওয়া যায়নি</value>
+  </data>
+  <data name="User updated" xml:space="preserve">
+    <value>তথ্য হালনাগাদ হয়েছে</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>ব্যবহারকারী</value>
+  </data>
+  <data name="Verify" xml:space="preserve">
+    <value>যাচাই করুন</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>দেখুন</value>
+  </data>
+  <data name="View all {0} news" xml:space="preserve">
+    <value>{0}-এর সব সংবাদ দেখুন</value>
+  </data>
+  <data name="We couldn't load this page. Please try again in a moment." xml:space="preserve">
+    <value>পাতাটি লোড করা যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।</value>
+  </data>
+  <data name="We sent a 6-digit code to {0}. It expires in one minute." xml:space="preserve">
+    <value>{0} ঠিকানায় ৬ অঙ্কের একটি কোড পাঠানো হয়েছে। এক মিনিটের মধ্যে এর মেয়াদ শেষ হবে।</value>
+  </data>
+  <data name="Welcome back. Sign in to comment, write and manage your account." xml:space="preserve">
+    <value>আবার স্বাগতম। মন্তব্য, লেখা ও অ্যাকাউন্ট পরিচালনার জন্য লগ-ইন করুন।</value>
+  </data>
+  <data name="Write" xml:space="preserve">
+    <value>লিখুন</value>
+  </data>
+  <data name="Write an article" xml:space="preserve">
+    <value>সংবাদ লিখুন</value>
+  </data>
+  <data name="Write the full story. Leave an empty line between paragraphs." xml:space="preserve">
+    <value>পুরো সংবাদটি লিখুন। অনুচ্ছেদের মাঝে একটি ফাঁকা লাইন রাখুন।</value>
+  </data>
+  <data name="Writing guide" xml:space="preserve">
+    <value>লেখার নির্দেশিকা</value>
+  </data>
+  <data name="Yes, delete" xml:space="preserve">
+    <value>হ্যাঁ, মুছুন</value>
+  </data>
+  <data name="You" xml:space="preserve">
+    <value>আপনি</value>
+  </data>
+  <data name="You cannot delete your own account." xml:space="preserve">
+    <value>নিজের অ্যাকাউন্ট নিজে মুছতে পারবেন না।</value>
+  </data>
+  <data name="You cannot edit this article." xml:space="preserve">
+    <value>এই সংবাদটি আপনি সম্পাদনা করতে পারবেন না।</value>
+  </data>
+  <data name="You haven't written anything yet" xml:space="preserve">
+    <value>আপনি এখনো কিছু লেখেননি</value>
+  </data>
+  <data name="You're all caught up." xml:space="preserve">
+    <value>আপনি সব সংবাদ দেখে ফেলেছেন।</value>
+  </data>
+  <data name="Your account does not have permission to open this page." xml:space="preserve">
+    <value>এই পাতাটি খোলার অনুমতি আপনার অ্যাকাউন্টে নেই।</value>
+  </data>
+  <data name="Your article is published after an admin approves it." xml:space="preserve">
+    <value>অ্যাডমিন অনুমোদন দিলে আপনার লেখা প্রকাশিত হবে।</value>
+  </data>
+  <data name="Your comment" xml:space="preserve">
+    <value>আপনার মন্তব্য</value>
+  </data>
+  <data name="to join the conversation." xml:space="preserve">
+    <value>করে আলোচনায় অংশ নিন।</value>
+  </data>
+  <data name="{0} articles" xml:space="preserve">
+    <value>{0}টি সংবাদ</value>
+  </data>
+  <data name="{0} home" xml:space="preserve">
+    <value>{0} প্রচ্ছদ</value>
+  </data>
+  <data name="{0} min read" xml:space="preserve">
+    <value>{0} মিনিটে পড়ুন</value>
+  </data>
+  <data name="{0} news" xml:space="preserve">
+    <value>{0} সংবাদ</value>
+  </data>
+  <data name="{0} stories found" xml:space="preserve">
+    <value>{0}টি সংবাদ পাওয়া গেছে</value>
+  </data>
+  <data name="{0} views" xml:space="preserve">
+    <value>{0} বার পঠিত</value>
+  </data>
+</root>

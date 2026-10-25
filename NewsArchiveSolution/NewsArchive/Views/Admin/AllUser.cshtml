@@ -1,64 +1,57 @@
 ﻿@model IEnumerable<BLL.DTOs.UserDTO>
 
 @{
-    ViewData["Title"] = "Admin - All Users";
-    var rolesDict = new Dictionary<int, string>();
-    var rawRoles = ViewBag.Roles as IEnumerable<dynamic>;
-    if (rawRoles != null)
-    {
-        foreach (var r in rawRoles)
-        {
-            int id = (int)r.Id;
-            string name = (string)(r.RoleName ?? "");
-            rolesDict[id] = name;
-        }
-    }
+    ViewData["Title"] = L["Users"];
+    ViewData["NoIndex"] = true;
     var currentAdminEmail = ViewBag.CurrentAdminEmail as string;
 }
 
-<a asp-action="AllUser" style="text-decoration:none; color:inherit;">
-    <h2>All Users</h2>
-</a>
-
-
-<form asp-action="AllUser" method="post" class="mb-3">
-    <div class="input-group">
-        <input type="text" name="searchTerm" class="form-control" placeholder="Search by name or email" />
-        <button type="submit" class="btn btn-primary">Search</button>
+<div class="container py-4 py-lg-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <h1 class="page-title mb-0">@L["Users"]</h1>
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus"></i> @L["Add user"]</a>
     </div>
-</form>
 
-<p>
-    <a asp-action="Create" asp-controller="Admin" class="btn btn-success">Create New Member</a>
-</p>
+    <form asp-action="AllUser" method="post" class="search-panel mb-4">
+        <div class="input-group">
+            <input type="text" name="searchTerm" class="form-control" placeholder="@L["Search by name or email"]" aria-label="@L["Search by name or email"]" />
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> @L["Search"]</button>
+        </div>
+    </form>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Created</th>
-            <th style="width:220px">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Name</td>
-                <td>@item.Email</td>
-                <td>@(rolesDict.TryGetValue(item.RoleId, out var rn) ? rn : item.RoleId.ToString())</td>
-                <td>@item.CreatedAt.ToString("g")</td>
-                <td>
-                    @if (!string.Equals(item.Email, currentAdminEmail, StringComparison.OrdinalIgnoreCase))
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-secondary">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-danger ms-2">Delete</a>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-<a asp-controller="Article" a asp-action="Index" class="btn btn-secondary ms-2">Back</a>
+    <div class="table-responsive">
+        <table class="table table-clean">
+            <thead>
+                <tr>
+                    <th>@L["Name"]</th>
+                    <th>@L["Email"]</th>
+                    <th>@L["Role"]</th>
+                    <th>@L["Joined"]</th>
+                    <th class="text-end">@L["Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Name</td>
+                        <td>@item.Email</td>
+                        <td><span class="badge text-bg-secondary">@L[AppRoles.Name(item.RoleId)]</span></td>
+                        <td class="text-nowrap">@item.CreatedAt.ToString("d MMM yyyy")</td>
+                        <td class="text-end text-nowrap">
+                            @if (!string.Equals(item.Email, currentAdminEmail, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-secondary">@L["Edit"]</a>
+                                <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-link text-danger">@L["Delete"]</a>
+                            }
+                            else
+                            {
+                                <span class="meta">@L["You"]</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

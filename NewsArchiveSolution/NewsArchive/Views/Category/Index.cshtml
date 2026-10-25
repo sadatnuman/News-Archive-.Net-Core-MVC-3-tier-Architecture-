@@ -1,48 +1,58 @@
 ﻿@model IEnumerable<BLL.DTOs.CategoryDTO>
-@using BLL
-@using NewsArchive.Seo
 
 @{
-    var isAdmin = Context.Session.GetInt32("RoleId") == AppRoles.Admin;
+    var lang = UiLanguage.Current;
+    var isAdmin = User.RoleId() == AppRoles.Admin;
+    var counts = ViewBag.ArticleCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
     var meta = ViewData.Meta();
-    meta.Title = "News sections";
-    meta.Description = "Browse NewsArchive coverage by section: " + string.Join(", ", Model.Select(c => c.Name)) + ".";
-    meta.CanonicalPath = "/Category";
-    meta.Breadcrumbs.Add(("Sections", "/Category"));
+    meta.Title = L["News sections"];
+    meta.Description = L["Browse The Meridian Newsfolio coverage by section: {0}.", string.Join(", ", Model.Select(c => c.LocalName(lang)))];
+    meta.CanonicalPath = SeoUrls.Page("/Category");
+    meta.Breadcrumbs.Add((L["Sections"], SeoUrls.Page("/Category")));
 }
 
 <div class="container py-4 py-lg-5">
-    <nav class="crumbs" aria-label="Breadcrumb">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Sections</li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@L["Sections"]</li>
         </ol>
     </nav>
 
     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
         <header>
-            <h1 class="page-title">News sections</h1>
-            <p class="page-intro mb-0">Every story in the archive is filed under one of these sections.</p>
+            <h1 class="page-title">@L["News sections"]</h1>
+            <p class="page-intro mb-0">@L["Every story in the archive is filed under one of these sections."]</p>
         </header>
         @if (isAdmin)
         {
-            <a asp-action="Create" class="btn btn-primary"><i class="bi bi-folder-plus"></i> New section</a>
+            <a asp-action="Create" class="btn btn-primary"><i class="bi bi-folder-plus"></i> @L["New section"]</a>
         }
     </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-folder2-open"></i>
+            <h2 class="h5 mt-3">@L["No sections yet"]</h2>
+        </div>
+    }
 
     <div class="row g-4">
         @foreach (var item in Model)
         {
+            var url = SeoUrls.Category(item.CategoryId, item.Slug);
             <div class="col-md-6 col-lg-4">
                 <div class="data-card d-flex flex-column">
-                    <h2 class="h4 mb-2"><a href="@SeoUrls.Category(item.CategoryId, item.Slug)">@item.Name</a></h2>
-                    <p class="text-muted small flex-grow-1">@item.Description</p>
-                    <div class="d-flex align-items-center gap-2">
-                        <a href="@SeoUrls.Category(item.CategoryId, item.Slug)" class="btn btn-outline-primary btn-sm">Read @item.Name news</a>
+                    <h2 class="h4 mb-2"><a href="@url">@item.LocalName(lang)</a></h2>
+                    <p class="text-muted small flex-grow-1">@item.LocalDescription(lang)</p>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <a href="@url" class="btn btn-outline-primary btn-sm">@L["Read {0} news", item.LocalName(lang)]</a>
                         @if (isAdmin)
                         {
-                            <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-sm btn-link">Edit</a>
-                            <a asp-action="Delete" asp-route-id="@item.CategoryId" class="btn btn-sm btn-link text-danger">Delete</a>
+                            <span class="meta ms-auto">@L["{0} articles", counts.TryGetValue(item.CategoryId, out var n) ? n : 0]</span>
+                            <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-sm btn-link">@L["Edit"]</a>
+                            <a asp-action="Delete" asp-route-id="@item.CategoryId" class="btn btn-sm btn-link text-danger">@L["Delete"]</a>
                         }
                     </div>
                 </div>

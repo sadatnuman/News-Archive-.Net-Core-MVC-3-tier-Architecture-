@@ -1,0 +1,29 @@
+@model BLL.DTOs.UserDTO
+
+@{
+    ViewData["Title"] = L["Profile"];
+    ViewData["NoIndex"] = true;
+}
+
+<div class="container">
+    <div class="auth-card">
+        <h1 class="h3 mb-1">@L["Profile"]</h1>
+        <p class="text-muted mb-4">@L["Signed in as {0}", L[AppRoles.Name(Model.RoleId)]]</p>
+        <form asp-action="Profile" method="post">
+            <input type="hidden" asp-for="UserId" />
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-semibold"></label>
+                <input asp-for="Name" class="form-control" autocomplete="name" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label fw-semibold"></label>
+                <input asp-for="Email" class="form-control" readonly />
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">@L["Save changes"]</button>
+                <a asp-action="ChangePassword" class="btn btn-outline-secondary">@L["Change password"]</a>
+            </div>
+        </form>
+    </div>
+</div>

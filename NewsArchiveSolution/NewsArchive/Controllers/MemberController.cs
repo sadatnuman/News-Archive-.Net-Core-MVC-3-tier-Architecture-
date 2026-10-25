@@ -1,125 +1,81 @@
-﻿using BLL;
-using NewsArchive.Filters;
+using BLL;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
+using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
 {
-    [RoleAccess(AppRoles.Reader, AppRoles.Author)]
-    [Logged]
-    public class MemberController : Controller
+    [CustomAuthorize(AppRoles.Reader, AppRoles.Author)]
+    public class MemberController : AppController
     {
-        private readonly UserService _userService;
-        private readonly RoleService _roleService;
+        private readonly UserService userService;
+        private readonly AuthService authService;
 
-        public MemberController(UserService userService, RoleService roleService)
+        public MemberController(UserService userService, AuthService authService)
         {
-            _userService = userService;
-            _roleService = roleService;
+            this.userService = userService;
+            this.authService = authService;
         }
 
         [HttpGet]
         public IActionResult Profile()
         {
-            ViewBag.Roles = _roleService.Get();
-            var email = HttpContext.Session.GetString("Email");
-            var user = _userService.GetByEmail(email);
+            var user = userService.GetByEmail(CurrentEmail);
             if (user == null) return NotFound();
-            ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
             return View(user);
         }
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Profile(UserDTO obj)
         {
-            ViewBag.Roles = _roleService.Get();
-
-            var existing = _userService.Get(obj.UserId);
+            var existing = userService.Get(CurrentUserId ?? 0);
             if (existing == null) return NotFound();
 
-            existing.Name = obj.Name;
-
-            var updated = _userService.Update(existing);
-            if (updated)
+            if (string.IsNullOrWhiteSpace(obj.Name) || obj.Name.Trim().Length is < 2 or > 100)
             {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User updated";
-                return RedirectToAction("Profile","Member");
+                Flash("danger", "Name must be between 2 and 100 characters");
+                return View(existing);
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            existing.Name = obj.Name;
+            if (userService.Update(existing))
+            {
+                Flash("success", "User updated");
+                return RedirectToAction("Profile", "Member");
+            }
+
+            Flash("danger", "Update failed");
             return View(existing);
         }
-
 
         [HttpGet]
         public IActionResult ChangePassword()
         {
-            ViewBag.Roles = _roleService.Get();
-            var email = HttpContext.Session.GetString("Email");
-            var user = _userService.GetByEmail(email);
+            var user = userService.GetByEmail(CurrentEmail);
             if (user == null) return NotFound();
-            ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
-
-            var model = new BLL.DTOs.ChangePasswordDTO
-            {
-                UserId = user.UserId,
-                Email = user.Email
-            };
-
-            return View(model);
+            return View(new ChangePasswordDTO { UserId = user.UserId, Email = user.Email });
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult ChangePassword(BLL.DTOs.ChangePasswordDTO obj)
+        public async Task<IActionResult> ChangePassword(ChangePasswordDTO obj)
         {
-            ViewBag.Roles = _roleService.Get();
+            var userId = CurrentUserId ?? 0;
+            obj.UserId = userId;
+            obj.Email = CurrentEmail;
+            if (!ModelState.IsValid) return View(obj);
 
-            if (!ModelState.IsValid)
+            if (authService.ChangePassword(userId, obj.PasswordHash))
             {
-                return View(obj);
-            }
-
-            var existing = _userService.Get(obj.UserId);
-            if (existing == null) return NotFound();
-
-            existing.PasswordHash = GetMd5(obj.PasswordHash);   
-            existing.ConfPassword = GetMd5(obj.ConfPassword);
-
-            var updated = _userService.Update(existing);
-            if (updated)
-            {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "Password updated";
+                await authService.RevokeAllAsync(userId);
+                var refreshed = authService.GetUser(userId);
+                if (refreshed != null) await SignInUserAsync(refreshed);
+                Flash("success", "Password updated");
                 return RedirectToAction("Profile", "Member");
             }
 
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Update failed";
+            Flash("danger", "Update failed");
             return View(obj);
-        }
-
-        private static string GetMd5(string input)
-        {
-            using (MD5 md5 = MD5.Create())
-            {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(input ?? string.Empty);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                var sb = new StringBuilder();
-                foreach (byte b in hashBytes)
-                    sb.Append(b.ToString("x2"));
-
-                return sb.ToString();
-            }
         }
     }
 }
