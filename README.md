@@ -12,22 +12,23 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - English and Bangla editions with a language switcher; every page, form and message is translated
 - Light, dark and system themes
 - Home page with a lead story, latest news, trending stories and a breaking-news ticker
-- Sections, trending and breaking news, search by keyword and date range
+- Sections, topics (tags), trending and breaking news, search by keyword and date range
 - Article pages with byline, reading time, share buttons (LinkedIn, X, Facebook, WhatsApp), comments and related stories
 - Sign up, sign in, profile, password change and password reset with a one-time code
 
 **Authors**
-- Write articles in English or Bangla, save drafts and submit them for approval
+- Write articles in English or Bangla, tag them with up to 8 topics, save drafts and submit them for approval
 - "My articles" page with the status of every article and the editor's notes on rejected ones
 
 **Admins**
 - Approve or reject submitted articles; nothing written by an author is published without approval
 - Add, rename and delete any number of sections, with English and Bangla names; articles are moved when a section is deleted
+- Manage topic tags in English and Bangla; every tag gets its own page at `/tag/{id}/{slug}`
 - Manage users and roles, and moderate comments
 - Dashboard with totals, the review queue, most-viewed articles and articles per section
 
 **REST API**
-- JSON API under `/api` for articles, sections, comments and accounts, with paging, language filters and proper status codes
+- JSON API under `/api` for articles, sections, tags, comments and accounts, with paging, language filters and proper status codes
 - Token authentication: `Authorization: Bearer {token}` for apps, or an HttpOnly `AuthToken` cookie for browser clients (`?webClient=true`)
 - Role checks on every protected endpoint, token expiry, logout and "log out everywhere"
 - Interactive documentation with Swagger UI at `/swagger`

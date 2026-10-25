@@ -26,6 +26,6 @@ namespace DAL
 
         public IRepository<Role> GetRoleRepository() => new Repository<Role>(db);
 
-        public IRepository<Tag> GetTagRepository() => new Repository<Tag>(db);
+        public ITagRepository GetTagRepository() => new TagRepo(db);
     }
 }

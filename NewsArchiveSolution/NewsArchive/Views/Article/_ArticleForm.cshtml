@@ -4,6 +4,8 @@
     var lang = UiLanguage.Current;
     var isAdmin = ViewBag.IsAdmin as bool? ?? false;
     var categories = ViewBag.Categories as List<BLL.DTOs.CategoryDTO> ?? new List<BLL.DTOs.CategoryDTO>();
+    var tags = ViewBag.Tags as List<BLL.DTOs.TagDTO> ?? new List<BLL.DTOs.TagDTO>();
+    var selectedTags = Model.TagIds ?? new List<int>();
     var isEdit = Model.ArticleId > 0;
 }
 
@@ -63,6 +65,24 @@
         <input asp-for="ImagePath" class="form-control" placeholder="images/articles/image-name.jpg" />
         <span asp-validation-for="ImagePath" class="text-danger small"></span>
     </div>
+
+    @if (tags.Count > 0)
+    {
+        <fieldset class="mb-4">
+            <legend class="form-label fw-semibold fs-6 mb-1">@L["Tags"]</legend>
+            <p class="small text-muted mb-2">@L["Choose up to {0} topics that describe the story.", BLL.Services.TagService.MaxTagsPerArticle]</p>
+            <div class="tag-picker" data-max-tags="@BLL.Services.TagService.MaxTagsPerArticle">
+                @foreach (var tag in tags)
+                {
+                    var id = $"tag-{tag.TagId}";
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="TagIds" value="@tag.TagId" id="@id" checked="@(selectedTags.Contains(tag.TagId) ? "checked" : null)" />
+                        <label class="form-check-label" for="@id">@tag.LocalName(lang)</label>
+                    </div>
+                }
+            </div>
+        </fieldset>
+    }
 
     @if (isAdmin)
     {

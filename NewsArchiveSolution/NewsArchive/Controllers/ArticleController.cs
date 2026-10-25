@@ -14,9 +14,11 @@ namespace NewsArchive.Controllers
         CategoryService categoryService;
         CommentService commentService;
         UserService userService;
+        TagService tagService;
 
-        public ArticleController(ArticleService articleService, CategoryService categoryService, CommentService commentService, UserService userService)
+        public ArticleController(ArticleService articleService, CategoryService categoryService, CommentService commentService, UserService userService, TagService tagService)
         {
+            this.tagService = tagService;
             this.articleService = articleService;
             this.categoryService = categoryService;
             this.commentService = commentService;
@@ -26,6 +28,7 @@ namespace NewsArchive.Controllers
         private void SetFormData()
         {
             ViewBag.Categories = categoryService.Get();
+            ViewBag.Tags = tagService.Get();
             ViewBag.IsAdmin = CurrentRoleId == AppRoles.Admin;
         }
 
@@ -46,6 +49,7 @@ namespace NewsArchive.Controllers
 
             ViewBag.IsSearch = isSearch;
             ViewBag.Trending = trending;
+            ViewBag.PopularTags = isSearch ? new List<TagDTO>() : tagService.GetPopular(12, CurrentLanguage);
             ViewBag.Keyword = keyword;
             ViewBag.From = from;
             ViewBag.To = to;

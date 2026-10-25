@@ -1,0 +1,119 @@
+@model List<BLL.DTOs.ArticleDTO>
+@inject SeoUrls Urls
+
+@{
+    var lang = UiLanguage.Current;
+    var tag = (BLL.DTOs.TagDTO)ViewBag.Tag;
+    var name = tag.LocalName(lang);
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var total = (int)ViewBag.Total;
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    var path = SeoUrls.Tag(tag.TagId, tag.Slug, page: page);
+
+    var meta = ViewData.Meta();
+    meta.Title = page > 1 ? L["{0} news, page {1}", name, page] : L["{0} news", name];
+    meta.Description = L["Every story about {0} in The Meridian Newsfolio archive.", name];
+    meta.CanonicalPath = path;
+    meta.Image = Model.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagePath))?.ImagePath;
+    meta.Breadcrumbs.Add((L["Topics"], SeoUrls.Page("/tags")));
+    meta.Breadcrumbs.Add((name, SeoUrls.Tag(tag.TagId, tag.Slug)));
+    meta.JsonLd.Add(new Dictionary<string, object?>
+    {
+        ["@type"] = "CollectionPage",
+        ["name"] = meta.Title,
+        ["url"] = Urls.Absolute(path),
+        ["inLanguage"] = lang,
+        ["description"] = meta.Description,
+        ["about"] = new Dictionary<string, object?> { ["@type"] = "Thing", ["name"] = name },
+        ["mainEntity"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "ItemList",
+            ["itemListElement"] = Model.Select((a, i) => new Dictionary<string, object?>
+            {
+                ["@type"] = "ListItem",
+                ["position"] = (page - 1) * pageSize + i + 1,
+                ["url"] = Urls.Absolute(SeoUrls.Article(a))
+            }).ToList()
+        }
+    });
+
+    var lead = page == 1 ? Model.FirstOrDefault() : null;
+    var rest = lead == null ? Model : Model.Skip(1).ToList();
+}
+
+@section Head {
+    @if (page > 1)
+    {
+        <link rel="prev" href="@SeoUrls.Tag(tag.TagId, tag.Slug, page: page - 1)" />
+    }
+    @if (page < totalPages)
+    {
+        <link rel="next" href="@SeoUrls.Tag(tag.TagId, tag.Slug, page: page + 1)" />
+    }
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/tags")">@L["Topics"]</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@name</li>
+        </ol>
+    </nav>
+
+    <header class="mb-4 pb-3 border-bottom">
+        <span class="kicker">@L["Topic"]</span>
+        <h1 class="page-title mt-1"><i class="bi bi-hash text-accent" aria-hidden="true"></i>@name</h1>
+        <p class="page-intro mb-0">@L["{0} stories found", total]</p>
+    </header>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-tag"></i>
+            <h2 class="h5 mt-3">@L["No {0} stories yet", name]</h2>
+            <p class="mb-0"><a href="@SeoUrls.Page("/tags")">@L["Browse all topics"]</a></p>
+        </div>
+    }
+    else
+    {
+        @if (lead != null)
+        {
+            <section class="mb-5" aria-label="@L["Top story"]">
+                <partial name="_StoryLead" model="lead" />
+            </section>
+        }
+
+        @if (rest.Any())
+        {
+            <section aria-labelledby="more-heading">
+                <div class="section-head">
+                    <h2 id="more-heading">@L["More {0} stories", name]</h2>
+                </div>
+                <div class="row g-4">
+                    @foreach (var item in rest)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <partial name="_StoryCard" model="item" />
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        @if (totalPages > 1)
+        {
+            <nav class="mt-5" aria-label="@L["Pages"]">
+                <ul class="pagination justify-content-center flex-wrap">
+                    @for (var i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == page ? "active" : "")">
+                            <a class="page-link" href="@SeoUrls.Tag(tag.TagId, tag.Slug, page: i)" aria-current="@(i == page ? "page" : null)">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+</div>

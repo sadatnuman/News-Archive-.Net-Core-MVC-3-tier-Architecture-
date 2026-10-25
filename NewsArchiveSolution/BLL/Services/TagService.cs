@@ -1,14 +1,16 @@
 using AutoMapper;
 using BLL.DTOs;
-using DAL.EF.Tables;
 using DAL;
+using DAL.EF.Tables;
 using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class TagService
     {
-        private readonly IRepository<Tag> repo;
+        public const int MaxTagsPerArticle = 8;
+
+        private readonly ITagRepository repo;
         private readonly IMapper mapper;
 
         public TagService(DataAccessFactory factory, IMapper mapper)
@@ -19,33 +21,99 @@ namespace BLL.Services
 
         public List<TagDTO> Get()
         {
-            var data = repo.Get();
-            var res = mapper.Map<List<TagDTO>>(data);
-            return res;
+            return mapper.Map<List<TagDTO>>(repo.Get());
         }
 
-        public TagDTO Get(int id)
+        public List<TagDTO> GetWithCounts(string? language = null)
+        {
+            var counts = repo.CountPublished(language);
+            var tags = Get();
+            foreach (var tag in tags)
+                tag.ArticleCount = counts.TryGetValue(tag.TagId, out var count) ? count : 0;
+            return tags;
+        }
+
+        public TagDTO? Get(int id)
         {
             var data = repo.Get(id);
-            var res = mapper.Map<TagDTO>(data);
-            return res;
+            return data == null ? null : mapper.Map<TagDTO>(data);
         }
 
-        public bool Create(TagDTO c)
+        public List<TagDTO> GetPopular(int count, string? language = null)
         {
-            var converted = mapper.Map<Tag>(c);
-            return repo.Create(converted);
+            return mapper.Map<List<TagDTO>>(repo.GetPopular(count, language));
         }
 
-        public bool Update(TagDTO c)
+        public List<TagDTO> GetForArticle(int articleId)
         {
-            var converted = mapper.Map<Tag>(c);
-            return repo.Update(converted);
+            return mapper.Map<List<TagDTO>>(repo.GetForArticle(articleId));
+        }
+
+        public List<ArticleDTO> GetArticles(int tagId, string? language, int page, int pageSize, out int total)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 12;
+            return mapper.Map<List<ArticleDTO>>(repo.GetArticles(tagId, language, page, pageSize, out total));
+        }
+
+        public bool NameExists(string? name, int tagId)
+        {
+            return !string.IsNullOrWhiteSpace(name) && repo.NameExists(name.Trim(), tagId);
+        }
+
+        public bool Create(TagDTO tag)
+        {
+            var entity = new Tag
+            {
+                Name = tag.Name.Trim(),
+                NameBn = string.IsNullOrWhiteSpace(tag.NameBn) ? null : tag.NameBn.Trim(),
+                Slug = UniqueSlug(tag.Name, 0)
+            };
+            if (!repo.Create(entity)) return false;
+
+            tag.TagId = entity.TagId;
+            tag.Slug = entity.Slug;
+            return true;
+        }
+
+        public bool Update(TagDTO tag)
+        {
+            var entity = repo.Get(tag.TagId);
+            if (entity == null) return false;
+
+            entity.Name = tag.Name.Trim();
+            entity.NameBn = string.IsNullOrWhiteSpace(tag.NameBn) ? null : tag.NameBn.Trim();
+            entity.Slug = UniqueSlug(entity.Name, entity.TagId);
+            return repo.Update(entity);
         }
 
         public bool Delete(int id)
         {
             return repo.Delete(id);
+        }
+
+        public bool SetArticleTags(int articleId, IEnumerable<int>? tagIds)
+        {
+            return repo.SetArticleTags(articleId, (tagIds ?? Enumerable.Empty<int>()).Distinct().Take(MaxTagsPerArticle));
+        }
+
+        public void EnsureSlugs()
+        {
+            var missing = repo.GetWithoutSlug();
+            if (missing.Count == 0) return;
+            foreach (var tag in missing)
+                tag.Slug = UniqueSlug(tag.Name, tag.TagId);
+            repo.SaveChanges();
+        }
+
+        private string UniqueSlug(string name, int tagId)
+        {
+            var baseSlug = SlugHelper.Generate(name);
+            var slug = baseSlug;
+            var suffix = 2;
+            while (repo.SlugExists(slug, tagId))
+                slug = $"{baseSlug}-{suffix++}";
+            return slug;
         }
     }
 }

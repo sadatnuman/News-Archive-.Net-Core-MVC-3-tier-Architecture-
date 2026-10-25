@@ -23,7 +23,7 @@ namespace BLL.DTOs
 
         [Display(Name = "Image path")]
         [StringLength(255, ErrorMessage = "Image path cannot exceed 255 characters")]
-        [RegularExpression(@"^(/(?!/)[A-Za-z0-9_\-./]+|https://[^\s""'<>]+)$", ErrorMessage = "Use a site path like /images/articles/photo.jpg or an https:// address")]
+        [RegularExpression(@"^(?!.*\.\.)(/?(?!/)[A-Za-z0-9_\-./]+|https://[^\s""'<>]+)$", ErrorMessage = "Use a site path like /images/articles/photo.jpg or an https:// address")]
         public string? ImagePath { get; set; }
 
         [Display(Name = "Category")]
@@ -35,6 +35,9 @@ namespace BLL.DTOs
 
         [Display(Name = "Language")]
         public string LanguageCode { get; set; } = AppLanguages.English;
+
+        [Display(Name = "Tags")]
+        public List<int> TagIds { get; set; } = new();
 
         public int StatusId { get; set; }
 

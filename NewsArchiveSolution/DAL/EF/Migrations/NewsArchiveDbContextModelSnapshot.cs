@@ -351,11 +351,27 @@ namespace DAL.EF.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("NameBn")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Slug")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
                     b.HasKey("TagId")
                         .HasName("PK__Tags__657CF9AC4036D6BB");
 
                     b.HasIndex(new[] { "Name" }, "UX_Tags_Name")
                         .IsUnique();
+
+                    b.HasIndex(new[] { "NameBn" }, "UX_Tags_NameBn")
+                        .IsUnique()
+                        .HasFilter("[NameBn] IS NOT NULL");
+
+                    b.HasIndex(new[] { "Slug" }, "UX_Tags_Slug")
+                        .IsUnique()
+                        .HasFilter("[Slug] IS NOT NULL");
 
                     b.ToTable("Tags");
                 });

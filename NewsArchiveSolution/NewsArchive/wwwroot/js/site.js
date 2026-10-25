@@ -37,6 +37,20 @@
         }
     });
 
+    function limitTags(picker) {
+        var max = parseInt(picker.getAttribute("data-max-tags"), 10) || 8;
+        var boxes = picker.querySelectorAll("input[type=checkbox]");
+        var checked = picker.querySelectorAll("input[type=checkbox]:checked").length;
+        boxes.forEach(function (box) {
+            box.disabled = !box.checked && checked >= max;
+        });
+    }
+
+    document.querySelectorAll(".tag-picker").forEach(function (picker) {
+        picker.addEventListener("change", function () { limitTags(picker); });
+        limitTags(picker);
+    });
+
     media.addEventListener("change", function () {
         if (storedChoice() === "system") apply("system");
     });

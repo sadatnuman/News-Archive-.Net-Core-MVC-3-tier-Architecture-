@@ -16,11 +16,13 @@ namespace NewsArchive.Controllers
 
         private readonly ArticleService articleService;
         private readonly CategoryService categoryService;
+        private readonly TagService tagService;
         private readonly SeoUrls urls;
         private readonly SiteOptions site;
 
-        public SeoController(ArticleService articleService, CategoryService categoryService, SeoUrls urls, IOptions<SiteOptions> site)
+        public SeoController(ArticleService articleService, CategoryService categoryService, TagService tagService, SeoUrls urls, IOptions<SiteOptions> site)
         {
+            this.tagService = tagService;
             this.articleService = articleService;
             this.categoryService = categoryService;
             this.urls = urls;
@@ -80,6 +82,9 @@ namespace NewsArchive.Controllers
                 AddUrl(SeoUrls.Page("/Category", lang), null, "weekly", "0.6");
                 foreach (var c in categories)
                     AddUrl(SeoUrls.Category(c.CategoryId, c.Slug, lang), null, "daily", "0.7");
+                AddUrl(SeoUrls.Page("/tags", lang), null, "weekly", "0.5");
+                foreach (var t in tagService.GetWithCounts(lang).Where(t => t.ArticleCount > 0))
+                    AddUrl(SeoUrls.Tag(t.TagId, t.Slug, lang), null, "daily", "0.6");
             }
 
             foreach (var a in articles)

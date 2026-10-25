@@ -1,4 +1,4 @@
-﻿namespace BLL.DTOs
+namespace BLL.DTOs
 {
     public class ArticleDTO
     {
@@ -37,6 +37,8 @@
         public DateTime? ReviewedAt { get; set; }
 
         public string? ReviewNote { get; set; }
+
+        public List<TagDTO> Tags { get; set; } = new();
 
         public string StatusName => ArticleStatus.Name(StatusId);
 

@@ -60,6 +60,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `NormalizeSchemaAndApprovalWorkflow` | 3NF clean-up, approval workflow columns, slugs, keys, indexes and seed data |
 | `AddLanguages` | `Languages` lookup table, `Articles.LanguageCode` foreign key, Bangla names for sections |
 | `AddUserTokens` | `UserTokens` table for API tokens (hash only, expiry, revocation) |
+| `AddTagTranslationsAndSlugs` | Bangla tag names and unique slugs for tag pages |
 
 ### Tables (3NF)
 
@@ -71,7 +72,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `Languages` | `LanguageCode` (`en`, `bn`) | | |
 | `Categories` | `CategoryId` | | `UX_Categories_Name`, `UX_Categories_NameBn` (filtered), `UX_Categories_Slug` (filtered) |
 | `Articles` | `ArticleId` | `AuthorId → Users`, `CategoryId → Categories`, `StatusId → ArticleStatuses`, `LanguageCode → Languages`, `ReviewedById → Users` | `CK_Articles_ViewsCount` (`>= 0`) |
-| `Tags` | `TagId` | | `UX_Tags_Name` |
+| `Tags` | `TagId` | | `UX_Tags_Name`, `UX_Tags_NameBn` (filtered), `UX_Tags_Slug` (filtered) |
 | `ContentLabels` | `(ArticleId, TagId)` | `ArticleId → Articles` (cascade), `TagId → Tags` (cascade) | |
 | `Comments` | `CommentId` | `ArticleId → Articles` (cascade), `UserId → Users` | |
 | `UserTokens` | `TokenId` | `UserId → Users` (cascade) | `UX_UserTokens_TokenHash` |
@@ -105,8 +106,8 @@ Duplicate indexes from the original database (`IX_Users_Email`, `IX_ContentLabel
 |---|---|
 | `Interfaces/IRepository<T>` | Generic contract: `Get(id)`, `Get()`, `Create`, `Update`, `Delete`, `Count`, `SaveChanges` |
 | `Repos/Repository<T>` | Generic EF implementation; `Update` finds the row by its primary key and copies the new values |
-| `Interfaces/IArticleRepository`, `ICategoryRepository`, `ICommentRepository`, `IUserRepository`, `ITokenRepository` | Entity-specific queries on top of the generic contract |
-| `Repos/ArticleRepo`, `CategoryRepo`, `CommentRepo`, `UserRepo`, `TokenRepo` | `internal` implementations deriving from `Repository<T>` |
+| `Interfaces/IArticleRepository`, `ICategoryRepository`, `ICommentRepository`, `IUserRepository`, `ITokenRepository`, `ITagRepository` | Entity-specific queries on top of the generic contract |
+| `Repos/ArticleRepo`, `CategoryRepo`, `CommentRepo`, `UserRepo`, `TokenRepo`, `TagRepo` | `internal` implementations deriving from `Repository<T>` |
 | `DataAccessFactory` | The only public entry point: `GetArticleRepository()`, `GetCategoryRepository()`, `GetCommentRepository()`, `GetUserRepository()`, `GetTokenRepository()`, `GetRoleRepository()`, `GetTagRepository()` |
 
 Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
@@ -117,6 +118,8 @@ Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 - `GetByAuthor`, `GetByStatus`, `CountByStatus` editorial workflow.
 - `GetPublishedForSitemap`, `GetLatest` sitemap and RSS.
 - `IncrementViewCount` single `UPDATE` through `ExecuteUpdate`.
+
+`TagRepo` counts published articles per tag in SQL (`CountPublished`, `GetPopular`), pages the published articles of a tag (`GetArticles`) and replaces an article's tags in one save (`SetArticleTags`).
 
 ## Business layer (BLL)
 
@@ -143,6 +146,14 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 - Deleting a section that still has articles requires choosing a target section; the articles are moved in the same transaction (`CategoryRepo.DeleteMovingArticles`).
 - The navigation shows the first six sections and puts the rest under **More**.
 
+## Tags (topics)
+
+- Admins manage tags at **Account → Tags** (`/tags` shows the management table to admins): English name, optional Bangla name, automatic unique slug.
+- Authors and admins pick up to 8 tags per article in the article form (`TagService.MaxTagsPerArticle`, enforced in BLL and by the form).
+- Article pages show the tags as links and add them as `keywords` in the `NewsArticle` JSON-LD.
+- The home page sidebar lists the 12 most used topics in the current language; tag pages are paged, have `CollectionPage` JSON-LD, `rel=prev/next` and are listed in the sitemap.
+- Deleting a tag only removes the link from articles (cascade on `ContentLabels`).
+
 ## Presentation layer (NewsArchive)
 
 ### Public URLs
@@ -154,6 +165,8 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | `/news/{id}/{slug}` | `Article/Details` | Canonical article URL; `/Article/Details/{id}` and wrong slugs redirect (301) |
 | `/category/{id}/{slug}` | `Category/ArticlesByCategory` | `/Category/ArticlesByCategory/{id}` redirects (301) |
 | `/Category` | `Category/Index` | All sections |
+| `/tags` | `Tag/Index` | Topics with article counts in the current language (management table for admins) |
+| `/tag/{id}/{slug}?page=` | `Tag/Articles` | Paged published stories of a topic; wrong or missing slug redirects (301) |
 | `/trending`, `/breaking-news` | `Article/TrendingNews`, `Article/BreakingNews` | |
 | `/about`, `/contact`, `/editorial-policy`, `/privacy`, `/terms` | `Pages/*` | |
 | `/error/{code}` | `Pages/Error` | Status code pages (404, 500) |
@@ -170,6 +183,7 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | Admin | `Index` (dashboard), `PendingArticles`, `Approve/{id}`, `Reject/{id}` | Admin |
 | Admin | `AllUser`, `Create`, `Edit/{id}`, `Delete/{id}`, `Profile`, `ChangePassword` | Admin |
 | Category | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
+| Tag | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Member | `Profile`, `ChangePassword` | Reader, Author |
 | Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 
@@ -204,6 +218,10 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `DELETE /api/comments/{id}` | Comment owner or Admin | 204 / 403 |
 | `GET /api/categories`, `/{id}`, `/{id}/articles?lang=` | Public | 200 |
 | `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}?moveArticlesTo=` | Admin | 201 / 204 / 409 |
+| `GET /api/tags?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 |
+| `POST /api/tags`, `PUT /api/tags/{id}`, `DELETE /api/tags/{id}` | Admin | 201 / 204 / 409 |
+
+Article `POST` and `PUT` accept `tagIds` in the body; `GET /api/articles/{id}` returns the article's `tags`.
 
 Token authentication is declared with `[ApiAuthorize(roles...)]` (`Filters/ApiAuthorize.cs`, a `TypeFilterAttribute`) which runs `Filters/TokenAuthorizationFilter.cs` (`IAsyncAuthorizationFilter`). The filter reads `Authorization: Bearer {token}` or the `AuthToken` cookie, validates it through `AuthService`, and returns 401 (missing, unknown, expired or revoked token) or 403 (wrong role).
 
@@ -284,7 +302,6 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 ## Known limitations
 
 - Images are referenced by typed path; there is no upload.
-- Tags exist in the schema but have no management UI.
 - The password reset code is not emailed yet; an email sender will be plugged in later.
 - Login lockout counters live in memory, so they reset when the app restarts and are per server.
 
@@ -297,6 +314,8 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 1c | English + Bangla site, light/dark/system theme, flexible sections, brand, bilingual sample data | Done |
 | 2 | Course-aligned architecture: repository interfaces, generic repository, `DataAccessFactory`, AutoMapper profile via DI, cookie authentication with claims, PBKDF2 password hashing | Done |
 | 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger, security hardening | Done |
-| 4 | Rich text, image upload, tags UI, date archive, revisions, scheduling | Planned |
+| 4 | Tags and topic pages | Done |
+| 4b | Show/hide password, image upload for articles and profile pictures | In progress |
+| 4c | Rich text, date archive, revisions, scheduling | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |
