@@ -267,6 +267,14 @@ namespace NewsArchive.Controllers
             return CurrentRoleId == AppRoles.Author ? RedirectToAction("MyArticles") : RedirectToAction("Index");
         }
 
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
+        [HttpPost]
+        public IActionResult Preview(string? content)
+        {
+            if (content != null && content.Length > 20000) content = content[..20000];
+            return Content(NewsArchive.Content.ArticleRenderer.Render(content).ToString() ?? string.Empty, "text/html; charset=utf-8");
+        }
+
         [CustomAuthorize(AppRoles.Author)]
         [HttpGet]
         public IActionResult MyArticles()

@@ -135,6 +135,95 @@
         });
     });
 
+    function wrapSelection(textarea, kind) {
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var value = textarea.value;
+        var selected = value.slice(start, end);
+        var lineStart = value.lastIndexOf("\n", start - 1) + 1;
+        var insert;
+        var cursorStart;
+        var cursorEnd;
+
+        function prefixLines(prefix, numbered) {
+            var block = value.slice(lineStart, end) || "";
+            var lines = block.split("\n").map(function (line, i) { return (numbered ? (i + 1) + ". " : prefix) + line; });
+            insert = lines.join("\n");
+            textarea.setRangeText(insert, lineStart, end, "end");
+        }
+
+        switch (kind) {
+            case "bold":
+                insert = "**" + (selected || "bold text") + "**";
+                textarea.setRangeText(insert, start, end, "select");
+                cursorStart = start + 2;
+                cursorEnd = start + insert.length - 2;
+                textarea.setSelectionRange(cursorStart, cursorEnd);
+                break;
+            case "italic":
+                insert = "*" + (selected || "italic text") + "*";
+                textarea.setRangeText(insert, start, end, "select");
+                textarea.setSelectionRange(start + 1, start + insert.length - 1);
+                break;
+            case "link":
+                insert = "[" + (selected || "link text") + "](https://)";
+                textarea.setRangeText(insert, start, end, "end");
+                textarea.setSelectionRange(start + insert.length - 9, start + insert.length - 1);
+                break;
+            case "heading":
+                prefixLines("## ", false);
+                break;
+            case "quote":
+                prefixLines("> ", false);
+                break;
+            case "list":
+                prefixLines("- ", false);
+                break;
+            case "numbered":
+                prefixLines("", true);
+                break;
+        }
+        textarea.focus();
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    document.querySelectorAll(".md-editor").forEach(function (editor) {
+        var textarea = editor.querySelector(".md-input");
+        var preview = editor.querySelector(".md-preview");
+        var toolbar = editor.querySelector(".md-toolbar");
+        var tabs = editor.querySelectorAll("[data-md-tab]");
+        var form = editor.closest("form");
+
+        editor.querySelectorAll("[data-md]").forEach(function (button) {
+            button.addEventListener("click", function () { wrapSelection(textarea, button.getAttribute("data-md")); });
+        });
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener("click", function () {
+                var showPreview = tab.getAttribute("data-md-tab") === "preview";
+                tabs.forEach(function (t) {
+                    var active = t === tab;
+                    t.classList.toggle("active", active);
+                    t.setAttribute("aria-selected", active ? "true" : "false");
+                });
+                textarea.hidden = showPreview;
+                toolbar.hidden = showPreview;
+                preview.hidden = !showPreview;
+                if (!showPreview) { textarea.focus(); return; }
+
+                var token = form ? form.querySelector("input[name=__RequestVerificationToken]") : null;
+                var body = new FormData();
+                body.append("content", textarea.value);
+                if (token) body.append("__RequestVerificationToken", token.value);
+                preview.textContent = "…";
+                fetch(editor.getAttribute("data-preview-url"), { method: "POST", body: body, credentials: "same-origin" })
+                    .then(function (response) { return response.ok ? response.text() : ""; })
+                    .then(function (html) { preview.innerHTML = html; })
+                    .catch(function () { preview.textContent = ""; });
+            });
+        });
+    });
+
     var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
 

@@ -268,6 +268,7 @@ Swagger UI is served at `/swagger` in Development, or anywhere when `Api:Swagger
 - `_Navigation.cshtml` top bar, masthead with search, sticky section navigation, role menus, breaking-news ticker.
 - `_Footer.cshtml` brand, sections, explore links, company and policy links, RSS.
 - Story partials: `_StoryLead`, `_StoryCard`, `_StoryCompact`, built from `_StoryMedia`, `_StoryKicker`, `_StoryMeta`.
+- The article form has a Markdown toolbar (heading, bold, italic, quote, lists, link) and a **Preview** tab that renders through `POST /Article/Preview` (Admin, Author, antiforgery) with the same renderer as the article page. Plain-text articles keep rendering one paragraph per blank line.
 - `wwwroot/js/site.js` adds a show/hide button to every password field (localized label from `data-show-password` / `data-hide-password` on `<body>`, `aria-pressed`, the field is masked again on submit) and limits the tag picker to 8 choices.
 - Design tokens and components in `wwwroot/css/site.css` (Source Serif 4 and Inter, with Noto Bengali fallbacks).
 - Brand assets in `wwwroot/images/brand/` (1200×630 share image, icons) and `wwwroot/site.webmanifest`.
@@ -337,7 +338,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | Brute force | Per-account lockout after 5 failed sign-ins for 15 minutes (`Auth/LoginThrottle.cs`, MVC and API); per-IP rate limits: sign-in, sign-up and reset 20/min, comments 6/min, whole API 120/min; unknown emails cost the same time as known ones |
 | Password reset | 6-digit OTP from a cryptographic RNG, valid 5 minutes, single use, 5 attempts, same response whether or not the email exists; logged only in Development |
 | CSRF | `AutoValidateAntiforgeryToken` on every MVC POST (antiforgery cookie SameSite=Strict); API cookie is SameSite=Strict and the API only accepts JSON bodies |
-| XSS | Razor encoding everywhere, article content rendered as encoded paragraphs, JSON-LD serialized with the default JavaScript encoder, image paths limited to site paths or `https://` |
+| XSS | Razor encoding everywhere, article content rendered by `Content/ArticleRenderer` (Markdig with raw HTML disabled; only `http`, `https`, `mailto`, `#` and site-relative links, only site or `https` images, external links get `rel="nofollow noopener noreferrer"`, headings shifted to h2-h6), JSON-LD serialized with the default JavaScript encoder, image paths limited to site paths or `https://` |
 | Open redirect | `returnUrl` is only followed when `Url.IsLocalUrl` accepts it |
 | Security headers | `Content-Security-Policy` (scripts from self only, no objects, frame-ancestors self), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cache-Control: no-store` on account and API responses, no `Server` header; HSTS outside Development |
 | Proxies | Forwarded headers are only trusted from loopback or from addresses listed in `Hosting:KnownProxies`, so clients cannot fake their IP to dodge rate limits |
@@ -372,6 +373,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 4c | Date archive with calendar and "On this day" | Done |
 | 4d | Author pages with bios | Done |
 | 4e | Bookmarks ("read later") | Done |
-| 4f | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
+| 4f | Safe Markdown formatting with toolbar and live preview | Done |
+| 4g | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

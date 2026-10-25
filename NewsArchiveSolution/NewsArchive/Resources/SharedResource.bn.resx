@@ -135,6 +135,9 @@
   <data name="Bio cannot exceed 500 characters" xml:space="preserve">
     <value>পরিচিতি ৫০০ অক্ষরের বেশি হতে পারবে না</value>
   </data>
+  <data name="Bold" xml:space="preserve">
+    <value>গাঢ়</value>
+  </data>
   <data name="Breadcrumb" xml:space="preserve">
     <value>অবস্থান</value>
   </data>
@@ -161,6 +164,9 @@
   </data>
   <data name="Browse the archive" xml:space="preserve">
     <value>আর্কাইভ দেখুন</value>
+  </data>
+  <data name="Bulleted list" xml:space="preserve">
+    <value>বুলেট তালিকা</value>
   </data>
   <data name="By" xml:space="preserve">
     <value>লিখেছেন</value>
@@ -336,6 +342,9 @@
   <data name="Edited articles go back to the admin for approval." xml:space="preserve">
     <value>সম্পাদিত লেখা আবার অ্যাডমিনের অনুমোদনের জন্য যাবে।</value>
   </data>
+  <data name="Editor view" xml:space="preserve">
+    <value>সম্পাদকের দৃশ্য</value>
+  </data>
   <data name="Editor's note:" xml:space="preserve">
     <value>সম্পাদকের মন্তব্য:</value>
   </data>
@@ -390,6 +399,12 @@
   <data name="Forgot password?" xml:space="preserve">
     <value>পাসওয়ার্ড ভুলে গেছেন?</value>
   </data>
+  <data name="Formatting" xml:space="preserve">
+    <value>বিন্যাস</value>
+  </data>
+  <data name="Formatting: ## heading, **bold**, *italic*, &gt; quote, - list, [text](https://link)." xml:space="preserve">
+    <value>বিন্যাস: ## শিরোনাম, **গাঢ়**, *বাঁকা*, &gt; উদ্ধৃতি, - তালিকা, [লেখা](https://লিংক)।</value>
+  </data>
   <data name="From" xml:space="preserve">
     <value>শুরু</value>
   </data>
@@ -404,6 +419,9 @@
   </data>
   <data name="Guest" xml:space="preserve">
     <value>অতিথি</value>
+  </data>
+  <data name="Heading" xml:space="preserve">
+    <value>উপশিরোনাম</value>
   </data>
   <data name="Headline" xml:space="preserve">
     <value>শিরোনাম</value>
@@ -440,6 +458,9 @@
   </data>
   <data name="Invalid username/email or password" xml:space="preserve">
     <value>ইমেইল বা পাসওয়ার্ড সঠিক নয়</value>
+  </data>
+  <data name="Italic" xml:space="preserve">
+    <value>বাঁকা</value>
   </data>
   <data name="JPEG, PNG, WebP or GIF, up to 2 MB." xml:space="preserve">
     <value>JPEG, PNG, WebP বা GIF, সর্বোচ্চ ২ MB।</value>
@@ -482,6 +503,9 @@
   </data>
   <data name="Light" xml:space="preserve">
     <value>লাইট</value>
+  </data>
+  <data name="Link" xml:space="preserve">
+    <value>লিংক</value>
   </data>
   <data name="Logged out successfully" xml:space="preserve">
     <value>আপনি লগ-আউট করেছেন</value>
@@ -612,6 +636,9 @@
   <data name="Nothing written by authors goes live until you approve it. Open an article to read it in full before deciding." xml:space="preserve">
     <value>আপনার অনুমোদন ছাড়া লেখকদের কোনো লেখা প্রকাশিত হয় না। সিদ্ধান্ত নেওয়ার আগে সংবাদটি খুলে পুরোটা পড়ুন।</value>
   </data>
+  <data name="Numbered list" xml:space="preserve">
+    <value>ক্রমিক তালিকা</value>
+  </data>
   <data name="OTP already used" xml:space="preserve">
     <value>এই ওটিপি আগেই ব্যবহার করা হয়েছে</value>
   </data>
@@ -693,6 +720,9 @@
   <data name="Post comment" xml:space="preserve">
     <value>মন্তব্য করুন</value>
   </data>
+  <data name="Preview" xml:space="preserve">
+    <value>প্রিভিউ</value>
+  </data>
   <data name="Privacy policy" xml:space="preserve">
     <value>গোপনীয়তা নীতি</value>
   </data>
@@ -719,6 +749,9 @@
   </data>
   <data name="Put the file in wwwroot/images/articles/. A 1200 × 630 image looks best when shared." xml:space="preserve">
     <value>ফাইলটি wwwroot/images/articles/ ফোল্ডারে রাখুন। শেয়ারের জন্য ১২০০ × ৬৩০ মাপের ছবি সবচেয়ে ভালো দেখায়।</value>
+  </data>
+  <data name="Quote" xml:space="preserve">
+    <value>উদ্ধৃতি</value>
   </data>
   <data name="RSS feed" xml:space="preserve">
     <value>আরএসএস ফিড</value>

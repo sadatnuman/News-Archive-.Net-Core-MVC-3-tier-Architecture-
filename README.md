@@ -20,7 +20,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - Sign up, sign in, profile with a profile picture, password change and password reset with a one-time code; every password field has a show/hide eye button
 
 **Authors**
-- Write articles in English or Bangla, upload a picture, tag them with up to 8 topics, save drafts and submit them for approval
+- Write articles in English or Bangla with safe formatting (headings, bold, quotes, lists, links), a toolbar and live preview, upload a picture, tag them with up to 8 topics, save drafts and submit them for approval
 - "My articles" page with the status of every article and the editor's notes on rejected ones
 
 **Admins**

@@ -23,9 +23,6 @@
     var path = SeoUrls.Article(Model);
     var absoluteUrl = Urls.Absolute(path);
     var image = SeoUrls.Image(Model.ImagePath);
-    var paragraphs = (Model.Content ?? string.Empty)
-        .Replace("\r\n", "\n")
-        .Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     var wordCount = (Model.Content ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
     var readingMinutes = Math.Max(1, (int)Math.Round(wordCount / 220.0));
     var modified = Model.UpdatedAt.HasValue && Model.UpdatedAt > Model.PublishDate ? Model.UpdatedAt : null;
@@ -165,20 +162,7 @@
             }
 
             <div class="article-body" lang="@Model.LanguageCode">
-                @foreach (var p in paragraphs)
-                {
-                    var lines = p.Split('\n');
-                    <p>
-                        @for (var i = 0; i < lines.Length; i++)
-                        {
-                            @lines[i]
-                            if (i < lines.Length - 1)
-                            {
-                                <br />
-                            }
-                        }
-                    </p>
-                }
+                @NewsArchive.Content.ArticleRenderer.Render(Model.Content)
             </div>
 
             @if (Model.Tags.Count > 0)
