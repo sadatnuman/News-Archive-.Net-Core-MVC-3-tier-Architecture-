@@ -1,0 +1,11 @@
+@model BLL.DTOs.ArticleDTO
+@using NewsArchive.Seo
+
+<article class="story story-compact">
+    <div>
+        <partial name="_StoryKicker" model="Model" />
+        <h3 class="story-title"><a href="@SeoUrls.Article(Model.ArticleId, Model.Slug)">@Model.Title</a></h3>
+        <partial name="_StoryMeta" model="Model" />
+    </div>
+    <partial name="_StoryMedia" model="Model" />
+</article>

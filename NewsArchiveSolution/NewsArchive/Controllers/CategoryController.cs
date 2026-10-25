@@ -1,11 +1,12 @@
-using Auth.AuthFilters;
+using BLL;
+using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace App.Controllers
+namespace NewsArchive.Controllers
 {
-    public class CategoryController : Controller
+    public class CategoryController : AppController
     {
         CategoryService categoryService;
         ArticleService articleService;
@@ -22,19 +23,25 @@ namespace App.Controllers
             return View(data);
         }
 
-        public IActionResult ArticlesByCategory(int id)
+        [HttpGet("category/{id:int}/{slug?}", Order = 0)]
+        [HttpGet("Category/ArticlesByCategory/{id:int}", Order = 1)]
+        public IActionResult ArticlesByCategory(int id, string? slug)
         {
             var category = categoryService.Get(id);
             if (category == null)
                 return NotFound();
 
+            if (slug != category.Slug)
+                return RedirectPermanent(Seo.SeoUrls.Category(category.CategoryId, category.Slug));
+
             var articles = articleService.GetByCategoryId(id);
+            SetArticleLookups(articles);
 
             ViewBag.Category = category;
             return View(articles);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Create()
         {
@@ -45,7 +52,7 @@ namespace App.Controllers
             return View(new CategoryDTO());
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Create(CategoryDTO c)
         {
@@ -64,7 +71,7 @@ namespace App.Controllers
             return View(c);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Edit(int id)
         {
@@ -76,7 +83,7 @@ namespace App.Controllers
             return View(data);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Edit(CategoryDTO c)
         {
@@ -95,7 +102,7 @@ namespace App.Controllers
             return View(c);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Delete(int id)
         {
@@ -107,7 +114,7 @@ namespace App.Controllers
             return View(data);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Delete(int id, string Decision)
         {
@@ -115,13 +122,12 @@ namespace App.Controllers
             if (roleId != 1)
                 return RedirectToAction("Index");
 
-            if (Decision.Equals("Yes"))
+            if (Decision == "Yes")
             {
-                var res = categoryService.Delete(id);
-                if (res == true)
-                {
-                    return RedirectToAction("Index");
-                }
+                if (categoryService.Delete(id))
+                    Flash("success", "Category deleted.");
+                else
+                    Flash("danger", "This category still has articles. Move or delete them first.");
             }
             return RedirectToAction("Index");
         }

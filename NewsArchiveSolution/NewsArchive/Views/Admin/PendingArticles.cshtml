@@ -1,0 +1,57 @@
+@model List<BLL.DTOs.ArticleDTO>
+@using NewsArchive.Seo
+
+@{
+    ViewData["Title"] = "Articles awaiting approval";
+    ViewData["NoIndex"] = true;
+    var authors = ViewBag.AuthorNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var categories = ViewBag.CategoryNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+}
+
+<div class="container py-4 py-lg-5">
+    <header class="mb-4">
+        <h1 class="page-title">Articles awaiting approval</h1>
+        <p class="page-intro mb-0">Nothing written by authors goes live until you approve it. Open an article to read it in full before deciding.</p>
+    </header>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h2 class="h5 mt-3">The review queue is empty</h2>
+            <p class="mb-0">New submissions from authors will appear here.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var a in Model)
+        {
+            <div class="data-card mb-3">
+                <div class="d-flex flex-wrap justify-content-between gap-3">
+                    <div class="flex-grow-1" style="min-width: 260px;">
+                        <span class="kicker">@(categories.TryGetValue(a.CategoryId, out var c) ? c : "Uncategorised")</span>
+                        <h2 class="h5 mt-1 mb-1"><a href="@SeoUrls.Article(a.ArticleId, a.Slug)">@a.Title</a></h2>
+                        <p class="text-muted small mb-2">@PageMeta.Shorten(a.Summary, 220)</p>
+                        <div class="meta">
+                            By @(authors.TryGetValue(a.AuthorId, out var n) ? n : "Unknown")
+                            <span class="sep">&bull;</span>
+                            Submitted @((a.UpdatedAt ?? a.CreatedAt).ToString("MMM d, yyyy h:mm tt"))
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-2" style="min-width: 260px;">
+                        <div class="d-flex gap-2">
+                            <a href="@SeoUrls.Article(a.ArticleId, a.Slug)" class="btn btn-outline-secondary flex-grow-1"><i class="bi bi-eye"></i> Read</a>
+                            <form asp-action="Approve" asp-route-id="@a.ArticleId" method="post" class="flex-grow-1">
+                                <button type="submit" class="btn btn-success w-100"><i class="bi bi-check2-circle"></i> Approve</button>
+                            </form>
+                        </div>
+                        <form asp-action="Reject" asp-route-id="@a.ArticleId" method="post" class="d-flex gap-2">
+                            <input type="text" name="note" class="form-control form-control-sm" placeholder="Reason for rejection" maxlength="500" required aria-label="Reason for rejecting @a.Title" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

@@ -1,9 +1,10 @@
-using Auth.AuthFilters;
+using BLL;
+using NewsArchive.Filters;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
-namespace App.Controllers
+namespace NewsArchive.Controllers
 {
     public class CommentController : Controller
     {
@@ -26,7 +27,7 @@ namespace App.Controllers
             if (string.IsNullOrEmpty(email) || !roleId.HasValue)
                 return RedirectToAction("Login", "Auth");
 
-            var user = userService.Get().FirstOrDefault(u => u.Email == email);
+            var user = userService.GetByEmail(email);
             if (user == null)
                 return RedirectToAction("Details", "Article", new { id = articleId });
 

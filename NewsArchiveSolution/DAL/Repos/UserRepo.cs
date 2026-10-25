@@ -1,5 +1,6 @@
 ﻿using DAL.EF;
 using DAL.EF.Tables;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -35,8 +36,31 @@ namespace DAL.Repos
         public bool Delete(int id)
         {
             var exobj = Get(id);
+            if (exobj == null) return false;
+            if (db.Articles.Any(a => a.AuthorId == id || a.ReviewedById == id)) return false;
+
+            db.Comments.Where(c => c.UserId == id).ExecuteDelete();
             db.Users.Remove(exobj);
             return db.SaveChanges() > 0;
+        }
+
+        public User? GetByEmail(string? email)
+        {
+            if (string.IsNullOrEmpty(email)) return null;
+            return db.Users.AsNoTracking().FirstOrDefault(u => u.Email == email);
+        }
+
+        public Dictionary<int, string> GetNames(IEnumerable<int> ids)
+        {
+            var idList = ids.Distinct().ToList();
+            return db.Users.AsNoTracking()
+                .Where(u => idList.Contains(u.UserId))
+                .ToDictionary(u => u.UserId, u => u.Name);
+        }
+
+        public int Count()
+        {
+            return db.Users.Count();
         }
     }
 }

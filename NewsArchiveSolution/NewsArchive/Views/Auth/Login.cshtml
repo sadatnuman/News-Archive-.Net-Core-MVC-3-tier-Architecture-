@@ -26,10 +26,6 @@
     <div class="login-container">
         <div class="login-box">
             <h2>Login</h2>
-            @if (TempData["Msg"] != null)
-            {
-                <div class="alert alert-@TempData["Class"]">@TempData["Msg"]</div>
-            }
             <form asp-action="Login" method="post">
                 <div>
                     <label>Email</label>

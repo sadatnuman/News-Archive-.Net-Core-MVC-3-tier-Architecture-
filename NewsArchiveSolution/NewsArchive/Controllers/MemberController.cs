@@ -1,4 +1,5 @@
-﻿using Auth.AuthFilters;
+﻿using BLL;
+using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ using System.Text;
 
 namespace NewsArchive.Controllers
 {
-    [MemberAccess]
+    [RoleAccess(AppRoles.Reader, AppRoles.Author)]
     [Logged]
     public class MemberController : Controller
     {
@@ -28,7 +29,7 @@ namespace NewsArchive.Controllers
         {
             ViewBag.Roles = _roleService.Get();
             var email = HttpContext.Session.GetString("Email");
-            var user = _userService.Get().FirstOrDefault(u => u.Email == email);
+            var user = _userService.GetByEmail(email);
             if (user == null) return NotFound();
             ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
             return View(user);
@@ -63,7 +64,7 @@ namespace NewsArchive.Controllers
         {
             ViewBag.Roles = _roleService.Get();
             var email = HttpContext.Session.GetString("Email");
-            var user = _userService.Get().FirstOrDefault(u => u.Email == email);
+            var user = _userService.GetByEmail(email);
             if (user == null) return NotFound();
             ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
 

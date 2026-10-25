@@ -1,0 +1,69 @@
+@model List<BLL.DTOs.ArticleDTO>
+@using NewsArchive.Seo
+
+@{
+    var heading = ViewBag.Heading as string ?? "News";
+    var intro = ViewBag.Intro as string;
+
+    var meta = ViewData.Meta();
+    meta.Title = heading;
+    meta.Description = intro;
+    meta.CanonicalPath = ViewBag.CanonicalPath as string;
+    meta.Image = Model.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagePath))?.ImagePath;
+    meta.Breadcrumbs.Add((heading, meta.CanonicalPath ?? "/"));
+
+    var lead = Model.FirstOrDefault();
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@heading</li>
+        </ol>
+    </nav>
+
+    <header class="mb-4">
+        <h1 class="page-title">@heading</h1>
+        @if (!string.IsNullOrEmpty(intro))
+        {
+            <p class="page-intro">@intro</p>
+        }
+    </header>
+
+    @if (lead == null)
+    {
+        <div class="empty-state">
+            <i class="bi bi-newspaper"></i>
+            <h2 class="h5 mt-3">Nothing here right now</h2>
+            <p class="mb-0"><a href="/">Read the latest news</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-5">
+            <div class="col-lg-8">
+                <partial name="_StoryLead" model="lead" />
+                <div class="mt-4">
+                    @foreach (var item in Model.Skip(1))
+                    {
+                        <partial name="_StoryCompact" model="item" />
+                    }
+                </div>
+            </div>
+            <aside class="col-lg-4">
+                <div class="sticky-aside">
+                    <div class="side-panel">
+                        <h2 class="side-panel-title">Explore</h2>
+                        <ul class="list-unstyled mb-0">
+                            <li class="py-2 border-bottom"><a href="/">Latest news</a></li>
+                            <li class="py-2 border-bottom"><a href="/trending">Trending now</a></li>
+                            <li class="py-2 border-bottom"><a href="/breaking-news">Breaking news</a></li>
+                            <li class="py-2"><a href="/Category">All sections</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    }
+</div>

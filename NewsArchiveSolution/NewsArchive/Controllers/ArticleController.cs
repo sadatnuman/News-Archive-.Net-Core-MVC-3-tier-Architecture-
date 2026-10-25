@@ -1,12 +1,12 @@
-﻿using Auth.AuthFilters;
+﻿using BLL;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
+using NewsArchive.Filters;
 
-namespace App.Controllers
+namespace NewsArchive.Controllers
 {
-    public class ArticleController : Controller
+    public class ArticleController : AppController
     {
         ArticleService articleService;
         CategoryService categoryService;
@@ -21,330 +21,256 @@ namespace App.Controllers
             this.userService = userService;
         }
 
-        public IActionResult Index(string keyword = null, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 9)
+        private void SetFormData()
         {
+            ViewBag.Categories = categoryService.Get();
+            ViewBag.IsAdmin = CurrentRoleId == AppRoles.Admin;
+        }
+
+        [HttpGet("", Order = 0)]
+        [HttpGet("search", Order = 1)]
+        [HttpGet("Article", Order = 2)]
+        [HttpGet("Article/Index", Order = 3)]
+        public IActionResult Index(string? keyword = null, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 9)
+        {
+            var isSearch = !string.IsNullOrWhiteSpace(keyword) || from.HasValue || to.HasValue;
+            if (isSearch && Request.Path == "/")
+                return RedirectPermanent("/search" + Request.QueryString);
+
             int total;
             var data = articleService.Search(keyword, from, to, page, pageSize, out total);
+            var trending = isSearch ? new List<ArticleDTO>() : articleService.GetTrendingArticles(5);
+            SetArticleLookups(data.Concat(trending));
 
-            var users = userService.Get().ToDictionary(u => u.UserId, u => u.Name);
-            var categories = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
-
-            var authorNames = new Dictionary<int, string>();
-            var categoryNames = new Dictionary<int, string>();
-
-            foreach (var article in data)
-            {
-                if (users.TryGetValue(article.AuthorId, out var authorName))
-                    authorNames[article.ArticleId] = authorName;
-
-                if (categories.TryGetValue(article.CategoryId, out var categoryName))
-                    categoryNames[article.CategoryId] = categoryName;
-            }
-
-            ViewBag.AuthorNames = authorNames;
-            ViewBag.CategoryNames = categoryNames;
-            ViewBag.Categories = categories;
-
+            ViewBag.IsSearch = isSearch;
+            ViewBag.Trending = trending;
             ViewBag.Keyword = keyword;
             ViewBag.From = from;
             ViewBag.To = to;
-            ViewBag.Page = page;
+            ViewBag.Page = page < 1 ? 1 : page;
             ViewBag.PageSize = pageSize;
             ViewBag.Total = total;
 
-            return View(data);
+            return View(isSearch ? "Search" : "Index", data);
         }
 
+        [HttpGet("breaking-news", Order = 0)]
+        [HttpGet("Article/BreakingNews", Order = 1)]
         public IActionResult BreakingNews()
         {
-            var data = articleService.Get().Where(a => a.IsBreakingNews).ToList();
+            var data = articleService.GetBreakingNews();
+            SetArticleLookups(data);
 
-            var users = userService.Get().ToDictionary(u => u.UserId, u => u.Name);
-            var categories = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
-
-            var authorNames = new Dictionary<int, string>();
-            var categoryNames = new Dictionary<int, string>();
-
-            foreach (var article in data)
-            {
-                if (users.TryGetValue(article.AuthorId, out var authorName))
-                    authorNames[article.ArticleId] = authorName;
-
-                if (categories.TryGetValue(article.CategoryId, out var categoryName))
-                    categoryNames[article.CategoryId] = categoryName;
-            }
-
-            ViewBag.AuthorNames = authorNames;
-            ViewBag.CategoryNames = categoryNames;
-            ViewBag.Categories = categories;
-
-            ViewData["Title"] = "Breaking News";
-            return View("Index", data);
+            ViewBag.Heading = "Breaking News";
+            ViewBag.Intro = "The most important developing stories, updated as they happen.";
+            ViewBag.CanonicalPath = "/breaking-news";
+            return View("List", data);
         }
 
-        public IActionResult Details(int id)
+        [HttpGet("trending", Order = 0)]
+        [HttpGet("Article/TrendingNews", Order = 1)]
+        public IActionResult TrendingNews()
         {
-            var email = HttpContext.Session.GetString("Email");
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (!string.IsNullOrEmpty(email) && (roleId == 1 || roleId == 2))
-            {
-                articleService.IncrementViewCount(id);
-            }
+            var trending = articleService.GetTrendingArticles(12);
+            SetArticleLookups(trending);
+
+            ViewBag.Heading = "Trending News";
+            ViewBag.Intro = "The stories readers are viewing and discussing the most right now.";
+            ViewBag.CanonicalPath = "/trending";
+            return View("List", trending);
+        }
+
+        [HttpGet("news/{id:int}/{slug?}", Order = 0)]
+        [HttpGet("Article/Details/{id:int}", Order = 1)]
+        public IActionResult Details(int id, string? slug)
+        {
             var article = articleService.GetWithDetails(id);
-            if (article == null)
+            var userId = CurrentUserId;
+            var roleId = CurrentRoleId;
+            if (article == null || !ArticleService.CanView(article, userId, roleId))
                 return NotFound();
 
-            var comments = commentService.GetByArticleId(id);
+            if (article.IsPublished && slug != article.Slug)
+                return RedirectPermanent(Seo.SeoUrls.Article(article.ArticleId, article.Slug));
 
-            ViewBag.Article = article;
+            if (article.IsPublished && userId.HasValue)
+                articleService.IncrementViewCount(id);
+
+            var comments = article.IsPublished ? commentService.GetByArticleId(id) : new List<CommentDTO>();
+            var users = userService.GetNames(comments.Select(c => c.UserId).Append(article.AuthorId));
+
             ViewBag.Comments = comments;
-
-            var authorName = userService.Get().FirstOrDefault(u => u.UserId == article.AuthorId)?.Name;
-            var categoryName = categoryService.Get().FirstOrDefault(c => c.CategoryId == article.CategoryId)?.Name;
-            ViewBag.AuthorName = authorName ?? "Unknown Author";
-            ViewBag.CategoryName = categoryName ?? "Unknown";
-
-            var commentUserIds = comments?.Select(c => c.UserId).Distinct().ToList() ?? new List<int>();
-            var users = userService.Get().Where(u => commentUserIds.Contains(u.UserId)).ToDictionary(u => u.UserId, u => u.Name);
-            var commentUserNames = new Dictionary<int, string>();
-            if (comments != null)
-            {
-                foreach (var comm in comments)
-                {
-                    if (users.TryGetValue(comm.UserId, out var name))
-                        commentUserNames[comm.CommentId] = name;
-                    else
-                        commentUserNames[comm.CommentId] = "Unknown User";
-                }
-            }
-            ViewBag.CommentUserNames = commentUserNames;
-
-            ViewBag.IsLoggedIn = !string.IsNullOrEmpty(email) && roleId.HasValue;
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
-
-            ViewBag.UserId = userInfo?.UserId;
-            ViewBag.UserName = userInfo?.Name;
+            ViewBag.AuthorName = users.TryGetValue(article.AuthorId, out var authorName) ? authorName : "Unknown Author";
+            ViewBag.Category = categoryService.Get(article.CategoryId);
+            ViewBag.CommentUserNames = comments.ToDictionary(
+                c => c.CommentId,
+                c => users.TryGetValue(c.UserId, out var name) ? name : "Unknown User");
+            ViewBag.UserId = userId;
             ViewBag.RoleId = roleId;
-
-            var recommendations = articleService.GetRecommendedArticles(id, 4);
+            ViewBag.CanEdit = ArticleService.CanEdit(article.AuthorId, article.StatusId, userId ?? 0, roleId);
+            var recommendations = article.IsPublished
+                ? articleService.GetRecommendedArticles(id, 4)
+                : new List<ArticleDTO>();
+            var latest = articleService.GetLatest(6).Where(a => a.ArticleId != id).Take(5).ToList();
+            SetArticleLookups(recommendations.Concat(latest));
             ViewBag.Recommendations = recommendations;
+            ViewBag.Latest = latest;
 
             return View(article);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
         [HttpGet]
         public IActionResult Create()
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
-            var email = HttpContext.Session.GetString("Email");
-            ViewBag.Categories = categoryService.Get();
-
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
-
-            ViewBag.UserId = userInfo?.UserId;
-            ViewBag.UserName = userInfo?.Name;
-            ViewBag.UserEmail = email;
-
-            return View(new ArticleDTO());
+            SetFormData();
+            return View(new ArticleFormDTO());
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
-        public IActionResult Create(ArticleDTO a)
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(ArticleFormDTO form, string? submitAction)
         {
-            var email = HttpContext.Session.GetString("Email");
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
-            if (ModelState.IsValid)
+            var userId = CurrentUserId;
+            var roleId = CurrentRoleId;
+            if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
-                var user = userService.Get().FirstOrDefault(u => u.Email == email);
-                a.AuthorId = user?.UserId ?? 0;
-                a.PublishDate = DateTime.Now;
-
-                var res = articleService.Create(a);
-                if (res == true)
+                if (articleService.Create(form, userId.Value, roleId.Value, submitAction == "submit"))
                 {
-                    return RedirectToAction("Index");
+                    if (roleId == AppRoles.Admin)
+                    {
+                        Flash("success", "Article published.");
+                        return RedirectToAction("Index");
+                    }
+                    Flash("success", submitAction == "submit" ? "Article sent to the admin for approval." : "Draft saved.");
+                    return RedirectToAction("MyArticles");
                 }
+                ModelState.AddModelError(string.Empty, "The article could not be saved.");
             }
 
-            ViewBag.Categories = categoryService.Get();
-
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
-
-            ViewBag.UserEmail = email;
-            ViewBag.UserId = userInfo?.UserId;
-            ViewBag.UserName = userInfo?.Name;
-            ViewBag.RoleId = roleId;
-
-            return View(a);
+            SetFormData();
+            return View(form);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
+            var form = articleService.GetForm(id);
+            var article = articleService.Get(id);
+            if (form == null || article == null) return NotFound();
+            if (!ArticleService.CanEdit(article.AuthorId, article.StatusId, CurrentUserId ?? 0, CurrentRoleId))
+                return NotFound();
 
-            var email = HttpContext.Session.GetString("Email");
-            ViewBag.Categories = categoryService.Get();
-            var data = articleService.Get(id);
-
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
-
-            ViewBag.UserId = userInfo?.UserId;
-            ViewBag.UserName = userInfo?.Name;
-            ViewBag.UserEmail = email;
-
-            return View(data);
+            SetFormData();
+            return View(form);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
-        public IActionResult Edit(ArticleDTO a)
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(int id, ArticleFormDTO form, string? submitAction)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
-            if (ModelState.IsValid)
+            var userId = CurrentUserId;
+            var roleId = CurrentRoleId;
+            if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
-                var res = articleService.Update(a);
-                if (res == true)
+                if (articleService.Update(id, form, userId.Value, roleId.Value, submitAction == "submit"))
                 {
-                    return RedirectToAction("Index");
+                    if (roleId == AppRoles.Admin)
+                    {
+                        Flash("success", "Article updated.");
+                        return RedirectToAction("Details", new { id });
+                    }
+                    Flash("success", submitAction == "submit" ? "Changes sent to the admin for approval." : "Draft saved.");
+                    return RedirectToAction("MyArticles");
                 }
+                ModelState.AddModelError(string.Empty, "You cannot edit this article.");
             }
 
-            var email = HttpContext.Session.GetString("Email");
-            ViewBag.Categories = categoryService.Get();
-
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
-
-            ViewBag.UserEmail = email;
-            ViewBag.UserId = userInfo?.UserId;
-            ViewBag.UserName = userInfo?.Name;
-            ViewBag.RoleId = roleId;
-
-            return View(a);
+            form.ArticleId = id;
+            SetFormData();
+            return View(form);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
         [HttpGet]
         public IActionResult Delete(int id)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
             var data = articleService.Get(id);
+            if (data == null) return NotFound();
+            if (!ArticleService.CanEdit(data.AuthorId, data.StatusId, CurrentUserId ?? 0, CurrentRoleId))
+                return NotFound();
             return View(data);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string Decision)
         {
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            if (roleId != 1)
-                return RedirectToAction("Index");
-
-            if (Decision.Equals("Yes"))
+            if (Decision == "Yes")
             {
-                var res = articleService.Delete(id);
-                if (res == true)
-                {
-                    return RedirectToAction("Index");
-                }
+                if (articleService.Delete(id, CurrentUserId ?? 0, CurrentRoleId ?? 0))
+                    Flash("success", "Article deleted.");
+                else
+                    Flash("danger", "The article could not be deleted.");
             }
-            return RedirectToAction("Index");
+            return CurrentRoleId == AppRoles.Author ? RedirectToAction("MyArticles") : RedirectToAction("Index");
+        }
+
+        [RoleAccess(AppRoles.Author)]
+        [HttpGet]
+        public IActionResult MyArticles()
+        {
+            var articles = articleService.GetByAuthor(CurrentUserId ?? 0);
+            ViewBag.CategoryNames = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
+            return View(articles);
+        }
+
+        [RoleAccess(AppRoles.Author)]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Submit(int id)
+        {
+            if (articleService.Submit(id, CurrentUserId ?? 0))
+                Flash("success", "Article sent to the admin for approval.");
+            else
+                Flash("danger", "Only drafts and rejected articles can be submitted.");
+            return RedirectToAction("MyArticles");
         }
 
         [Logged]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult AddComment(int articleId, string commentText)
         {
-            var email = HttpContext.Session.GetString("Email");
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-
-            if (string.IsNullOrEmpty(email) || !roleId.HasValue)
+            var userId = CurrentUserId;
+            var article = articleService.Get(articleId);
+            if (userId == null)
                 return RedirectToAction("Login", "Auth");
+            if (article == null || !article.IsPublished)
+                return NotFound();
 
-            if (roleId != 1 && roleId != 2)
-                return RedirectToAction("Details", new { id = articleId });
-
-            var user = userService.Get().FirstOrDefault(u => u.Email == email);
-            if (user == null)
-                return RedirectToAction("Details", new { id = articleId });
-
-            var comment = new CommentDTO
+            var created = commentService.Create(new CommentDTO
             {
                 ArticleId = articleId,
-                UserId = user.UserId,
+                UserId = userId.Value,
                 Text = commentText,
                 CreatedDate = DateTime.Now
-            };
+            });
+            if (!created)
+                Flash("danger", "Comments must be between 2 and 500 characters.");
 
-            commentService.Create(comment);
             return RedirectToAction("Details", new { id = articleId });
         }
 
         [HttpGet]
         public IActionResult Privacy()
         {
-            return View();
+            return RedirectPermanent("/privacy");
         }
 
-        [HttpGet]
-        public IActionResult Error()
-        {
-            Response.StatusCode = 500;
-            return View();
-        }
-
-        public IActionResult TrendingNews()
-        {
-            var trending = articleService.GetTrendingArticles(10);
-            var users = userService.Get().ToDictionary(u => u.UserId, u => u.Name);
-            var categories = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
-            var authorNames = new Dictionary<int, string>();
-            var categoryNames = new Dictionary<int, string>();
-            foreach (var article in trending)
-            {
-                if (users.TryGetValue(article.AuthorId, out var authorName))
-                    authorNames[article.ArticleId] = authorName;
-                if (categories.TryGetValue(article.CategoryId, out var categoryName))
-                    categoryNames[article.CategoryId] = categoryName;
-            }
-            ViewBag.AuthorNames = authorNames;
-            ViewBag.CategoryNames = categoryNames;
-            ViewBag.Categories = categories;
-            ViewData["Title"] = "Trending News";
-            return View("Index", trending);
-        }
     }
 }

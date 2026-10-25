@@ -1,58 +1,76 @@
-﻿@{
-    ViewData["Title"] = "Admin Analytics Dashboard";
-    var mostViewed = ViewBag.MostViewed as List<BLL.DTOs.ArticleDTO>;
-    var articlesPerCategory = ViewBag.ArticlesPerCategory as List<(string Category, int Count)>;
+﻿@using NewsArchive.Seo
+
+@{
+    ViewData["Title"] = "Admin dashboard";
+    ViewData["NoIndex"] = true;
+    var mostViewed = ViewBag.MostViewed as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
+    var perCategory = ViewBag.ArticlesPerCategory as List<(string Category, int Count)> ?? new List<(string Category, int Count)>();
+    var pending = (int)(ViewBag.PendingCount ?? 0);
+    var maxCategory = perCategory.Count > 0 ? perCategory.Max(c => c.Count) : 1;
 }
-<div class="container py-5">
-    <h1>Admin Analytics Dashboard</h1>
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5>Total Articles</h5>
-                    <p class="display-6">@ViewBag.TotalArticles</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5>Total Users</h5>
-                    <p class="display-6">@ViewBag.TotalUsers</p>
-                </div>
-            </div>
+
+<div class="container py-4 py-lg-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <h1 class="page-title mb-0">Admin dashboard</h1>
+        <div class="d-flex gap-2">
+            <a asp-controller="Article" asp-action="Create" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Write</a>
+            <a asp-action="AllUser" class="btn btn-outline-secondary"><i class="bi bi-people"></i> Users</a>
         </div>
     </div>
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h4>Most Viewed Articles</h4>
-            <ul class="list-group">
-                @if (mostViewed != null)
-                {
-                    foreach (var art in mostViewed)
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @art.Title
-                            <span class="badge bg-primary rounded-pill">@art.ViewsCount</span>
-                        </li>
-                    }
-                }
-            </ul>
+
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-lg-3">
+            <div class="data-card">
+                <div class="label">Articles</div>
+                <div class="value">@ViewBag.TotalArticles</div>
+            </div>
         </div>
-        <div class="col-md-6">
-            <h4>Articles per Category</h4>
-            <ul class="list-group">
-                @if (articlesPerCategory != null)
-                {
-                    foreach (var cat in articlesPerCategory)
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @cat.Category
-                            <span class="badge bg-info rounded-pill">@cat.Count</span>
-                        </li>
-                    }
-                }
-            </ul>
+        <div class="col-6 col-lg-3">
+            <div class="data-card">
+                <div class="label">Users</div>
+                <div class="value">@ViewBag.TotalUsers</div>
+            </div>
         </div>
+        <div class="col-12 col-lg-6">
+            <a asp-action="PendingArticles" class="data-card d-flex justify-content-between align-items-center @(pending > 0 ? "border-warning" : "")">
+                <div>
+                    <div class="label">Awaiting approval</div>
+                    <div class="value">@pending</div>
+                </div>
+                <span class="btn btn-sm @(pending > 0 ? "btn-warning" : "btn-outline-secondary")">Review queue <i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        <section class="col-lg-6" aria-labelledby="viewed-heading">
+            <div class="section-head"><h2 id="viewed-heading">Most viewed</h2></div>
+            <ol class="rank-list">
+                @foreach (var art in mostViewed)
+                {
+                    <li>
+                        <div class="d-flex justify-content-between gap-3">
+                            <a href="@SeoUrls.Article(art.ArticleId, art.Slug)">@art.Title</a>
+                            <span class="meta text-nowrap">@art.ViewsCount views</span>
+                        </div>
+                    </li>
+                }
+            </ol>
+        </section>
+        <section class="col-lg-6" aria-labelledby="category-heading">
+            <div class="section-head"><h2 id="category-heading">Published articles per section</h2></div>
+            @foreach (var cat in perCategory.OrderByDescending(c => c.Count))
+            {
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="fw-semibold">@cat.Category</span>
+                        <span class="text-muted">@cat.Count</span>
+                    </div>
+                    <div class="progress" style="height: 8px;" role="progressbar" aria-label="@cat.Category" aria-valuenow="@cat.Count" aria-valuemin="0" aria-valuemax="@maxCategory">
+                        <div class="progress-bar bg-dark" style="width: @(cat.Count * 100 / maxCategory)%"></div>
+                    </div>
+                </div>
+            }
+        </section>
     </div>
 </div>

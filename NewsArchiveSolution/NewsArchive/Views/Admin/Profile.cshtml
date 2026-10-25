@@ -5,10 +5,6 @@
 }
 
 <h2>Profile</h2>
-@if (TempData["Msg"] != null)
-{
-    <div class="alert alert-@TempData["Class"]">@TempData["Msg"]</div>
-}
 <form asp-action="Profile" method="post">
     <input type="hidden" asp-for="UserId" />
 

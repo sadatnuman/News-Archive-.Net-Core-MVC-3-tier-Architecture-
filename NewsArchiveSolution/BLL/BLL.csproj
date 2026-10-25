@@ -8,12 +8,10 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="14.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.3.9" />
-    <PackageReference Include="Microsoft.AspNetCore.Session" Version="2.3.9" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DAL\DAL.csproj" />
+    <ProjectReference Include="..\DAL\DAL.csproj" PrivateAssets="compile" />
   </ItemGroup>
 
 </Project>

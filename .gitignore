@@ -1,0 +1,35 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+packages/
+
+# Test results
+TestResults/
+[Tt]est[Rr]esult*/
+coverage*/
+
+# Secrets and local settings
+appsettings.*.local.json
+*.pfx
+
+# User uploads (generated at runtime)
+NewsArchiveSolution/NewsArchive/wwwroot/uploads/
+
+# OS
+Thumbs.db
+.DS_Store

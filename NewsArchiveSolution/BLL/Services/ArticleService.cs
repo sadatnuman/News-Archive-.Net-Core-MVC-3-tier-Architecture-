@@ -5,7 +5,6 @@ using DAL.Repos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace BLL.Services
 {
@@ -25,27 +24,160 @@ namespace BLL.Services
             return res;
 
         }
-        public ArticleDTO Get(int id)
+        public ArticleDTO? Get(int id)
         {
             var data = repo.Get(id);
-            var res = mapper.Map<ArticleDTO>(data);
-            return res;
-
-        }
-        public bool Create(ArticleDTO c)
-        {
-            var converted = mapper.Map<Article>(c);
-            return repo.Create(converted);
+            return data == null ? null : mapper.Map<ArticleDTO>(data);
         }
 
-        public bool Update(ArticleDTO c)
+        public bool Create(ArticleFormDTO form, int authorId, int roleId, bool submitForReview)
         {
-            var converted = mapper.Map<Article>(c);
-            return repo.Update(converted);
+            var isAdmin = roleId == AppRoles.Admin;
+            if (!isAdmin && roleId != AppRoles.Author) return false;
+
+            var now = DateTime.Now;
+            var article = new Article
+            {
+                Title = form.Title.Trim(),
+                Slug = SlugHelper.Generate(form.Title),
+                Summary = form.Summary.Trim(),
+                Content = form.Content,
+                ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim(),
+                CategoryId = form.CategoryId,
+                IsBreakingNews = isAdmin && form.IsBreakingNews,
+                AuthorId = authorId,
+                CreatedAt = now,
+                PublishDate = now,
+                ViewsCount = 0
+            };
+
+            if (isAdmin)
+            {
+                article.StatusId = ArticleStatus.Published;
+                article.ReviewedById = authorId;
+                article.ReviewedAt = now;
+            }
+            else
+            {
+                article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
+            }
+
+            return repo.Create(article);
         }
-        public bool Delete(int id)
+
+        public bool Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview)
         {
-            return repo.Delete(id);
+            var article = repo.Get(articleId);
+            if (article == null || !CanEdit(article.AuthorId, article.StatusId, editorId, roleId)) return false;
+
+            var isAdmin = roleId == AppRoles.Admin;
+            article.Title = form.Title.Trim();
+            article.Slug = SlugHelper.Generate(form.Title);
+            article.Summary = form.Summary.Trim();
+            article.Content = form.Content;
+            article.ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim();
+            article.CategoryId = form.CategoryId;
+            article.UpdatedAt = DateTime.Now;
+
+            if (isAdmin)
+            {
+                article.IsBreakingNews = form.IsBreakingNews;
+            }
+            else
+            {
+                article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
+            }
+
+            return repo.Update(article);
+        }
+
+        public bool Submit(int articleId, int authorId)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || article.AuthorId != authorId) return false;
+            if (article.StatusId != ArticleStatus.Draft && article.StatusId != ArticleStatus.Rejected) return false;
+
+            article.StatusId = ArticleStatus.Pending;
+            article.UpdatedAt = DateTime.Now;
+            return repo.Update(article);
+        }
+
+        public bool Approve(int articleId, int adminId)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || article.StatusId != ArticleStatus.Pending) return false;
+
+            var now = DateTime.Now;
+            article.StatusId = ArticleStatus.Published;
+            article.PublishDate = now;
+            article.ReviewedById = adminId;
+            article.ReviewedAt = now;
+            article.ReviewNote = null;
+            return repo.Update(article);
+        }
+
+        public bool Reject(int articleId, int adminId, string? note)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || article.StatusId != ArticleStatus.Pending) return false;
+
+            article.StatusId = ArticleStatus.Rejected;
+            article.ReviewedById = adminId;
+            article.ReviewedAt = DateTime.Now;
+            article.ReviewNote = string.IsNullOrWhiteSpace(note) ? "No reason given." : note.Trim();
+            return repo.Update(article);
+        }
+
+        public bool Delete(int articleId, int userId, int roleId)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || !CanEdit(article.AuthorId, article.StatusId, userId, roleId)) return false;
+            return repo.Delete(articleId);
+        }
+
+        public static bool CanEdit(int authorId, int statusId, int userId, int? roleId)
+        {
+            if (roleId == AppRoles.Admin) return true;
+            return roleId == AppRoles.Author && authorId == userId && statusId != ArticleStatus.Published;
+        }
+
+        public static bool CanView(ArticleDTO article, int? userId, int? roleId)
+        {
+            if (article.IsPublished || roleId == AppRoles.Admin) return true;
+            return roleId == AppRoles.Author && userId == article.AuthorId;
+        }
+
+        public ArticleFormDTO? GetForm(int id)
+        {
+            var a = repo.Get(id);
+            if (a == null) return null;
+            return new ArticleFormDTO
+            {
+                ArticleId = a.ArticleId,
+                Title = a.Title,
+                Summary = a.Summary,
+                Content = a.Content,
+                ImagePath = a.ImagePath,
+                CategoryId = a.CategoryId,
+                IsBreakingNews = a.IsBreakingNews,
+                StatusId = a.StatusId,
+                ReviewNote = a.ReviewNote
+            };
+        }
+
+        public List<ArticleDTO> GetByAuthor(int authorId)
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetByAuthor(authorId));
+        }
+
+        public List<ArticleDTO> GetPending()
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetByStatus(ArticleStatus.Pending));
+        }
+
+        public int CountPending()
+        {
+            return repo.CountByStatus(ArticleStatus.Pending);
         }
 
         public List<ArticleDTO> GetByCategoryId(int categoryId)
@@ -55,11 +187,10 @@ namespace BLL.Services
             return res;
         }
 
-        public ArticleDTO GetWithDetails(int id)
+        public ArticleDTO? GetWithDetails(int id)
         {
             var data = repo.GetWithDetails(id);
-            var res = mapper.Map<ArticleDTO>(data);
-            return res;
+            return data == null ? null : mapper.Map<ArticleDTO>(data);
         }
 
         public void IncrementViewCount(int articleId)
@@ -67,71 +198,56 @@ namespace BLL.Services
             repo.IncrementViewCount(articleId);
         }
 
-        public List<ArticleDTO> Search(string keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total)
+        public List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total)
         {
-            var query = repo.Get().AsQueryable();
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                query = query.Where(a => a.Title.Contains(keyword) || a.Content.Contains(keyword));
-            }
-            if (from.HasValue)
-                query = query.Where(a => a.PublishDate >= from.Value);
-            if (to.HasValue)
-                query = query.Where(a => a.PublishDate <= to.Value);
-            total = query.Count();
-            return query.OrderByDescending(a => a.PublishDate)
-                        .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
-                        .Select(a => mapper.Map<ArticleDTO>(a)).ToList();
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 9;
+            var data = repo.Search(keyword, from, to, page, pageSize, out total);
+            return mapper.Map<List<ArticleDTO>>(data);
+        }
+
+        public List<ArticleDTO> GetBreakingNews()
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetBreaking());
         }
 
         public List<ArticleDTO> GetTrendingArticles(int count)
         {
-            var articles = repo.Get();
-            var trending = articles
-                .Select(a => new {
-                    Article = a,
-                    TrendingScore = a.ViewsCount + (a.Comments?.Count() ?? 0) * 2
-                })
-                .OrderByDescending(x => x.TrendingScore)
-                .Take(count)
-                .Select(x => mapper.Map<ArticleDTO>(x.Article))
-                .ToList();
-            return trending;
+            return mapper.Map<List<ArticleDTO>>(repo.GetTrending(count));
+        }
+
+        public List<ArticleDTO> GetLatest(int count)
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetLatest(count));
         }
 
         public List<ArticleDTO> GetRecommendedArticles(int articleId, int count = 4)
         {
-            var all = repo.Get();
-            var target = all.FirstOrDefault(a => a.ArticleId == articleId);
-            if (target == null) return new List<ArticleDTO>();
-            // 1. Same Category
-            var sameCategory = all.Where(a => a.ArticleId != articleId && a.CategoryId == target.CategoryId).ToList();
-            if (sameCategory.Count >= count)
-                return sameCategory.Take(count).Select(a => mapper.Map<ArticleDTO>(a)).ToList();
-            // 2. Same Tag
-            var targetTags = target.Tags.Select(t => t.TagId).ToList();
-            var sameTag = all.Where(a => a.ArticleId != articleId && a.Tags.Any(t => targetTags.Contains(t.TagId))).ToList();
-            var combined = sameCategory.Concat(sameTag).Distinct().Take(count).ToList();
-            if (combined.Count >= count)
-                return combined.Take(count).Select(a => mapper.Map<ArticleDTO>(a)).ToList();
-            // 3. Fallback: latest popular
-            var fallback = all.Where(a => a.ArticleId != articleId)
-                .OrderByDescending(a => a.ViewsCount)
-                .ThenByDescending(a => a.PublishDate)
-                .Take(count - combined.Count)
-                .ToList();
-            return combined.Concat(fallback).Take(count).Select(a => mapper.Map<ArticleDTO>(a)).ToList();
+            return mapper.Map<List<ArticleDTO>>(repo.GetRecommended(articleId, count));
         }
+
+        public List<ArticleDTO> GetPublishedForSitemap()
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetPublishedForSitemap());
+        }
+
         public int GetCommentCount(int articleId)
         {
-            var article = repo.Get(articleId);
-            return article?.Comments?.Count() ?? 0;
+            return repo.GetCommentCount(articleId);
         }
 
         public bool HasBreakingNews()
         {
-            return repo.Get().Any(a => a.IsBreakingNews);
+            return repo.HasBreakingNews();
+        }
+
+        public void EnsureSlugs()
+        {
+            var missing = repo.GetWithoutSlug();
+            if (missing.Count == 0) return;
+            foreach (var a in missing)
+                a.Slug = SlugHelper.Generate(a.Title);
+            repo.SaveChanges();
         }
     }
 }

@@ -46,5 +46,16 @@ namespace BLL.Services
         {
             return repo.Delete(id);
         }
+
+        public UserDTO? GetByEmail(string? email)
+        {
+            var data = repo.GetByEmail(email);
+            return data == null ? null : mapper.Map<UserDTO>(data);
+        }
+
+        public Dictionary<int, string> GetNames(IEnumerable<int> ids)
+        {
+            return repo.GetNames(ids);
+        }
     }
 }

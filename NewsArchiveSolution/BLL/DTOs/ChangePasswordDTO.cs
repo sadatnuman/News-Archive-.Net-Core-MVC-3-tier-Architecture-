@@ -7,7 +7,6 @@ namespace BLL.DTOs
         [Required]
         public int UserId { get; set; }
 
-        // Optional for display only
         public string? Email { get; set; }
 
         [Required(ErrorMessage = "Password is required")]

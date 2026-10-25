@@ -41,7 +41,6 @@ namespace DAL.Repos
             return db.SaveChanges() > 0;
         }
 
-        // NEW METHOD TO GET COMMENTS BY ARTICLE WITH USER INFO
         public List<Comment> GetByArticleId(int articleId)
         {
             return db.Comments

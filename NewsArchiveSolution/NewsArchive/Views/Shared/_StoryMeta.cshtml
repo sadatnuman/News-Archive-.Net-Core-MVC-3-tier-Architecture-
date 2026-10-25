@@ -1,0 +1,14 @@
+@model BLL.DTOs.ArticleDTO
+
+@{
+    var authors = ViewBag.AuthorNames as Dictionary<int, string>;
+    var author = authors != null && authors.TryGetValue(Model.AuthorId, out var name) ? name : null;
+}
+
+<div class="meta">
+    @if (!string.IsNullOrEmpty(author))
+    {
+        <span>By @author</span><span class="sep">&bull;</span>
+    }
+    <time datetime="@Model.PublishDate.ToString("yyyy-MM-ddTHH:mm")">@Model.PublishDate.ToString("MMM d, yyyy")</time>
+</div>

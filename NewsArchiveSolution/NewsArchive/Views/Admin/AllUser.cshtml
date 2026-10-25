@@ -20,13 +20,6 @@
     <h2>All Users</h2>
 </a>
 
-@if (TempData["Msg"] != null)
-{
-    var alertClass = TempData["Class"] as string ?? "info";
-    <div class="alert alert-@alertClass">
-        @TempData["Msg"]
-    </div>
-}
 
 <form asp-action="AllUser" method="post" class="mb-3">
     <div class="input-group">

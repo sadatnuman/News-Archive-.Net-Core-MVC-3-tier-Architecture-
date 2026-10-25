@@ -1,0 +1,12 @@
+@model BLL.DTOs.ArticleDTO
+@using NewsArchive.Seo
+
+<article class="story story-lead">
+    <partial name="_StoryMedia" model="Model" view-data='new ViewDataDictionary(ViewData) { { "Eager", true } }' />
+    <div class="pt-3">
+        <partial name="_StoryKicker" model="Model" />
+        <h2 class="story-title"><a href="@SeoUrls.Article(Model.ArticleId, Model.Slug)">@Model.Title</a></h2>
+        <p class="story-summary">@Model.Summary</p>
+        <partial name="_StoryMeta" model="Model" />
+    </div>
+</article>

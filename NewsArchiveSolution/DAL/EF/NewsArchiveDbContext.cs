@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using DAL.EF.Tables;
+﻿using DAL.EF.Tables;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL.EF;
@@ -18,6 +16,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<Article> Articles { get; set; }
 
+    public virtual DbSet<ArticleStatus> ArticleStatuses { get; set; }
+
     public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<Comment> Comments { get; set; }
@@ -29,23 +29,49 @@ public partial class NewsArchiveDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=DbConn");
+    {
+        if (!optionsBuilder.IsConfigured)
+            optionsBuilder.UseSqlServer("Name=DbConn");
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ArticleStatus>(entity =>
+        {
+            entity.HasKey(e => e.StatusId).HasName("PK_ArticleStatuses");
+
+            entity.Property(e => e.StatusId).ValueGeneratedNever();
+            entity.Property(e => e.Name).HasMaxLength(30);
+
+            entity.HasIndex(e => e.Name, "UX_ArticleStatuses_Name").IsUnique();
+
+            entity.HasData(
+                new ArticleStatus { StatusId = ArticleStatusIds.Draft, Name = "Draft" },
+                new ArticleStatus { StatusId = ArticleStatusIds.Pending, Name = "Pending" },
+                new ArticleStatus { StatusId = ArticleStatusIds.Published, Name = "Published" },
+                new ArticleStatus { StatusId = ArticleStatusIds.Rejected, Name = "Rejected" });
+        });
+
         modelBuilder.Entity<Article>(entity =>
         {
             entity.HasKey(e => e.ArticleId).HasName("PK__Articles__9C6270E827220E8D");
 
-            entity.HasIndex(e => e.AuthorId, "IX_Articles_AuthorId");
+            entity.HasIndex(e => new { e.StatusId, e.PublishDate }, "IX_Articles_StatusId_PublishDate")
+                .IsDescending(false, true);
 
-            entity.HasIndex(e => e.CategoryId, "IX_Articles_CategoryId");
+            entity.HasIndex(e => new { e.CategoryId, e.StatusId, e.PublishDate }, "IX_Articles_CategoryId_StatusId_PublishDate")
+                .IsDescending(false, false, true);
 
-            entity.HasIndex(e => e.IsBreakingNews, "IX_Articles_IsBreakingNews");
+            entity.HasIndex(e => new { e.AuthorId, e.StatusId }, "IX_Articles_AuthorId_StatusId");
 
-            entity.HasIndex(e => e.PublishDate, "IX_Articles_PublishDate");
+            entity.HasIndex(e => new { e.IsBreakingNews, e.StatusId, e.PublishDate }, "IX_Articles_IsBreakingNews_StatusId_PublishDate")
+                .IsDescending(false, false, true);
 
             entity.HasIndex(e => e.ViewsCount, "IX_Articles_ViewsCount");
+
+            entity.HasIndex(e => e.ReviewedById, "IX_Articles_ReviewedById");
+
+            entity.ToTable(t => t.HasCheckConstraint("CK_Articles_ViewsCount", "[ViewsCount] >= 0"));
 
             entity.Property(e => e.ImagePath).HasMaxLength(255);
             entity.Property(e => e.PublishDate)
@@ -53,6 +79,14 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Summary).HasMaxLength(500);
             entity.Property(e => e.Title).HasMaxLength(200);
+            entity.Property(e => e.Slug).HasMaxLength(200);
+            entity.Property(e => e.StatusId).HasDefaultValue(ArticleStatusIds.Draft);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ReviewedAt).HasColumnType("datetime");
+            entity.Property(e => e.ReviewNote).HasMaxLength(500);
 
             entity.HasOne(d => d.Author).WithMany(p => p.Articles)
                 .HasForeignKey(d => d.AuthorId)
@@ -63,6 +97,16 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Articles_Categories");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.Articles)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Articles_ArticleStatuses");
+
+            entity.HasOne(d => d.ReviewedBy).WithMany(p => p.ReviewedArticles)
+                .HasForeignKey(d => d.ReviewedById)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Articles_ReviewedBy_Users");
 
             entity.HasMany(d => d.Tags).WithMany(p => p.Articles)
                 .UsingEntity<Dictionary<string, object>>(
@@ -77,7 +121,6 @@ public partial class NewsArchiveDbContext : DbContext
                     {
                         j.HasKey("ArticleId", "TagId").HasName("PK__ContentL__4A35BF72DD4B7AFD");
                         j.ToTable("ContentLabels");
-                        j.HasIndex(new[] { "ArticleId" }, "IX_ContentLabels_ArticleId");
                         j.HasIndex(new[] { "TagId" }, "IX_ContentLabels_TagId");
                     });
         });
@@ -86,19 +129,21 @@ public partial class NewsArchiveDbContext : DbContext
         {
             entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A0BC1E2D8D4");
 
-            entity.HasIndex(e => e.Name, "IX_Categories_Name");
+            entity.HasIndex(e => e.Name, "UX_Categories_Name").IsUnique();
+
+            entity.HasIndex(e => e.Slug, "UX_Categories_Slug").IsUnique().HasFilter("[Slug] IS NOT NULL");
 
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.Name).HasMaxLength(100);
+            entity.Property(e => e.Slug).HasMaxLength(120);
         });
 
         modelBuilder.Entity<Comment>(entity =>
         {
             entity.HasKey(e => e.CommentId).HasName("PK__Comments__C3B4DFCA5955C019");
 
-            entity.HasIndex(e => e.ArticleId, "IX_Comments_ArticleId");
-
-            entity.HasIndex(e => e.CreatedDate, "IX_Comments_CreatedDate");
+            entity.HasIndex(e => new { e.ArticleId, e.CreatedDate }, "IX_Comments_ArticleId_CreatedDate")
+                .IsDescending(false, true);
 
             entity.HasIndex(e => e.UserId, "IX_Comments_UserId");
 
@@ -119,14 +164,23 @@ public partial class NewsArchiveDbContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
+            entity.HasKey(e => e.Id).HasName("PK_Roles");
+
+            entity.HasIndex(e => e.RoleName, "UX_Roles_RoleName").IsUnique();
+
             entity.Property(e => e.RoleName).HasMaxLength(50);
+
+            entity.HasData(
+                new Role { Id = RoleIds.Admin, RoleName = "Admin" },
+                new Role { Id = RoleIds.Reader, RoleName = "Reader" },
+                new Role { Id = RoleIds.Author, RoleName = "Author" });
         });
 
         modelBuilder.Entity<Tag>(entity =>
         {
             entity.HasKey(e => e.TagId).HasName("PK__Tags__657CF9AC4036D6BB");
 
-            entity.HasIndex(e => e.Name, "IX_Tags_Name");
+            entity.HasIndex(e => e.Name, "UX_Tags_Name").IsUnique();
 
             entity.Property(e => e.Name).HasMaxLength(50);
         });
@@ -135,13 +189,10 @@ public partial class NewsArchiveDbContext : DbContext
         {
             entity.HasKey(e => e.UserId).HasName("PK__User__1788CC4C12AF141B");
 
-            entity.HasIndex(e => e.Email, "IX_Users_Email");
+            entity.HasIndex(e => e.Email, "UQ__User__A9D1053417333C75").IsUnique();
 
             entity.HasIndex(e => e.RoleId, "IX_Users_Role");
 
-            entity.HasIndex(e => e.Email, "UQ__User__A9D1053417333C75").IsUnique();
-
-            entity.Property(e => e.ConfPassword).HasMaxLength(255);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())", "DF__User__CreatedAt__4D94879B")
                 .HasColumnType("datetime");

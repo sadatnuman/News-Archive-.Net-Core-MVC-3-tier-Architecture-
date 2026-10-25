@@ -1,8 +1,5 @@
-﻿using DAL.EF;
-using System;
-using System.Collections.Generic;
+﻿using DAL.Repos;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace BLL.Validations
 {
@@ -15,15 +12,13 @@ namespace BLL.Validations
 
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            var db = (NewsArchiveDbContext)validationContext.GetService(typeof(NewsArchiveDbContext));
-
-            var data = (from u in db.Users
-                        where u.Email.Equals(value.ToString())
-                        select u).SingleOrDefault();
-            if (data == null)
-            {
+            var email = value?.ToString();
+            if (string.IsNullOrWhiteSpace(email))
                 return ValidationResult.Success;
-            }
+
+            var repo = (UserRepo?)validationContext.GetService(typeof(UserRepo));
+            if (repo == null || repo.GetByEmail(email) == null)
+                return ValidationResult.Success;
 
             return new ValidationResult(ErrorMessage);
         }

@@ -1,0 +1,28 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<SiteOptions> SiteConfig
+
+@{
+    Layout = "_PageShell";
+    ViewData["Heading"] = "Contact";
+    var email = SiteConfig.Value.ContactEmail;
+    var meta = ViewData.Meta();
+    meta.Title = "Contact NewsArchive";
+    meta.Description = "Send news tips, corrections and feedback to the NewsArchive newsroom.";
+    meta.Breadcrumbs.Add(("Contact", "/contact"));
+}
+
+<p class="lead">We read every message. Tell us about a story we should cover, an error we should correct, or how we can improve.</p>
+
+@if (!string.IsNullOrWhiteSpace(email))
+{
+    <div class="side-panel mb-4">
+        <h2 class="side-panel-title">Newsroom email</h2>
+        <p class="mb-0"><a href="mailto:@email" class="fs-5 fw-semibold">@email</a></p>
+    </div>
+}
+
+<h2>Corrections</h2>
+<p>If you believe a story contains an error, include the article link and the details of the correction. Our corrections process is described in the <a href="/editorial-policy">editorial policy</a>.</p>
+
+<h2>Writing for us</h2>
+<p>Create an account and ask an administrator to give it the Author role. Authors can write and submit articles, which an editor reviews before they are published.</p>

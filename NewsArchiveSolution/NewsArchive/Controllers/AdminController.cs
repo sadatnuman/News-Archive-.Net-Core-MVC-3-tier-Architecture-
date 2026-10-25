@@ -1,4 +1,5 @@
-﻿using Auth.AuthFilters;
+﻿using BLL;
+using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,28 +11,63 @@ using System.Text;
 
 namespace NewsArchive.Controllers
 {
-    [AdminAccess]
+    [RoleAccess(AppRoles.Admin)]
     [Logged]
-    public class AdminController : Controller
+    public class AdminController : AppController
     {
         private readonly UserService _userService;
         private readonly RoleService _roleService;
         private readonly AnalyticsService analyticsService;
+        private readonly ArticleService articleService;
+        private readonly CategoryService categoryService;
 
-
-        public AdminController(UserService userService, RoleService roleService, AnalyticsService analyticsService)
+        public AdminController(UserService userService, RoleService roleService, AnalyticsService analyticsService, ArticleService articleService, CategoryService categoryService)
         {
             _userService = userService;
             _roleService = roleService;
             this.analyticsService = analyticsService;
+            this.articleService = articleService;
+            this.categoryService = categoryService;
         }
         public IActionResult Index()
         {
             ViewBag.TotalArticles = analyticsService.GetTotalArticles();
             ViewBag.TotalUsers = analyticsService.GetTotalUsers();
+            ViewBag.PendingCount = articleService.CountPending();
             ViewBag.MostViewed = analyticsService.GetMostViewedArticles(5);
             ViewBag.ArticlesPerCategory = analyticsService.GetArticlesPerCategory();
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult PendingArticles()
+        {
+            var pending = articleService.GetPending();
+            ViewBag.AuthorNames = _userService.GetNames(pending.Select(a => a.AuthorId));
+            ViewBag.CategoryNames = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
+            return View(pending);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Approve(int id)
+        {
+            if (articleService.Approve(id, CurrentUserId ?? 0))
+                Flash("success", "Article approved and published.");
+            else
+                Flash("danger", "Only pending articles can be approved.");
+            return RedirectToAction("PendingArticles");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Reject(int id, string? note)
+        {
+            if (articleService.Reject(id, CurrentUserId ?? 0, note))
+                Flash("warning", "Article rejected and returned to the author.");
+            else
+                Flash("danger", "Only pending articles can be rejected.");
+            return RedirectToAction("PendingArticles");
         }
         [HttpGet]
         public IActionResult AllUser()
@@ -62,7 +98,7 @@ namespace NewsArchive.Controllers
         {
             ViewBag.Roles = _roleService.Get();
             var email = HttpContext.Session.GetString("Email");
-            var user = _userService.Get().FirstOrDefault(u => u.Email == email);
+            var user = _userService.GetByEmail(email);
             if (user == null) return NotFound();
             ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
             return View(user);
@@ -97,7 +133,7 @@ namespace NewsArchive.Controllers
         {
             ViewBag.Roles = _roleService.Get();
             var email = HttpContext.Session.GetString("Email");
-            var user = _userService.Get().FirstOrDefault(u => u.Email == email);
+            var user = _userService.GetByEmail(email);
             if (user == null) return NotFound();
             ViewBag.RoleName = _roleService.Get().FirstOrDefault(r => r.Id == user.RoleId)?.RoleName;
 
@@ -231,16 +267,15 @@ namespace NewsArchive.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string Decision)
         {
-            var deleted = _userService.Delete(id);
-            if (deleted)
-            {
-                TempData["Class"] = "success";
-                TempData["Msg"] = "User deleted";
+            if (Decision != "Yes")
                 return RedirectToAction("AllUser");
-               
-            }
-            TempData["Class"] = "danger";
-            TempData["Msg"] = "Delete failed";
+
+            if (id == CurrentUserId)
+                Flash("danger", "You cannot delete your own account.");
+            else if (_userService.Delete(id))
+                Flash("success", "User deleted.");
+            else
+                Flash("danger", "This user has written articles. Reassign or delete them first.");
 
             return RedirectToAction("AllUser");
         }

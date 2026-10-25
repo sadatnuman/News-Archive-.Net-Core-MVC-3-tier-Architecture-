@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Create Member";
 
-    // Build roles list safely
     var roles = ViewBag.Roles as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
 }
 
