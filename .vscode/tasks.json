@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/NewsArchiveSolution/NewsArchiveSolution.slnx", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "watch",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["watch", "run", "--project", "${workspaceFolder}/NewsArchiveSolution/NewsArchive/NewsArchive.csproj", "--launch-profile", "http"],
+      "isBackground": true,
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "database update",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["ef", "database", "update", "--project", "DAL", "--startup-project", "NewsArchive"],
+      "options": { "cwd": "${workspaceFolder}/NewsArchiveSolution" },
+      "problemMatcher": []
+    }
+  ]
+}

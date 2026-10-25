@@ -315,7 +315,11 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | CORS | Only origins listed in `Api:AllowedOrigins` |
 | Errors | MVC: `/error/500` and `/error/{code}` pages. API: JSON `ProblemDetails` for exceptions and status codes |
 | Compression | Response compression enabled for HTTPS |
-| Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*`, `Api:*`, `Hosting:KnownProxies` |
+| Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*`, `Api:*`, `Hosting:KnownProxies`, `Database:MigrateOnStartup` |
+| Startup | `BusinessLayerServices.InitializeBusinessLayer` applies migrations (Development or `Database:MigrateOnStartup`), fills missing slugs and purges old tokens; a database failure is logged with the setting to check |
+| Health | `/health` runs `Health/DatabaseHealthCheck` through `SystemService.IsDatabaseReachable` (`DataAccessFactory.CanConnect`) |
+| Packages | EF Core 10.0.14, Swashbuckle 10.3.1, `System.Security.Cryptography.Pkcs` 10.0.14 pinned in DAL to replace the vulnerable transitive 9.0.x from SqlClient. AutoMapper 14.0.0 is kept for the course pattern; advisory GHSA-rvv3-g6hj-g44x (deep recursion) is suppressed in `BLL.csproj` / `NewsArchive.csproj` because every map is flat and capped with `MaxDepth(3)` |
+| Tooling | `global.json` (SDK 10.0, latest feature band), `.vscode` launch, tasks and recommended extensions, `.github/workflows/build.yml` CI |
 | Code style | No code comments; names must explain intent |
 | Responsive layout | Verified without horizontal overflow at 320, 375, 414, 768, 1024, 1366 and 1920 px in Chrome and Edge |
 

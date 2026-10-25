@@ -12,5 +12,11 @@ namespace DAL
             services.AddScoped<DataAccessFactory>();
             return services;
         }
+
+        public static void MigrateDataLayer(this IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+            scope.ServiceProvider.GetRequiredService<NewsArchiveDbContext>().Database.Migrate();
+        }
     }
 }

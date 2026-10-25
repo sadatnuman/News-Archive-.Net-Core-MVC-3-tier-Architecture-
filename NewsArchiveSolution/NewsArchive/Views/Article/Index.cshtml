@@ -11,7 +11,7 @@
     string PagePath(int p) => SeoUrls.Page(p == 1 ? "/" : $"/?page={p}");
 
     var meta = ViewData.Meta();
-    meta.Title = isFirstPage ? null : L["Latest news – page {0}", page];
+    meta.Title = isFirstPage ? null : L["Latest news – page {0}", page].Value;
     meta.CanonicalPath = PagePath(page);
     meta.JsonLd.Add(new Dictionary<string, object?>
     {

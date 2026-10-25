@@ -14,6 +14,8 @@ namespace DAL
             this.db = db;
         }
 
+        public bool CanConnect() => db.Database.CanConnect();
+
         public IArticleRepository GetArticleRepository() => new ArticleRepo(db);
 
         public ICategoryRepository GetCategoryRepository() => new CategoryRepo(db);

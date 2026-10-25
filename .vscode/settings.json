@@ -1,0 +1,11 @@
+{
+  "dotnet.defaultSolution": "NewsArchiveSolution/NewsArchiveSolution.slnx",
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  },
+  "search.exclude": {
+    "**/wwwroot/lib": true,
+    "**/wwwroot/uploads": true
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "NewsArchive (http)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/NewsArchiveSolution/NewsArchive/bin/Debug/net10.0/NewsArchive.dll",
+      "cwd": "${workspaceFolder}/NewsArchiveSolution/NewsArchive",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\bNow listening on:\s+(https?://\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5096"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/NewsArchiveSolution/NewsArchive/Views"
+      }
+    },
+    {
+      "name": "NewsArchive (https)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/NewsArchiveSolution/NewsArchive/bin/Debug/net10.0/NewsArchive.dll",
+      "cwd": "${workspaceFolder}/NewsArchiveSolution/NewsArchive",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\bNow listening on:\s+(https://\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7240;http://localhost:5096"
+      }
+    }
+  ]
+}
