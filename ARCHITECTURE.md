@@ -56,7 +56,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 
 | Migration | Purpose |
 |---|---|
-| `InitialSchema` | Baseline of the original database (matches `NewsArchiveDB.bacpac`) |
+| `InitialSchema` | Baseline of the original database schema |
 | `NormalizeSchemaAndApprovalWorkflow` | 3NF clean-up, approval workflow columns, slugs, keys, indexes and seed data |
 | `AddLanguages` | `Languages` lookup table, `Articles.LanguageCode` foreign key, Bangla names for sections |
 | `AddUserTokens` | `UserTokens` table for API tokens (hash only, expiry, revocation) |
