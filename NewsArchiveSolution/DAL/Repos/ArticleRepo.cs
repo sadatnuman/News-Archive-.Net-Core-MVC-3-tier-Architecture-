@@ -63,6 +63,47 @@ namespace DAL.Repos
                         .ToList();
         }
 
+        public List<Article> GetByPeriod(DateTime from, DateTime toExclusive, string? language, int page, int pageSize, out int total)
+        {
+            var query = Published(language).Where(a => a.PublishDate >= from && a.PublishDate < toExclusive);
+            total = query.Count();
+            return query.OrderByDescending(a => a.PublishDate)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+        }
+
+        public List<(int Year, int Month, int Count)> CountByMonth(string? language = null)
+        {
+            return Published(language)
+                .GroupBy(a => new { a.PublishDate.Year, a.PublishDate.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                .OrderByDescending(x => x.Year).ThenByDescending(x => x.Month)
+                .AsEnumerable()
+                .Select(x => (x.Year, x.Month, x.Count))
+                .ToList();
+        }
+
+        public Dictionary<int, int> CountByDay(int year, int month, string? language = null)
+        {
+            var from = new DateTime(year, month, 1);
+            var to = from.AddMonths(1);
+            return Published(language)
+                .Where(a => a.PublishDate >= from && a.PublishDate < to)
+                .GroupBy(a => a.PublishDate.Day)
+                .Select(g => new { Day = g.Key, Count = g.Count() })
+                .ToDictionary(x => x.Day, x => x.Count);
+        }
+
+        public List<Article> GetOnThisDay(int month, int day, int beforeYear, int count, string? language = null)
+        {
+            return Published(language)
+                .Where(a => a.PublishDate.Month == month && a.PublishDate.Day == day && a.PublishDate.Year < beforeYear)
+                .OrderByDescending(a => a.PublishDate)
+                .Take(count)
+                .ToList();
+        }
+
         public List<Article> GetBreaking(string? language = null)
         {
             return Published(language)

@@ -1,0 +1,66 @@
+@model List<BLL.DTOs.ArchiveMonthDTO>
+@using System.Globalization
+
+@{
+    var format = CultureInfo.CurrentCulture.DateTimeFormat;
+    var years = Model.GroupBy(m => m.Year).OrderByDescending(g => g.Key).ToList();
+    var total = Model.Sum(m => m.Count);
+    var meta = ViewData.Meta();
+    meta.Title = L["News archive"];
+    meta.Description = L["Every story published by The Meridian Newsfolio, organised by year, month and day."];
+    meta.CanonicalPath = SeoUrls.Page("/archive");
+    meta.Breadcrumbs.Add((L["Archive"], SeoUrls.Page("/archive")));
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@L["Archive"]</li>
+        </ol>
+    </nav>
+
+    <header class="archive-hero mb-5">
+        <div>
+            <span class="kicker">@L["News Preserved. Stories Rediscovered."]</span>
+            <h1 class="page-title mt-1">@L["News archive"]</h1>
+            <p class="page-intro mb-0">@L["{0} stories, organised by year, month and day.", total]</p>
+        </div>
+        @await Html.PartialAsync("_Globe", "globe-lg")
+    </header>
+
+    @if (years.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-calendar3"></i>
+            <h2 class="h5 mt-3">@L["No stories published yet"]</h2>
+        </div>
+    }
+
+    @foreach (var year in years)
+    {
+        var counts = year.ToDictionary(m => m.Month, m => m.Count);
+        <section class="mb-5" aria-labelledby="year-@year.Key">
+            <div class="section-head">
+                <h2 id="year-@year.Key"><a href="@SeoUrls.Archive(year.Key)">@year.Key</a></h2>
+                <span class="meta">@L["{0} stories", year.Sum(m => m.Count)]</span>
+            </div>
+            <div class="month-grid">
+                @for (var m = 1; m <= 12; m++)
+                {
+                    if (counts.TryGetValue(m, out var count))
+                    {
+                        <a class="month-tile has-stories" href="@SeoUrls.Archive(year.Key, m)" data-tilt data-tilt-max="8">
+                            <span class="month-name">@format.GetMonthName(m)</span>
+                            <span class="month-count">@L["{0} stories", count]</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="month-tile"><span class="month-name">@format.GetMonthName(m)</span><span class="month-count">&ndash;</span></span>
+                    }
+                }
+            </div>
+        </section>
+    }
+</div>

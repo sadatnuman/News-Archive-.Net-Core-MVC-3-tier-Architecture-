@@ -72,6 +72,7 @@ namespace NewsArchive.Controllers
             ViewBag.IsSearch = isSearch;
             ViewBag.Trending = trending;
             ViewBag.PopularTags = isSearch ? new List<TagDTO>() : tagService.GetPopular(12, CurrentLanguage);
+            ViewBag.OnThisDay = isSearch ? new List<ArticleDTO>() : articleService.GetOnThisDay(DateTime.Now, 3, CurrentLanguage);
             ViewBag.Keyword = keyword;
             ViewBag.From = from;
             ViewBag.To = to;

@@ -25,6 +25,7 @@
     });
 
     var lead = isFirstPage ? Model.FirstOrDefault() : null;
+    var onThisDay = ViewBag.OnThisDay as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
     var popularTags = ViewBag.PopularTags as List<BLL.DTOs.TagDTO> ?? new List<BLL.DTOs.TagDTO>();
     var secondary = isFirstPage ? Model.Skip(1).Take(3).ToList() : new List<BLL.DTOs.ArticleDTO>();
     var grid = isFirstPage ? Model.Skip(4).ToList() : Model;
@@ -133,6 +134,26 @@
                             <a class="small fw-semibold" href="@SeoUrls.Page("/tags")">@L["Browse all topics"] <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                         </div>
                     }
+                    <div class="side-panel">
+                        <h2 class="side-panel-title">@(onThisDay.Count > 0 ? L["On this day"] : L["From the archive"])</h2>
+                        @if (onThisDay.Count > 0)
+                        {
+                            <ul class="list-unstyled mb-3">
+                                @foreach (var a in onThisDay)
+                                {
+                                    <li class="py-2 border-bottom" lang="@a.LanguageCode">
+                                        <span class="meta d-block">@a.PublishDate.Year</span>
+                                        <a href="@SeoUrls.Article(a)">@a.Title</a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="small text-muted mb-3">@L["Browse every story by year, month and day."]</p>
+                        }
+                        <a class="btn btn-outline-primary btn-sm" href="@SeoUrls.Page("/archive")"><i class="bi bi-calendar3"></i> @L["Browse the archive"]</a>
+                    </div>
                     <div class="side-panel">
                         <h2 class="side-panel-title">@L["Stay informed"]</h2>
                         <p class="small text-muted mb-3">@L["Follow every story as it is published with our RSS feed."]</p>

@@ -43,6 +43,16 @@ namespace NewsArchive.Seo
         public static string Tag(int id, string? slug, string? language = null, int page = 1) =>
             UiLanguage.WithLanguage(TagPath(id, slug) + (page > 1 ? $"?page={page}" : string.Empty), language ?? UiLanguage.Current);
 
+        public static string ArchivePath(int? year = null, int? month = null, int? day = null)
+        {
+            if (year == null) return "/archive";
+            if (month == null) return $"/archive/{year}";
+            return day == null ? $"/archive/{year}/{month:D2}" : $"/archive/{year}/{month:D2}/{day:D2}";
+        }
+
+        public static string Archive(int? year = null, int? month = null, int? day = null, string? language = null, int page = 1) =>
+            UiLanguage.WithLanguage(ArchivePath(year, month, day) + (page > 1 ? $"?page={page}" : string.Empty), language ?? UiLanguage.Current);
+
         public static string Page(string path, string? language = null) =>
             UiLanguage.WithLanguage(path, language ?? UiLanguage.Current);
 

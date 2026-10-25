@@ -120,6 +120,8 @@ Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 - `GetPublishedForSitemap`, `GetLatest` sitemap and RSS.
 - `IncrementViewCount` single `UPDATE` through `ExecuteUpdate`.
 
+`ArticleRepo` also groups published articles by month and by day in SQL (`CountByMonth`, `CountByDay`), pages a date range (`GetByPeriod`) and finds stories published on the same day in earlier years (`GetOnThisDay`), used by the archive pages and the home page's **On this day** panel.
+
 `TagRepo` counts published articles per tag in SQL (`CountPublished`, `GetPopular`), pages the published articles of a tag (`GetArticles`) and replaces an article's tags in one save (`SetArticleTags`).
 
 ## Business layer (BLL)
@@ -181,6 +183,9 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | `/news/{id}/{slug}` | `Article/Details` | Canonical article URL; `/Article/Details/{id}` and wrong slugs redirect (301) |
 | `/category/{id}/{slug}` | `Category/ArticlesByCategory` | `/Category/ArticlesByCategory/{id}` redirects (301) |
 | `/Category` | `Category/Index` | All sections |
+| `/archive` | `Archive/Index` | Every year with month tiles and story counts in the current language |
+| `/archive/{year}` | `Archive/Year` | Twelve month tiles for one year |
+| `/archive/{year}/{MM}`, `/archive/{year}/{MM}/{DD}?page=` | `Archive/Period` | Paged stories of a month or day with a calendar; unpadded numbers redirect (301); empty periods are `noindex` |
 | `/tags` | `Tag/Index` | Topics with article counts in the current language (management table for admins) |
 | `/tag/{id}/{slug}?page=` | `Tag/Articles` | Paged published stories of a topic; wrong or missing slug redirects (301) |
 | `/trending`, `/breaking-news` | `Article/TrendingNews`, `Article/BreakingNews` | |
@@ -238,6 +243,7 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `GET /api/categories`, `/{id}`, `/{id}/articles?lang=` | Public | 200 |
 | `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}?moveArticlesTo=` | Admin | 201 / 204 / 409 |
 | `GET /api/tags?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 |
+| `GET /api/archive?lang=`, `/api/archive/{year}/{month}?day=&lang=&page=&pageSize=`, `/api/archive/{year}/{month}/days` | Public | 200 / 404 for impossible dates |
 | `POST /api/tags`, `PUT /api/tags/{id}`, `DELETE /api/tags/{id}` | Admin | 201 / 204 / 409 |
 
 Article `POST` and `PUT` accept `tagIds` in the body; `GET /api/articles/{id}` returns the article's `tags`.
@@ -353,6 +359,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger, security hardening | Done |
 | 4 | Tags and topic pages | Done |
 | 4b | Show/hide password, image upload for articles and profile pictures | Done |
-| 4c | Rich text, date archive, revisions, scheduling | Planned |
+| 4c | Date archive with calendar and "On this day" | Done |
+| 4d | Author pages, bookmarks, rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |
