@@ -67,71 +67,37 @@ namespace BLL.Services
             repo.IncrementViewCount(articleId);
         }
 
-        public List<ArticleDTO> Search(string keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total)
+        public List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total)
         {
-            var query = repo.Get().AsQueryable();
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                query = query.Where(a => a.Title.Contains(keyword) || a.Content.Contains(keyword));
-            }
-            if (from.HasValue)
-                query = query.Where(a => a.PublishDate >= from.Value);
-            if (to.HasValue)
-                query = query.Where(a => a.PublishDate <= to.Value);
-            total = query.Count();
-            return query.OrderByDescending(a => a.PublishDate)
-                        .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
-                        .Select(a => mapper.Map<ArticleDTO>(a)).ToList();
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 9;
+            var data = repo.Search(keyword, from, to, page, pageSize, out total);
+            return mapper.Map<List<ArticleDTO>>(data);
+        }
+
+        public List<ArticleDTO> GetBreakingNews()
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetBreaking());
         }
 
         public List<ArticleDTO> GetTrendingArticles(int count)
         {
-            var articles = repo.Get();
-            var trending = articles
-                .Select(a => new {
-                    Article = a,
-                    TrendingScore = a.ViewsCount + (a.Comments?.Count() ?? 0) * 2
-                })
-                .OrderByDescending(x => x.TrendingScore)
-                .Take(count)
-                .Select(x => mapper.Map<ArticleDTO>(x.Article))
-                .ToList();
-            return trending;
+            return mapper.Map<List<ArticleDTO>>(repo.GetTrending(count));
         }
 
         public List<ArticleDTO> GetRecommendedArticles(int articleId, int count = 4)
         {
-            var all = repo.Get();
-            var target = all.FirstOrDefault(a => a.ArticleId == articleId);
-            if (target == null) return new List<ArticleDTO>();
-            // 1. Same Category
-            var sameCategory = all.Where(a => a.ArticleId != articleId && a.CategoryId == target.CategoryId).ToList();
-            if (sameCategory.Count >= count)
-                return sameCategory.Take(count).Select(a => mapper.Map<ArticleDTO>(a)).ToList();
-            // 2. Same Tag
-            var targetTags = target.Tags.Select(t => t.TagId).ToList();
-            var sameTag = all.Where(a => a.ArticleId != articleId && a.Tags.Any(t => targetTags.Contains(t.TagId))).ToList();
-            var combined = sameCategory.Concat(sameTag).Distinct().Take(count).ToList();
-            if (combined.Count >= count)
-                return combined.Take(count).Select(a => mapper.Map<ArticleDTO>(a)).ToList();
-            // 3. Fallback: latest popular
-            var fallback = all.Where(a => a.ArticleId != articleId)
-                .OrderByDescending(a => a.ViewsCount)
-                .ThenByDescending(a => a.PublishDate)
-                .Take(count - combined.Count)
-                .ToList();
-            return combined.Concat(fallback).Take(count).Select(a => mapper.Map<ArticleDTO>(a)).ToList();
+            return mapper.Map<List<ArticleDTO>>(repo.GetRecommended(articleId, count));
         }
+
         public int GetCommentCount(int articleId)
         {
-            var article = repo.Get(articleId);
-            return article?.Comments?.Count() ?? 0;
+            return repo.GetCommentCount(articleId);
         }
 
         public bool HasBreakingNews()
         {
-            return repo.Get().Any(a => a.IsBreakingNews);
+            return repo.HasBreakingNews();
         }
     }
 }

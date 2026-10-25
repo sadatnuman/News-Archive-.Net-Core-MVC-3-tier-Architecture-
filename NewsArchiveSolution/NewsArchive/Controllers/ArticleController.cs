@@ -21,18 +21,16 @@ namespace App.Controllers
             this.userService = userService;
         }
 
-        public IActionResult Index(string keyword = null, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 9)
+        // Fills the author/category name lookups used by the article list view
+        private void SetListNames(List<ArticleDTO> articles)
         {
-            int total;
-            var data = articleService.Search(keyword, from, to, page, pageSize, out total);
-
-            var users = userService.Get().ToDictionary(u => u.UserId, u => u.Name);
+            var users = userService.GetNames(articles.Select(a => a.AuthorId));
             var categories = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
 
             var authorNames = new Dictionary<int, string>();
             var categoryNames = new Dictionary<int, string>();
 
-            foreach (var article in data)
+            foreach (var article in articles)
             {
                 if (users.TryGetValue(article.AuthorId, out var authorName))
                     authorNames[article.ArticleId] = authorName;
@@ -44,6 +42,13 @@ namespace App.Controllers
             ViewBag.AuthorNames = authorNames;
             ViewBag.CategoryNames = categoryNames;
             ViewBag.Categories = categories;
+        }
+
+        public IActionResult Index(string? keyword = null, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 9)
+        {
+            int total;
+            var data = articleService.Search(keyword, from, to, page, pageSize, out total);
+            SetListNames(data);
 
             ViewBag.Keyword = keyword;
             ViewBag.From = from;
@@ -57,26 +62,8 @@ namespace App.Controllers
 
         public IActionResult BreakingNews()
         {
-            var data = articleService.Get().Where(a => a.IsBreakingNews).ToList();
-
-            var users = userService.Get().ToDictionary(u => u.UserId, u => u.Name);
-            var categories = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
-
-            var authorNames = new Dictionary<int, string>();
-            var categoryNames = new Dictionary<int, string>();
-
-            foreach (var article in data)
-            {
-                if (users.TryGetValue(article.AuthorId, out var authorName))
-                    authorNames[article.ArticleId] = authorName;
-
-                if (categories.TryGetValue(article.CategoryId, out var categoryName))
-                    categoryNames[article.CategoryId] = categoryName;
-            }
-
-            ViewBag.AuthorNames = authorNames;
-            ViewBag.CategoryNames = categoryNames;
-            ViewBag.Categories = categories;
+            var data = articleService.GetBreakingNews();
+            SetListNames(data);
 
             ViewData["Title"] = "Breaking News";
             return View("Index", data);
@@ -99,13 +86,11 @@ namespace App.Controllers
             ViewBag.Article = article;
             ViewBag.Comments = comments;
 
-            var authorName = userService.Get().FirstOrDefault(u => u.UserId == article.AuthorId)?.Name;
-            var categoryName = categoryService.Get().FirstOrDefault(c => c.CategoryId == article.CategoryId)?.Name;
-            ViewBag.AuthorName = authorName ?? "Unknown Author";
+            var commentUserIds = comments?.Select(c => c.UserId).ToList() ?? new List<int>();
+            var users = userService.GetNames(commentUserIds.Append(article.AuthorId));
+            var categoryName = categoryService.Get(article.CategoryId)?.Name;
+            ViewBag.AuthorName = users.TryGetValue(article.AuthorId, out var authorName) ? authorName : "Unknown Author";
             ViewBag.CategoryName = categoryName ?? "Unknown";
-
-            var commentUserIds = comments?.Select(c => c.UserId).Distinct().ToList() ?? new List<int>();
-            var users = userService.Get().Where(u => commentUserIds.Contains(u.UserId)).ToDictionary(u => u.UserId, u => u.Name);
             var commentUserNames = new Dictionary<int, string>();
             if (comments != null)
             {
@@ -120,10 +105,7 @@ namespace App.Controllers
             ViewBag.CommentUserNames = commentUserNames;
 
             ViewBag.IsLoggedIn = !string.IsNullOrEmpty(email) && roleId.HasValue;
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
+            var userInfo = userService.GetByEmail(email);
 
             ViewBag.UserId = userInfo?.UserId;
             ViewBag.UserName = userInfo?.Name;
@@ -146,10 +128,7 @@ namespace App.Controllers
             var email = HttpContext.Session.GetString("Email");
             ViewBag.Categories = categoryService.Get();
 
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
+            var userInfo = userService.GetByEmail(email);
 
             ViewBag.UserId = userInfo?.UserId;
             ViewBag.UserName = userInfo?.Name;
@@ -169,7 +148,7 @@ namespace App.Controllers
 
             if (ModelState.IsValid)
             {
-                var user = userService.Get().FirstOrDefault(u => u.Email == email);
+                var user = userService.GetByEmail(email);
                 a.AuthorId = user?.UserId ?? 0;
                 a.PublishDate = DateTime.Now;
 
@@ -182,10 +161,7 @@ namespace App.Controllers
 
             ViewBag.Categories = categoryService.Get();
 
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
+            var userInfo = userService.GetByEmail(email);
 
             ViewBag.UserEmail = email;
             ViewBag.UserId = userInfo?.UserId;
@@ -207,10 +183,7 @@ namespace App.Controllers
             ViewBag.Categories = categoryService.Get();
             var data = articleService.Get(id);
 
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
+            var userInfo = userService.GetByEmail(email);
 
             ViewBag.UserId = userInfo?.UserId;
             ViewBag.UserName = userInfo?.Name;
@@ -239,10 +212,7 @@ namespace App.Controllers
             var email = HttpContext.Session.GetString("Email");
             ViewBag.Categories = categoryService.Get();
 
-            var userInfo = userService.Get()
-                .Where(u => u.Email == email)
-                .Select(u => new { u.UserId, u.Name })
-                .FirstOrDefault();
+            var userInfo = userService.GetByEmail(email);
 
             ViewBag.UserEmail = email;
             ViewBag.UserId = userInfo?.UserId;
@@ -297,7 +267,7 @@ namespace App.Controllers
             if (roleId != 1 && roleId != 2)
                 return RedirectToAction("Details", new { id = articleId });
 
-            var user = userService.Get().FirstOrDefault(u => u.Email == email);
+            var user = userService.GetByEmail(email);
             if (user == null)
                 return RedirectToAction("Details", new { id = articleId });
 
@@ -329,20 +299,7 @@ namespace App.Controllers
         public IActionResult TrendingNews()
         {
             var trending = articleService.GetTrendingArticles(10);
-            var users = userService.Get().ToDictionary(u => u.UserId, u => u.Name);
-            var categories = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
-            var authorNames = new Dictionary<int, string>();
-            var categoryNames = new Dictionary<int, string>();
-            foreach (var article in trending)
-            {
-                if (users.TryGetValue(article.AuthorId, out var authorName))
-                    authorNames[article.ArticleId] = authorName;
-                if (categories.TryGetValue(article.CategoryId, out var categoryName))
-                    categoryNames[article.CategoryId] = categoryName;
-            }
-            ViewBag.AuthorNames = authorNames;
-            ViewBag.CategoryNames = categoryNames;
-            ViewBag.Categories = categories;
+            SetListNames(trending);
             ViewData["Title"] = "Trending News";
             return View("Index", trending);
         }
