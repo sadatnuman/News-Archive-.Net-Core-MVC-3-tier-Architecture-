@@ -9,12 +9,19 @@ namespace BLL.Services
     public class ArticleService
     {
         private readonly IArticleRepository repo;
+        private readonly ITagRepository tagRepo;
         private readonly IMapper mapper;
 
         public ArticleService(DataAccessFactory factory, IMapper mapper)
         {
             repo = factory.GetArticleRepository();
+            tagRepo = factory.GetTagRepository();
             this.mapper = mapper;
+        }
+
+        private void SaveTags(int articleId, IEnumerable<int>? tagIds)
+        {
+            tagRepo.SetArticleTags(articleId, (tagIds ?? Enumerable.Empty<int>()).Distinct().Take(TagService.MaxTagsPerArticle));
         }
 
         public List<ArticleDTO> Get()
@@ -63,7 +70,9 @@ namespace BLL.Services
                 article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
             }
 
-            return repo.Create(article) ? article.ArticleId : 0;
+            if (!repo.Create(article)) return 0;
+            SaveTags(article.ArticleId, form.TagIds);
+            return article.ArticleId;
         }
 
         public bool Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview)
@@ -90,7 +99,9 @@ namespace BLL.Services
                 article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
             }
 
-            return repo.Update(article);
+            if (!repo.Update(article)) return false;
+            SaveTags(articleId, form.TagIds);
+            return true;
         }
 
         public bool Submit(int articleId, int authorId)
@@ -164,7 +175,8 @@ namespace BLL.Services
                 IsBreakingNews = a.IsBreakingNews,
                 LanguageCode = a.LanguageCode,
                 StatusId = a.StatusId,
-                ReviewNote = a.ReviewNote
+                ReviewNote = a.ReviewNote,
+                TagIds = tagRepo.GetForArticle(a.ArticleId).Select(t => t.TagId).ToList()
             };
         }
 

@@ -1,0 +1,82 @@
+@model List<BLL.DTOs.TagDTO>
+
+@{
+    var lang = UiLanguage.Current;
+    var isAdmin = User.RoleId() == AppRoles.Admin;
+    var meta = ViewData.Meta();
+    meta.Title = L["News topics"];
+    meta.Description = L["Browse The Meridian Newsfolio archive by topic: {0}.", string.Join(", ", Model.Take(12).Select(t => t.LocalName(lang)))];
+    meta.CanonicalPath = SeoUrls.Page("/tags");
+    meta.Breadcrumbs.Add((L["Topics"], SeoUrls.Page("/tags")));
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@L["Topics"]</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <header>
+            <h1 class="page-title">@L["News topics"]</h1>
+            <p class="page-intro mb-0">@L["Follow a topic to see every related story in the archive."]</p>
+        </header>
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-primary"><i class="bi bi-tag"></i> @L["New tag"]</a>
+        }
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-tags"></i>
+            <h2 class="h5 mt-3">@L["No topics yet"]</h2>
+        </div>
+    }
+    else if (!isAdmin)
+    {
+        <ul class="tag-cloud list-unstyled">
+            @foreach (var tag in Model)
+            {
+                <li>
+                    <a class="tag-chip tag-chip-lg" href="@SeoUrls.Tag(tag.TagId, tag.Slug)">
+                        <i class="bi bi-hash" aria-hidden="true"></i>@tag.LocalName(lang)
+                        <span class="tag-count">@tag.ArticleCount</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-clean align-middle">
+                <thead>
+                    <tr>
+                        <th>@L["Name (English)"]</th>
+                        <th>@L["Name (Bangla)"]</th>
+                        <th class="text-end">@L["Articles"]</th>
+                        <th class="text-end">@L["Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tag in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold"><a href="@SeoUrls.Tag(tag.TagId, tag.Slug)">@tag.Name</a></td>
+                            <td lang="bn">@tag.NameBn</td>
+                            <td class="text-end">@tag.ArticleCount</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Edit" asp-route-id="@tag.TagId" class="btn btn-sm btn-outline-secondary">@L["Edit"]</a>
+                                <a asp-action="Delete" asp-route-id="@tag.TagId" class="btn btn-sm btn-link text-danger">@L["Delete"]</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

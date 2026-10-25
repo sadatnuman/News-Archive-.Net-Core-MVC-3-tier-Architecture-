@@ -37,6 +37,12 @@ namespace NewsArchive.Seo
         public static string Category(int id, string? slug, string? language = null) =>
             UiLanguage.WithLanguage(CategoryPath(id, slug), language ?? UiLanguage.Current);
 
+        public static string TagPath(int id, string? slug) =>
+            string.IsNullOrEmpty(slug) ? $"/tag/{id}" : $"/tag/{id}/{Uri.EscapeDataString(slug)}";
+
+        public static string Tag(int id, string? slug, string? language = null, int page = 1) =>
+            UiLanguage.WithLanguage(TagPath(id, slug) + (page > 1 ? $"?page={page}" : string.Empty), language ?? UiLanguage.Current);
+
         public static string Page(string path, string? language = null) =>
             UiLanguage.WithLanguage(path, language ?? UiLanguage.Current);
 

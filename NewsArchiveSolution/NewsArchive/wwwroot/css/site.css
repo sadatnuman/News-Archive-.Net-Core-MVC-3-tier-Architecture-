@@ -1043,3 +1043,107 @@ img {
     font-size: 1.08rem;
   }
 }
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  padding: 0;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .15rem;
+  padding: .3rem .75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: .85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.tag-chip .bi-hash {
+  color: var(--accent);
+}
+
+.tag-chip:hover,
+.tag-chip:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.tag-chip-lg {
+  padding: .5rem 1rem;
+  font-size: 1rem;
+}
+
+.tag-count {
+  margin-left: .45rem;
+  padding: 0 .45rem;
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.article-tags-label {
+  font-family: var(--font-sans);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tag-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: .35rem 1rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding: .75rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.password-field .form-control {
+  border-right: 0;
+}
+
+.password-toggle {
+  border: 1px solid var(--line-strong);
+  border-left: 0;
+  background: var(--paper);
+  color: var(--muted);
+  padding: 0 .85rem;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--accent);
+  background: var(--paper-2);
+}
+
+.password-field:focus-within .form-control,
+.password-field:focus-within .password-toggle {
+  border-color: var(--accent);
+}

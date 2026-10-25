@@ -1,0 +1,32 @@
+@model BLL.DTOs.TagDTO
+
+@{
+    var isEdit = Model.TagId > 0;
+}
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" class="editor-form">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <input type="hidden" asp-for="TagId" />
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <h2 class="h6 text-uppercase text-muted mb-3">English</h2>
+            <label asp-for="Name" class="form-label fw-semibold"></label>
+            <input asp-for="Name" class="form-control" maxlength="50" />
+            <span asp-validation-for="Name" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6">
+            <h2 class="h6 text-uppercase text-muted mb-3">বাংলা</h2>
+            <label asp-for="NameBn" class="form-label fw-semibold"></label>
+            <input asp-for="NameBn" class="form-control" lang="bn" maxlength="50" />
+            <span asp-validation-for="NameBn" class="text-danger small"></span>
+        </div>
+    </div>
+
+    <p class="small text-muted mt-3">@L["If the Bangla name is empty, the English name is shown on the Bangla site."]</p>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@L[isEdit ? "Save changes" : "Create tag"]</button>
+        <a asp-action="Index" class="btn btn-link">@L["Cancel"]</a>
+    </div>
+</form>

@@ -9,10 +9,12 @@ namespace BLL.Mapping
     {
         public MappingProfile()
         {
-            CreateMap<Article, ArticleDTO>().ReverseMap();
+            CreateMap<Article, ArticleDTO>();
+            CreateMap<ArticleDTO, Article>().ForMember(d => d.Tags, o => o.Ignore());
             CreateMap<Category, CategoryDTO>().ReverseMap();
             CreateMap<Comment, CommentDTO>().ReverseMap();
-            CreateMap<Tag, TagDTO>().ReverseMap();
+            CreateMap<Tag, TagDTO>().ForMember(d => d.ArticleCount, o => o.Ignore());
+            CreateMap<TagDTO, Tag>().ForMember(d => d.Articles, o => o.Ignore());
             CreateMap<User, UserDTO>().ReverseMap();
             CreateMap<Role, RoleDTO>().ReverseMap();
             CreateMap<User, AuthUserDTO>()

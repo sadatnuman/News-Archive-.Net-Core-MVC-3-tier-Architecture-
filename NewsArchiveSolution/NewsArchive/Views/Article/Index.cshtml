@@ -25,6 +25,7 @@
     });
 
     var lead = isFirstPage ? Model.FirstOrDefault() : null;
+    var popularTags = ViewBag.PopularTags as List<BLL.DTOs.TagDTO> ?? new List<BLL.DTOs.TagDTO>();
     var secondary = isFirstPage ? Model.Skip(1).Take(3).ToList() : new List<BLL.DTOs.ArticleDTO>();
     var grid = isFirstPage ? Model.Skip(4).ToList() : Model;
 }
@@ -117,6 +118,19 @@
                                     <li lang="@t.LanguageCode"><a href="@SeoUrls.Article(t)">@t.Title</a></li>
                                 }
                             </ol>
+                        </div>
+                    }
+                    @if (popularTags.Count > 0)
+                    {
+                        <div class="side-panel">
+                            <h2 class="side-panel-title">@L["Popular topics"]</h2>
+                            <ul class="tag-cloud list-unstyled mb-3">
+                                @foreach (var tag in popularTags)
+                                {
+                                    <li><a class="tag-chip" href="@SeoUrls.Tag(tag.TagId, tag.Slug)"><i class="bi bi-hash" aria-hidden="true"></i>@tag.LocalName(UiLanguage.Current)</a></li>
+                                }
+                            </ul>
+                            <a class="small fw-semibold" href="@SeoUrls.Page("/tags")">@L["Browse all topics"] <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                         </div>
                     }
                     <div class="side-panel">

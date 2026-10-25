@@ -1,0 +1,25 @@
+@model BLL.DTOs.TagDTO
+
+@{
+    ViewData["Title"] = L["Delete tag"];
+    ViewData["NoIndex"] = true;
+    var count = (int)(ViewBag.ArticleCount ?? 0);
+}
+
+<div class="container py-5">
+    <div class="auth-card" style="max-width: 560px;">
+        <h1 class="h3 mb-3">@L["Delete tag"]</h1>
+        <p class="fw-semibold mb-3"><i class="bi bi-hash" aria-hidden="true"></i>@Model.LocalName(UiLanguage.Current)</p>
+        @if (count > 0)
+        {
+            <div class="alert alert-warning">@L["{0} articles use this tag. They stay published; only the tag is removed from them.", count]</div>
+        }
+        <form asp-action="Delete" method="post">
+            <input type="hidden" name="id" value="@Model.TagId" />
+            <div class="d-flex gap-2">
+                <button type="submit" name="Decision" value="Yes" class="btn btn-danger">@L["Yes, delete"]</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">@L["Cancel"]</a>
+            </div>
+        </form>
+    </div>
+</div>

@@ -24,6 +24,9 @@
   <data name="A section with this name already exists." xml:space="preserve">
     <value>এই নামে একটি বিভাগ আগে থেকেই আছে।</value>
   </data>
+  <data name="A tag with this name already exists." xml:space="preserve">
+    <value>এই নামে একটি ট্যাগ আগে থেকেই আছে।</value>
+  </data>
   <data name="About us" xml:space="preserve">
     <value>আমাদের কথা</value>
   </data>
@@ -56,6 +59,9 @@
   </data>
   <data name="All sections" xml:space="preserve">
     <value>সব বিভাগ</value>
+  </data>
+  <data name="All topics" xml:space="preserve">
+    <value>সব বিষয়</value>
   </data>
   <data name="Already have an account?" xml:space="preserve">
     <value>আগে থেকেই অ্যাকাউন্ট আছে?</value>
@@ -126,8 +132,14 @@
   <data name="Breaking news" xml:space="preserve">
     <value>জরুরি সংবাদ</value>
   </data>
+  <data name="Browse The Meridian Newsfolio archive by topic: {0}." xml:space="preserve">
+    <value>বিষয় অনুযায়ী দ্য মেরিডিয়ান নিউজফোলিওর আর্কাইভ দেখুন: {0}।</value>
+  </data>
   <data name="Browse The Meridian Newsfolio coverage by section: {0}." xml:space="preserve">
     <value>বিভাগ অনুযায়ী দ্য মেরিডিয়ান নিউজফোলিওর সংবাদ দেখুন: {0}।</value>
+  </data>
+  <data name="Browse all topics" xml:space="preserve">
+    <value>সব বিষয় দেখুন</value>
   </data>
   <data name="By" xml:space="preserve">
     <value>লিখেছেন</value>
@@ -167,6 +179,9 @@
   </data>
   <data name="Choose the language the story is written in. It appears on that language's edition of the site." xml:space="preserve">
     <value>সংবাদটি যে ভাষায় লেখা তা বেছে নিন। সাইটের ওই ভাষার সংস্করণে এটি দেখানো হবে।</value>
+  </data>
+  <data name="Choose up to {0} topics that describe the story." xml:space="preserve">
+    <value>সংবাদের সঙ্গে মেলে এমন সর্বোচ্চ {0}টি বিষয় বেছে নিন।</value>
   </data>
   <data name="Clear" xml:space="preserve">
     <value>মুছুন</value>
@@ -219,6 +234,9 @@
   <data name="Create section" xml:space="preserve">
     <value>বিভাগ তৈরি করুন</value>
   </data>
+  <data name="Create tag" xml:space="preserve">
+    <value>ট্যাগ তৈরি করুন</value>
+  </data>
   <data name="Created date is required" xml:space="preserve">
     <value>তৈরির তারিখ প্রয়োজন</value>
   </data>
@@ -236,6 +254,9 @@
   </data>
   <data name="Delete section" xml:space="preserve">
     <value>বিভাগ মুছুন</value>
+  </data>
+  <data name="Delete tag" xml:space="preserve">
+    <value>ট্যাগ মুছুন</value>
   </data>
   <data name="Delete this article?" xml:space="preserve">
     <value>সংবাদটি মুছে ফেলবেন?</value>
@@ -276,6 +297,9 @@
   <data name="Edit section" xml:space="preserve">
     <value>বিভাগ সম্পাদনা</value>
   </data>
+  <data name="Edit tag" xml:space="preserve">
+    <value>ট্যাগ সম্পাদনা</value>
+  </data>
   <data name="Edit user" xml:space="preserve">
     <value>ব্যবহারকারী সম্পাদনা</value>
   </data>
@@ -306,6 +330,9 @@
   <data name="Enter your code" xml:space="preserve">
     <value>কোড লিখুন</value>
   </data>
+  <data name="Every story about {0} in The Meridian Newsfolio archive." xml:space="preserve">
+    <value>দ্য মেরিডিয়ান নিউজফোলিওর আর্কাইভে {0} বিষয়ক সব সংবাদ।</value>
+  </data>
   <data name="Every story in the archive is filed under one of these sections." xml:space="preserve">
     <value>আর্কাইভের প্রতিটি সংবাদ এই বিভাগগুলোর কোনো একটিতে রাখা আছে।</value>
   </data>
@@ -314,6 +341,9 @@
   </data>
   <data name="Failed to create user" xml:space="preserve">
     <value>ব্যবহারকারী তৈরি করা যায়নি</value>
+  </data>
+  <data name="Follow a topic to see every related story in the archive." xml:space="preserve">
+    <value>একটি বিষয় বেছে নিয়ে আর্কাইভের সংশ্লিষ্ট সব সংবাদ পড়ুন।</value>
   </data>
   <data name="Follow every story as it is published with our RSS feed." xml:space="preserve">
     <value>আমাদের আরএসএস ফিডে প্রতিটি সংবাদ প্রকাশের সঙ্গে সঙ্গে পান।</value>
@@ -335,6 +365,9 @@
   </data>
   <data name="Headline" xml:space="preserve">
     <value>শিরোনাম</value>
+  </data>
+  <data name="Hide password" xml:space="preserve">
+    <value>পাসওয়ার্ড লুকান</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>প্রচ্ছদ</value>
@@ -450,6 +483,9 @@
   <data name="New submissions from authors will appear here." xml:space="preserve">
     <value>লেখকদের জমা দেওয়া নতুন লেখা এখানে দেখা যাবে।</value>
   </data>
+  <data name="New tag" xml:space="preserve">
+    <value>নতুন ট্যাগ</value>
+  </data>
   <data name="News" xml:space="preserve">
     <value>সংবাদ</value>
   </data>
@@ -458,6 +494,9 @@
   </data>
   <data name="News sections" xml:space="preserve">
     <value>সংবাদ বিভাগ</value>
+  </data>
+  <data name="News topics" xml:space="preserve">
+    <value>সংবাদের বিষয়</value>
   </data>
   <data name="No OTP request found for this email" xml:space="preserve">
     <value>এই ইমেইলের জন্য কোনো ওটিপি অনুরোধ পাওয়া যায়নি</value>
@@ -473,6 +512,9 @@
   </data>
   <data name="No stories published yet" xml:space="preserve">
     <value>এখনো কোনো সংবাদ প্রকাশিত হয়নি</value>
+  </data>
+  <data name="No topics yet" xml:space="preserve">
+    <value>এখনো কোনো বিষয় নেই</value>
   </data>
   <data name="No user found with that email" xml:space="preserve">
     <value>এই ইমেইলে কোনো ব্যবহারকারী পাওয়া যায়নি</value>
@@ -548,6 +590,9 @@
   </data>
   <data name="Please select a category" xml:space="preserve">
     <value>একটি বিভাগ বেছে নিন</value>
+  </data>
+  <data name="Popular topics" xml:space="preserve">
+    <value>জনপ্রিয় বিষয়</value>
   </data>
   <data name="Post comment" xml:space="preserve">
     <value>মন্তব্য করুন</value>
@@ -690,6 +735,9 @@
   <data name="Share this article" xml:space="preserve">
     <value>সংবাদটি শেয়ার করুন</value>
   </data>
+  <data name="Show password" xml:space="preserve">
+    <value>পাসওয়ার্ড দেখুন</value>
+  </data>
   <data name="Sign in" xml:space="preserve">
     <value>লগ-ইন</value>
   </data>
@@ -747,11 +795,23 @@
   <data name="System" xml:space="preserve">
     <value>সিস্টেম</value>
   </data>
+  <data name="Tag created." xml:space="preserve">
+    <value>ট্যাগ তৈরি হয়েছে।</value>
+  </data>
+  <data name="Tag deleted." xml:space="preserve">
+    <value>ট্যাগ মুছে ফেলা হয়েছে।</value>
+  </data>
   <data name="Tag name is required" xml:space="preserve">
     <value>ট্যাগের নাম প্রয়োজন</value>
   </data>
   <data name="Tag name must be between 2 and 50 characters" xml:space="preserve">
     <value>ট্যাগের নাম ২ থেকে ৫০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Tag updated." xml:space="preserve">
+    <value>ট্যাগ হালনাগাদ হয়েছে।</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>ট্যাগ</value>
   </data>
   <data name="Terms of use" xml:space="preserve">
     <value>ব্যবহারের শর্তাবলি</value>
@@ -779,6 +839,9 @@
   </data>
   <data name="The stories readers are viewing and discussing the most right now." xml:space="preserve">
     <value>এই মুহূর্তে পাঠকেরা যে সংবাদগুলো সবচেয়ে বেশি পড়ছেন ও আলোচনা করছেন।</value>
+  </data>
+  <data name="The tag could not be deleted." xml:space="preserve">
+    <value>ট্যাগটি মোছা যায়নি।</value>
   </data>
   <data name="The {0} field is required." xml:space="preserve">
     <value>{0} প্রয়োজন।</value>
@@ -830,6 +893,12 @@
   </data>
   <data name="Top story" xml:space="preserve">
     <value>প্রধান সংবাদ</value>
+  </data>
+  <data name="Topic" xml:space="preserve">
+    <value>বিষয়</value>
+  </data>
+  <data name="Topics" xml:space="preserve">
+    <value>বিষয়সমূহ</value>
   </data>
   <data name="Trending" xml:space="preserve">
     <value>আলোচিত</value>
@@ -942,6 +1011,9 @@
   <data name="{0} articles" xml:space="preserve">
     <value>{0}টি সংবাদ</value>
   </data>
+  <data name="{0} articles use this tag. They stay published; only the tag is removed from them." xml:space="preserve">
+    <value>{0}টি সংবাদে এই ট্যাগ আছে। সংবাদগুলো প্রকাশিতই থাকবে, শুধু ট্যাগটি সরে যাবে।</value>
+  </data>
   <data name="{0} home" xml:space="preserve">
     <value>{0} প্রচ্ছদ</value>
   </data>
@@ -950,6 +1022,9 @@
   </data>
   <data name="{0} news" xml:space="preserve">
     <value>{0} সংবাদ</value>
+  </data>
+  <data name="{0} news, page {1}" xml:space="preserve">
+    <value>{0} সংবাদ, পৃষ্ঠা {1}</value>
   </data>
   <data name="{0} stories found" xml:space="preserve">
     <value>{0}টি সংবাদ পাওয়া গেছে</value>

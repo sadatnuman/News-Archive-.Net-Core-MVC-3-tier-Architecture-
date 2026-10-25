@@ -1,4 +1,4 @@
-﻿using DAL.EF.Tables;
+using DAL.EF.Tables;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL.EF;
@@ -212,7 +212,13 @@ public partial class NewsArchiveDbContext : DbContext
 
             entity.HasIndex(e => e.Name, "UX_Tags_Name").IsUnique();
 
+            entity.HasIndex(e => e.NameBn, "UX_Tags_NameBn").IsUnique().HasFilter("[NameBn] IS NOT NULL");
+
+            entity.HasIndex(e => e.Slug, "UX_Tags_Slug").IsUnique().HasFilter("[Slug] IS NOT NULL");
+
             entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.NameBn).HasMaxLength(50);
+            entity.Property(e => e.Slug).HasMaxLength(80);
         });
 
         modelBuilder.Entity<User>(entity =>

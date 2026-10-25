@@ -1,0 +1,15 @@
+@model BLL.DTOs.TagDTO
+
+@{
+    ViewData["Title"] = L["New tag"];
+    ViewData["NoIndex"] = true;
+}
+
+<div class="container py-5" style="max-width: 960px;">
+    <h1 class="page-title mb-4">@L["New tag"]</h1>
+    <partial name="_TagForm" model="Model" />
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -173,6 +173,7 @@ using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<ArticleService>().EnsureSlugs();
     scope.ServiceProvider.GetRequiredService<CategoryService>().EnsureSlugs();
+    scope.ServiceProvider.GetRequiredService<TagService>().EnsureSlugs();
     scope.ServiceProvider.GetRequiredService<AuthService>().PurgeExpiredTokens();
 }
 

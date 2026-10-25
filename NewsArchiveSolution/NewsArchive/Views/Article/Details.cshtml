@@ -59,6 +59,7 @@
         ["articleSection"] = sectionForSchema,
         ["wordCount"] = wordCount,
         ["inLanguage"] = Model.LanguageCode,
+        ["keywords"] = Model.Tags.Count > 0 ? string.Join(", ", Model.Tags.Select(t => t.LocalName(Model.LanguageCode))) : null,
         ["isAccessibleForFree"] = true
     });
 
@@ -169,6 +170,19 @@
                     </p>
                 }
             </div>
+
+            @if (Model.Tags.Count > 0)
+            {
+                <nav class="article-tags" aria-label="@L["Topics"]">
+                    <span class="article-tags-label">@L["Topics"]</span>
+                    <ul class="list-unstyled d-flex flex-wrap gap-2 mb-0">
+                        @foreach (var tag in Model.Tags)
+                        {
+                            <li><a class="tag-chip" href="@SeoUrls.Tag(tag.TagId, tag.Slug)" rel="tag"><i class="bi bi-hash" aria-hidden="true"></i>@tag.LocalName(lang)</a></li>
+                        }
+                    </ul>
+                </nav>
+            }
 
             <div class="d-flex flex-wrap gap-2 mt-4">
                 <a class="btn btn-outline-secondary btn-sm" href="@categoryUrl"><i class="bi bi-arrow-left"></i> @L["More in {0}", categoryName]</a>
