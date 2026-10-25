@@ -1,36 +1,36 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BLL.DTOs;
 using DAL.EF.Tables;
-using DAL.Repos;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class CommentService
     {
-        CommentRepo repo;
-        Mapper mapper;
-        public CommentService(CommentRepo repo)
+        private readonly ICommentRepository repo;
+        private readonly IMapper mapper;
+
+        public CommentService(DataAccessFactory factory, IMapper mapper)
         {
-            this.repo = repo;
-            mapper = MapperConfig.GetMapper();
+            repo = factory.GetCommentRepository();
+            this.mapper = mapper;
         }
+
         public List<CommentDTO> Get()
         {
             var data = repo.Get();
             var res = mapper.Map<List<CommentDTO>>(data);
             return res;
-
         }
+
         public CommentDTO Get(int id)
         {
             var data = repo.Get(id);
             var res = mapper.Map<CommentDTO>(data);
             return res;
-
         }
+
         public bool Create(CommentDTO c)
         {
             c.Text = c.Text?.Trim() ?? string.Empty;
@@ -44,6 +44,7 @@ namespace BLL.Services
             var converted = mapper.Map<Comment>(c);
             return repo.Update(converted);
         }
+
         public bool Delete(int id)
         {
             return repo.Delete(id);

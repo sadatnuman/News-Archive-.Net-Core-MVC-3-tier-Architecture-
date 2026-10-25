@@ -1,20 +1,22 @@
 using AutoMapper;
 using BLL.DTOs;
 using DAL.EF.Tables;
-using DAL.Repos;
+using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class RoleService
     {
-        RoleRepo repo;
-        Mapper mapper;
+        private readonly IRepository<Role> repo;
+        private readonly IMapper mapper;
 
-        public RoleService(RoleRepo repo)
+        public RoleService(DataAccessFactory factory, IMapper mapper)
         {
-            this.repo = repo;
-            mapper = MapperConfig.GetMapper();
+            repo = factory.GetRoleRepository();
+            this.mapper = mapper;
         }
+
 
         public List<RoleDTO> Get()
         {

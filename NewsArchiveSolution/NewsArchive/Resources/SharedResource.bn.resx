@@ -30,6 +30,9 @@
   <data name="About {0}" xml:space="preserve">
     <value>{0} সম্পর্কে</value>
   </data>
+  <data name="Access denied" xml:space="preserve">
+    <value>প্রবেশাধিকার নেই</value>
+  </data>
   <data name="Account" xml:space="preserve">
     <value>অ্যাকাউন্ট</value>
   </data>
@@ -336,6 +339,9 @@
   <data name="Home" xml:space="preserve">
     <value>প্রচ্ছদ</value>
   </data>
+  <data name="If an account exists for that email, a verification code has been sent." xml:space="preserve">
+    <value>এই ইমেইলে কোনো অ্যাকাউন্ট থাকলে একটি যাচাই কোড পাঠানো হয়েছে।</value>
+  </data>
   <data name="If the Bangla name is empty, the English name is shown on the Bangla site." xml:space="preserve">
     <value>বাংলা নাম না দিলে বাংলা সাইটে ইংরেজি নামই দেখানো হবে।</value>
   </data>
@@ -474,6 +480,9 @@
   <data name="No {0} stories yet" xml:space="preserve">
     <value>{0} বিভাগে এখনো কোনো সংবাদ নেই</value>
   </data>
+  <data name="Note cannot exceed 500 characters" xml:space="preserve">
+    <value>মন্তব্য ৫০০ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
   <data name="Nothing here right now" xml:space="preserve">
     <value>এই মুহূর্তে এখানে কিছু নেই</value>
   </data>
@@ -519,6 +528,9 @@
   <data name="Password must be between 8 and 500 characters" xml:space="preserve">
     <value>পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে</value>
   </data>
+  <data name="Password must contain at least one letter and one number" xml:space="preserve">
+    <value>পাসওয়ার্ডে অন্তত একটি অক্ষর ও একটি সংখ্যা থাকতে হবে</value>
+  </data>
   <data name="Password updated" xml:space="preserve">
     <value>পাসওয়ার্ড বদলানো হয়েছে</value>
   </data>
@@ -530,6 +542,9 @@
   </data>
   <data name="Pending review" xml:space="preserve">
     <value>পর্যালোচনার অপেক্ষায়</value>
+  </data>
+  <data name="Please choose a role" xml:space="preserve">
+    <value>একটি ভূমিকা বেছে নিন</value>
   </data>
   <data name="Please select a category" xml:space="preserve">
     <value>একটি বিভাগ বেছে নিন</value>
@@ -678,6 +693,9 @@
   <data name="Sign in" xml:space="preserve">
     <value>লগ-ইন</value>
   </data>
+  <data name="Sign in with another account" xml:space="preserve">
+    <value>অন্য অ্যাকাউন্টে সাইন ইন করুন</value>
+  </data>
   <data name="Sign out" xml:space="preserve">
     <value>লগ-আউট</value>
   </data>
@@ -801,6 +819,12 @@
   <data name="Toggle navigation" xml:space="preserve">
     <value>মেনু খুলুন</value>
   </data>
+  <data name="Too many failed attempts. Request a new code." xml:space="preserve">
+    <value>অনেকবার ভুল চেষ্টা হয়েছে। নতুন কোড চেয়ে নিন।</value>
+  </data>
+  <data name="Too many failed attempts. Try again in 15 minutes." xml:space="preserve">
+    <value>অনেকবার ভুল চেষ্টা হয়েছে। ১৫ মিনিট পরে আবার চেষ্টা করুন।</value>
+  </data>
   <data name="Top stories" xml:space="preserve">
     <value>প্রধান সংবাদ</value>
   </data>
@@ -830,6 +854,9 @@
   </data>
   <data name="Updated" xml:space="preserve">
     <value>হালনাগাদ</value>
+  </data>
+  <data name="Use a site path like /images/articles/photo.jpg or an https:// address" xml:space="preserve">
+    <value>/images/articles/photo.jpg এর মতো সাইটের পথ বা https:// ঠিকানা দিন</value>
   </data>
   <data name="User ID is required" xml:space="preserve">
     <value>ব্যবহারকারীর আইডি প্রয়োজন</value>
@@ -899,6 +926,9 @@
   </data>
   <data name="You're all caught up." xml:space="preserve">
     <value>আপনি সব সংবাদ দেখে ফেলেছেন।</value>
+  </data>
+  <data name="Your account does not have permission to open this page." xml:space="preserve">
+    <value>এই পাতাটি খোলার অনুমতি আপনার অ্যাকাউন্টে নেই।</value>
   </data>
   <data name="Your article is published after an admin approves it." xml:space="preserve">
     <value>অ্যাডমিন অনুমোদন দিলে আপনার লেখা প্রকাশিত হবে।</value>

@@ -1,35 +1,34 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BLL.DTOs;
 using DAL.EF.Tables;
-using DAL.Repos;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class CategoryService
     {
-        CategoryRepo repo;
-        Mapper mapper;
-        public CategoryService(CategoryRepo repo)
+        private readonly ICategoryRepository repo;
+        private readonly IMapper mapper;
+
+        public CategoryService(DataAccessFactory factory, IMapper mapper)
         {
-            this.repo = repo;
-            mapper = MapperConfig.GetMapper();
+            repo = factory.GetCategoryRepository();
+            this.mapper = mapper;
         }
+
         public List<CategoryDTO> Get()
         {
             var data = repo.Get();
             var res = mapper.Map<List<CategoryDTO>>(data);
             return res;
-
         }
+
         public CategoryDTO Get(int id)
         {
             var data = repo.Get(id);
             var res = mapper.Map<CategoryDTO>(data);
             return res;
-
         }
         private string UniqueSlug(string name, int categoryId)
         {
@@ -51,7 +50,9 @@ namespace BLL.Services
             c.Name = c.Name.Trim();
             c.Slug = UniqueSlug(c.Name, 0);
             var converted = mapper.Map<Category>(c);
-            return repo.Create(converted);
+            if (!repo.Create(converted)) return false;
+            c.CategoryId = converted.CategoryId;
+            return true;
         }
 
         public bool Update(CategoryDTO c)

@@ -30,6 +30,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<UserToken> UserTokens { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -232,6 +234,28 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Roles_Users");
+        });
+
+        modelBuilder.Entity<UserToken>(entity =>
+        {
+            entity.HasKey(e => e.TokenId).HasName("PK_UserTokens");
+
+            entity.HasIndex(e => e.TokenHash, "UX_UserTokens_TokenHash").IsUnique();
+
+            entity.HasIndex(e => new { e.UserId, e.ExpiresAt }, "IX_UserTokens_UserId_ExpiresAt");
+
+            entity.Property(e => e.TokenHash).HasMaxLength(64).IsFixedLength();
+            entity.Property(e => e.ClientType).HasMaxLength(20);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ExpiresAt).HasColumnType("datetime");
+            entity.Property(e => e.RevokedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Tokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_UserTokens_Users");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -7,8 +7,8 @@
 @{
     var site = SiteConfig.Value;
     var lang = UiLanguage.Current;
-    var roleId = Context.Session.GetInt32("RoleId");
-    var isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("Email")) && roleId.HasValue;
+    var roleId = User.RoleId();
+    var isLoggedIn = User.IsSignedIn() && roleId.HasValue;
     var isAdmin = roleId == AppRoles.Admin;
     var isAuthor = roleId == AppRoles.Author;
     var categories = categoryService.Get();

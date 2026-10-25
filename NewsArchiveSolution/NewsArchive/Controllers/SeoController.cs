@@ -42,6 +42,8 @@ namespace NewsArchive.Controllers
             sb.AppendLine("Disallow: /Article/Delete/");
             sb.AppendLine("Disallow: /Article/MyArticles");
             sb.AppendLine("Disallow: /search?");
+            sb.AppendLine("Disallow: /api/");
+            sb.AppendLine("Disallow: /swagger/");
             sb.AppendLine();
             sb.AppendLine($"Sitemap: {urls.Absolute("/sitemap.xml")}");
             sb.AppendLine($"Sitemap: {urls.Absolute("/news-sitemap.xml")}");

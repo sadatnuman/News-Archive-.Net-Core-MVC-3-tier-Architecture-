@@ -1,44 +1,27 @@
 using BLL;
-using NewsArchive.Filters;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
+using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
 {
-    public class CommentController : Controller
+    public class CommentController : AppController
     {
-        CommentService commentService;
-        UserService userService;
+        private readonly CommentService commentService;
 
-        public CommentController(CommentService commentService, UserService userService)
+        public CommentController(CommentService commentService)
         {
             this.commentService = commentService;
-            this.userService = userService;
         }
 
-        [Logged]
+        [CustomAuthorize]
         [HttpPost]
         public IActionResult Delete(int id, int articleId)
         {
-            var email = HttpContext.Session.GetString("Email");
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-
-            if (string.IsNullOrEmpty(email) || !roleId.HasValue)
-                return RedirectToAction("Login", "Auth");
-
-            var user = userService.GetByEmail(email);
-            if (user == null)
-                return RedirectToAction("Details", "Article", new { id = articleId });
-
             var comment = commentService.Get(id);
-            if (comment == null)
-                return RedirectToAction("Details", "Article", new { id = articleId });
+            if (comment != null && (comment.UserId == CurrentUserId || CurrentRoleId == AppRoles.Admin))
+                commentService.Delete(id);
 
-            if (comment.UserId != user.UserId && roleId != 1)
-                return RedirectToAction("Details", "Article", new { id = articleId });
-
-            commentService.Delete(id);
             return RedirectToAction("Details", "Article", new { id = articleId });
         }
     }

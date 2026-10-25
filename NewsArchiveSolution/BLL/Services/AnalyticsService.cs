@@ -1,23 +1,26 @@
 using BLL.DTOs;
-using DAL.Repos;
-using System.Collections.Generic;
-using System.Linq;
+using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class AnalyticsService
     {
-        private readonly ArticleRepo articleRepo;
-        private readonly UserRepo userRepo;
-        private readonly CategoryRepo categoryRepo;
-        public AnalyticsService(ArticleRepo articleRepo, UserRepo userRepo, CategoryRepo categoryRepo)
+        private readonly IArticleRepository articleRepo;
+        private readonly IUserRepository userRepo;
+        private readonly ICategoryRepository categoryRepo;
+
+        public AnalyticsService(DataAccessFactory factory)
         {
-            this.articleRepo = articleRepo;
-            this.userRepo = userRepo;
-            this.categoryRepo = categoryRepo;
+            articleRepo = factory.GetArticleRepository();
+            userRepo = factory.GetUserRepository();
+            categoryRepo = factory.GetCategoryRepository();
         }
+
         public int GetTotalArticles() => articleRepo.Count();
+
         public int GetTotalUsers() => userRepo.Count();
+
         public List<ArticleDTO> GetMostViewedArticles(int count)
         {
             return articleRepo.GetMostViewed(count)
@@ -29,6 +32,7 @@ namespace BLL.Services
                     ViewsCount = a.ViewsCount
                 }).ToList();
         }
+
         public List<(string Category, int Count)> GetArticlesPerCategory()
         {
             var counts = articleRepo.CountPerCategory();

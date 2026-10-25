@@ -1,7 +1,9 @@
-﻿using BLL;
+using BLL;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using NewsArchive.Auth;
 using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
@@ -119,7 +121,7 @@ namespace NewsArchive.Controllers
             return View(article);
         }
 
-        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpGet]
         public IActionResult Create()
         {
@@ -127,7 +129,7 @@ namespace NewsArchive.Controllers
             return View(new ArticleFormDTO { LanguageCode = CurrentLanguage });
         }
 
-        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(ArticleFormDTO form, string? submitAction)
@@ -136,7 +138,7 @@ namespace NewsArchive.Controllers
             var roleId = CurrentRoleId;
             if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
-                if (articleService.Create(form, userId.Value, roleId.Value, submitAction == "submit"))
+                if (articleService.Create(form, userId.Value, roleId.Value, submitAction == "submit") > 0)
                 {
                     if (roleId == AppRoles.Admin)
                     {
@@ -153,7 +155,7 @@ namespace NewsArchive.Controllers
             return View(form);
         }
 
-        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpGet]
         public IActionResult Edit(int id)
         {
@@ -167,7 +169,7 @@ namespace NewsArchive.Controllers
             return View(form);
         }
 
-        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, ArticleFormDTO form, string? submitAction)
@@ -194,7 +196,7 @@ namespace NewsArchive.Controllers
             return View(form);
         }
 
-        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpGet]
         public IActionResult Delete(int id)
         {
@@ -205,7 +207,7 @@ namespace NewsArchive.Controllers
             return View(data);
         }
 
-        [RoleAccess(AppRoles.Admin, AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string Decision)
@@ -220,7 +222,7 @@ namespace NewsArchive.Controllers
             return CurrentRoleId == AppRoles.Author ? RedirectToAction("MyArticles") : RedirectToAction("Index");
         }
 
-        [RoleAccess(AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Author)]
         [HttpGet]
         public IActionResult MyArticles()
         {
@@ -229,7 +231,7 @@ namespace NewsArchive.Controllers
             return View(articles);
         }
 
-        [RoleAccess(AppRoles.Author)]
+        [CustomAuthorize(AppRoles.Author)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Submit(int id)
@@ -241,9 +243,9 @@ namespace NewsArchive.Controllers
             return RedirectToAction("MyArticles");
         }
 
-        [Logged]
+        [CustomAuthorize]
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [EnableRateLimiting(ApiOptions.CommentRateLimit)]
         public IActionResult AddComment(int articleId, string commentText)
         {
             var userId = CurrentUserId;

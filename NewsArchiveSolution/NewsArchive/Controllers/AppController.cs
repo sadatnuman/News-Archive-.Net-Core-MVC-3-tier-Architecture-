@@ -1,35 +1,40 @@
+using BLL.DTOs;
 using BLL.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using NewsArchive.Auth;
 using NewsArchive.Seo;
 
 namespace NewsArchive.Controllers
 {
     public abstract class AppController : Controller
     {
-        protected int? CurrentRoleId => HttpContext.Session.GetInt32("RoleId");
+        protected int? CurrentRoleId => User.RoleId();
 
-        protected string? CurrentEmail => HttpContext.Session.GetString("Email");
+        protected string? CurrentEmail => User.Email();
+
+        protected int? CurrentUserId => User.UserId();
 
         protected string CurrentLanguage => UiLanguage.Current;
 
         protected IStringLocalizer L => HttpContext.RequestServices.GetRequiredService<IStringLocalizer<SharedResource>>();
 
-        protected int? CurrentUserId
+        protected async Task SignInUserAsync(AuthUserDTO user)
         {
-            get
-            {
-                var id = HttpContext.Session.GetInt32("UserId");
-                if (id.HasValue || string.IsNullOrEmpty(CurrentEmail)) return id;
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                AuthClaims.CreatePrincipal(user),
+                new AuthenticationProperties { IsPersistent = true, AllowRefresh = true });
 
-                var user = HttpContext.RequestServices.GetRequiredService<UserService>().GetByEmail(CurrentEmail);
-                if (user == null) return null;
-                HttpContext.Session.SetInt32("UserId", user.UserId);
-                return user.UserId;
-            }
+            HttpContext.Session.SetInt32("UserId", user.UserId);
+            HttpContext.Session.SetInt32("RoleId", user.RoleId);
+            HttpContext.Session.SetString("Email", user.Email);
+            HttpContext.Session.SetString("Name", user.Name);
         }
 
-        protected void SetArticleLookups(IEnumerable<BLL.DTOs.ArticleDTO> articles)
+        protected void SetArticleLookups(IEnumerable<ArticleDTO> articles)
         {
             var services = HttpContext.RequestServices;
             var categories = services.GetRequiredService<CategoryService>().Get();

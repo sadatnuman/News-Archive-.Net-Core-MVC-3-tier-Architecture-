@@ -26,6 +26,18 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - Manage users and roles, and moderate comments
 - Dashboard with totals, the review queue, most-viewed articles and articles per section
 
+**REST API**
+- JSON API under `/api` for articles, sections, comments and accounts, with paging, language filters and proper status codes
+- Token authentication: `Authorization: Bearer {token}` for apps, or an HttpOnly `AuthToken` cookie for browser clients (`?webClient=true`)
+- Role checks on every protected endpoint, token expiry, logout and "log out everywhere"
+- Interactive documentation with Swagger UI at `/swagger`
+
+**Security**
+- PBKDF2 password hashing (old MD5 hashes are upgraded automatically on the next sign-in)
+- Cookie sign-in with claims; a changed password, role or deleted account ends existing sessions
+- Account lockout after 5 failed sign-ins, rate limits on sign-in, comments and the API
+- CSRF protection, strict Content Security Policy and other security headers, safe redirects
+
 **SEO and sharing**
 - Clean URLs such as `/news/12/headline-of-the-story` with 301 redirects from old URLs
 - Title, meta description, canonical URL, robots rules and `hreflang` on every page
@@ -42,7 +54,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 |---|---|
 | Framework | ASP.NET Core MVC, .NET 10 |
 | Data | Entity Framework Core 10 (migrations), SQL Server |
-| Mapping | AutoMapper |
+| Mapping | AutoMapper (profile registered through dependency injection) |
+| Authentication | Cookie authentication with claims (MVC), hashed bearer and cookie tokens (API) |
+| API docs | Swashbuckle (Swagger / OpenAPI) |
 | Localization | ASP.NET Core localization, resource files, culture-specific views |
 | UI | Razor views, Bootstrap 5.3, Bootstrap Icons, Cinzel / Source Serif 4 / Inter / Noto Bengali |
 
@@ -50,9 +64,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 
 ```
 NewsArchiveSolution/
-├── DAL/          EF Core DbContext, entities, migrations, repositories
-├── BLL/          Services, DTOs, business rules, validation
-└── NewsArchive/  MVC controllers, filters, views, localization, SEO, wwwroot, Program.cs
+├── DAL/          EF Core DbContext, entities, migrations, repository interfaces, DataAccessFactory
+├── BLL/          Services, DTOs, AutoMapper profile, password and token security, validation
+└── NewsArchive/  MVC and API controllers, filters, views, localization, SEO, wwwroot, Program.cs
 database/
 └── sample-data.sql    Bilingual sample content (users, sections, articles, comments)
 ```
@@ -110,6 +124,18 @@ dotnet run --project NewsArchive
 
 Or open `NewsArchiveSolution/NewsArchiveSolution.slnx` in Visual Studio 2022+ and press F5.
 
+### 5. Try the API
+
+Open `/swagger` while running in Development. Sign in with `POST /api/auth/login`, copy the `token`, press **Authorize** and paste it. From the command line:
+
+```bash
+curl -X POST http://localhost:5096/api/auth/login -H "Content-Type: application/json" \
+     -d "{\"email\":\"admin@meridiannewsfolio.local\",\"password\":\"Meridian@2026\"}"
+curl http://localhost:5096/api/articles/pending -H "Authorization: Bearer <token>"
+```
+
+The full endpoint list is in [ARCHITECTURE.md](ARCHITECTURE.md#rest-api).
+
 ## Configuration
 
 | Setting | Purpose |
@@ -118,6 +144,12 @@ Or open `NewsArchiveSolution/NewsArchiveSolution.slnx` in Visual Studio 2022+ an
 | `Site:BaseUrl` | Public address, used for canonical URLs, the sitemap and share images |
 | `Site:TwitterHandle`, `Site:SocialProfiles`, `Site:ContactEmail` | Social links and contact details |
 | `Site:ShowDemoNotice` | Shows the sample-content banner |
+| `Api:SwaggerEnabled` | Serve Swagger UI outside Development (default `false`) |
+| `Api:TokenLifetimeHours` | API token lifetime (default 12) |
+| `Api:AllowedOrigins` | Other websites allowed to call the API from a browser (CORS) |
+| `Hosting:KnownProxies` | IP addresses of a reverse proxy whose `X-Forwarded-*` headers can be trusted |
+
+Before going live: change the sample passwords, keep `Api:SwaggerEnabled` off unless the API docs should be public, and serve the site over HTTPS (cookies are marked Secure outside Development).
 
 ## Sharing on LinkedIn and X
 

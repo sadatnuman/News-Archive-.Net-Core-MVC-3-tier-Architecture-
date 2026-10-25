@@ -1,26 +1,36 @@
-﻿@{
+@model BLL.DTOs.LoginDTO
+
+@{
     ViewData["Title"] = L["Sign in"];
     ViewData["NoIndex"] = true;
+    var returnUrl = ViewBag.ReturnUrl as string;
 }
 
 <div class="container">
     <div class="auth-card">
         <h1 class="h3 mb-1">@L["Sign in"]</h1>
         <p class="text-muted mb-4">@L["Welcome back. Sign in to comment, write and manage your account."]</p>
-        <form asp-action="Login" method="post">
+        <form asp-action="Login" asp-route-returnUrl="@returnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
             <div class="mb-3">
-                <label for="Uname" class="form-label fw-semibold">@L["Email"]</label>
-                <input id="Uname" type="email" name="Uname" class="form-control" autocomplete="username" required />
+                <label asp-for="Email" class="form-label fw-semibold"></label>
+                <input asp-for="Email" type="email" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
             </div>
             <div class="mb-3">
                 <div class="d-flex justify-content-between">
-                    <label for="Pass" class="form-label fw-semibold">@L["Password"]</label>
+                    <label asp-for="Password" class="form-label fw-semibold"></label>
                     <a asp-action="ForgetPassword" class="small">@L["Forgot password?"]</a>
                 </div>
-                <input id="Pass" type="password" name="Pass" class="form-control" autocomplete="current-password" required />
+                <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
             </div>
             <button type="submit" class="btn btn-primary w-100">@L["Sign in"]</button>
         </form>
         <p class="text-center small mt-4 mb-0">@L["New here?"] <a asp-action="Create">@L["Create an account"]</a></p>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

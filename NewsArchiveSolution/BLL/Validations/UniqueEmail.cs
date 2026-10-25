@@ -1,4 +1,4 @@
-﻿using DAL.Repos;
+using DAL;
 using System.ComponentModel.DataAnnotations;
 
 namespace BLL.Validations
@@ -16,8 +16,8 @@ namespace BLL.Validations
             if (string.IsNullOrWhiteSpace(email))
                 return ValidationResult.Success;
 
-            var repo = (UserRepo?)validationContext.GetService(typeof(UserRepo));
-            if (repo == null || repo.GetByEmail(email) == null)
+            var factory = (DataAccessFactory?)validationContext.GetService(typeof(DataAccessFactory));
+            if (factory == null || factory.GetUserRepository().GetByEmail(email.Trim()) == null)
                 return ValidationResult.Success;
 
             return new ValidationResult(ErrorMessage);

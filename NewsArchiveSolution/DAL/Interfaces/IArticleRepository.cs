@@ -1,0 +1,41 @@
+using DAL.EF.Tables;
+
+namespace DAL.Interfaces
+{
+    public interface IArticleRepository : IRepository<Article>
+    {
+        List<Article> GetByCategoryId(int categoryId, string? language = null);
+
+        Article? GetWithDetails(int id);
+
+        void IncrementViewCount(int articleId);
+
+        List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
+
+        List<Article> GetBreaking(string? language = null);
+
+        bool HasBreakingNews(string? language = null);
+
+        List<Article> GetTrending(int count, string? language = null);
+
+        List<Article> GetMostViewed(int count);
+
+        List<Article> GetLatest(int count, string? language = null);
+
+        List<Article> GetRecommended(int articleId, int count);
+
+        List<Article> GetByAuthor(int authorId);
+
+        List<Article> GetByStatus(int statusId);
+
+        List<Article> GetPublishedForSitemap();
+
+        List<Article> GetWithoutSlug();
+
+        int CountByStatus(int statusId);
+
+        int GetCommentCount(int articleId);
+
+        Dictionary<int, int> CountPerCategory();
+    }
+}

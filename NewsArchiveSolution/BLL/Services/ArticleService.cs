@@ -1,39 +1,39 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BLL.DTOs;
 using DAL.EF.Tables;
-using DAL.Repos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class ArticleService
     {
-        ArticleRepo repo;
-        Mapper mapper;
-        public ArticleService(ArticleRepo repo)
+        private readonly IArticleRepository repo;
+        private readonly IMapper mapper;
+
+        public ArticleService(DataAccessFactory factory, IMapper mapper)
         {
-            this.repo = repo;
-            mapper = MapperConfig.GetMapper();
+            repo = factory.GetArticleRepository();
+            this.mapper = mapper;
         }
+
         public List<ArticleDTO> Get()
         {
             var data = repo.Get();
             var res = mapper.Map<List<ArticleDTO>>(data);
             return res;
-
         }
+
         public ArticleDTO? Get(int id)
         {
             var data = repo.Get(id);
             return data == null ? null : mapper.Map<ArticleDTO>(data);
         }
 
-        public bool Create(ArticleFormDTO form, int authorId, int roleId, bool submitForReview)
+        public int Create(ArticleFormDTO form, int authorId, int roleId, bool submitForReview)
         {
             var isAdmin = roleId == AppRoles.Admin;
-            if (!isAdmin && roleId != AppRoles.Author) return false;
+            if (!isAdmin && roleId != AppRoles.Author) return 0;
 
             var now = DateTime.Now;
             var article = new Article
@@ -63,7 +63,7 @@ namespace BLL.Services
                 article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
             }
 
-            return repo.Create(article);
+            return repo.Create(article) ? article.ArticleId : 0;
         }
 
         public bool Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview)

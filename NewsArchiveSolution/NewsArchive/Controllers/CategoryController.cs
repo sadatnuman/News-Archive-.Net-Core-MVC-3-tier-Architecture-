@@ -43,14 +43,14 @@ namespace NewsArchive.Controllers
             return View(articles);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Create()
         {
             return View(new CategoryDTO());
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Create(CategoryDTO c)
         {
@@ -65,7 +65,7 @@ namespace NewsArchive.Controllers
             return View(c);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Edit(int id)
         {
@@ -74,7 +74,7 @@ namespace NewsArchive.Controllers
             return View(data);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Edit(CategoryDTO c)
         {
@@ -89,7 +89,7 @@ namespace NewsArchive.Controllers
             return View(c);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Delete(int id)
         {
@@ -101,7 +101,7 @@ namespace NewsArchive.Controllers
             return View(data);
         }
 
-        [RoleAccess(AppRoles.Admin)]
+        [CustomAuthorize(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Delete(int id, string Decision, int? moveArticlesTo)
         {

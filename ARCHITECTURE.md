@@ -9,9 +9,9 @@ Update it whenever a layer, entity, endpoint or cross-cutting concern changes.
 
 ```
 NewsArchiveSolution/
-├── DAL/          Data Access Layer    (EF Core DbContext, entities, migrations, repositories)
-├── BLL/          Business Logic Layer (services, DTOs, mapping, validation, business rules)
-└── NewsArchive/  Presentation Layer   (MVC controllers, filters, Razor views, SEO, static files)
+├── DAL/          Data Access Layer    (EF Core DbContext, entities, migrations, repository interfaces, DataAccessFactory)
+├── BLL/          Business Logic Layer (services, DTOs, AutoMapper profile, password and token security, validation)
+└── NewsArchive/  Presentation Layer   (MVC controllers, REST API controllers, filters, Razor views, SEO, static files)
 ```
 
 Dependencies flow one way only:
@@ -23,7 +23,8 @@ NewsArchive  ──►  BLL  ──►  DAL  ──►  SQL Server
 The boundaries are enforced by the build:
 
 - `BLL.csproj` references DAL with `PrivateAssets="compile"`, so the presentation layer cannot compile against DAL types. `DAL.dll` is still copied for runtime.
-- DAL registers its own services in `DAL/DataLayerServices.cs` (`AddDataLayer`); BLL registers its services and calls `AddDataLayer` in `BLL/BusinessLayerServices.cs` (`AddBusinessLayer`). `Program.cs` only calls `AddBusinessLayer`.
+- DAL registers the `DbContext` and `DataAccessFactory` in `DAL/DataLayerServices.cs` (`AddDataLayer`); BLL registers AutoMapper, its services and calls `AddDataLayer` in `BLL/BusinessLayerServices.cs` (`AddBusinessLayer`). `Program.cs` only calls `AddBusinessLayer`.
+- Concrete repositories are `internal` to DAL. BLL only sees the repository interfaces returned by `DataAccessFactory`.
 - BLL has no ASP.NET MVC or HTTP dependencies. Authorization filters live in `NewsArchive/Filters`.
 - Only DAL touches the `DbContext`. Filtering, sorting, paging and counting happen in SQL.
 
@@ -58,6 +59,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `InitialSchema` | Baseline of the original database (matches `NewsArchiveDB.bacpac`) |
 | `NormalizeSchemaAndApprovalWorkflow` | 3NF clean-up, approval workflow columns, slugs, keys, indexes and seed data |
 | `AddLanguages` | `Languages` lookup table, `Articles.LanguageCode` foreign key, Bangla names for sections |
+| `AddUserTokens` | `UserTokens` table for API tokens (hash only, expiry, revocation) |
 
 ### Tables (3NF)
 
@@ -72,6 +74,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `Tags` | `TagId` | | `UX_Tags_Name` |
 | `ContentLabels` | `(ArticleId, TagId)` | `ArticleId → Articles` (cascade), `TagId → Tags` (cascade) | |
 | `Comments` | `CommentId` | `ArticleId → Articles` (cascade), `UserId → Users` | |
+| `UserTokens` | `TokenId` | `UserId → Users` (cascade) | `UX_UserTokens_TokenHash` |
 
 Normalization changes:
 
@@ -92,12 +95,21 @@ Normalization changes:
 | `IX_Articles_ReviewedById` | Reviewer foreign key |
 | `IX_Comments_ArticleId_CreatedDate` (desc) | Comments under an article |
 | `IX_Comments_UserId`, `IX_Users_Role`, `IX_ContentLabels_TagId` | Foreign key lookups |
+| `UX_UserTokens_TokenHash`, `IX_UserTokens_UserId_ExpiresAt` | Token lookup on every API call, revoke-all per user |
 
 Duplicate indexes from the original database (`IX_Users_Email`, `IX_ContentLabels_ArticleId`, single-column article indexes) were dropped because a unique constraint, primary key or composite index already covers them.
 
-### Repositories
+### Repositories and factory
 
-`DAL/Repos/*Repo.cs` expose CRUD plus query methods; reads use `AsNoTracking`. Notable `ArticleRepo` queries:
+| Piece | Role |
+|---|---|
+| `Interfaces/IRepository<T>` | Generic contract: `Get(id)`, `Get()`, `Create`, `Update`, `Delete`, `Count`, `SaveChanges` |
+| `Repos/Repository<T>` | Generic EF implementation; `Update` finds the row by its primary key and copies the new values |
+| `Interfaces/IArticleRepository`, `ICategoryRepository`, `ICommentRepository`, `IUserRepository`, `ITokenRepository` | Entity-specific queries on top of the generic contract |
+| `Repos/ArticleRepo`, `CategoryRepo`, `CommentRepo`, `UserRepo`, `TokenRepo` | `internal` implementations deriving from `Repository<T>` |
+| `DataAccessFactory` | The only public entry point: `GetArticleRepository()`, `GetCategoryRepository()`, `GetCommentRepository()`, `GetUserRepository()`, `GetTokenRepository()`, `GetRoleRepository()`, `GetTagRepository()` |
+
+Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 
 - `Search` keyword in title, summary or content and a date range (the `to` date includes the whole day), paged.
 - `GetTrending` score = views + 2 × comments, computed in SQL.
@@ -110,14 +122,17 @@ Duplicate indexes from the original database (`IX_Users_Email`, `IX_ContentLabel
 
 | Folder / file | Contents |
 |---|---|
-| `Services/` | `ArticleService`, `CategoryService`, `CommentService`, `TagService`, `UserService`, `RoleService`, `AnalyticsService` |
-| `DTOs/` | Read DTOs and form DTOs (`ArticleFormDTO` prevents over-posting of author, views and status) |
-| `Validations/UniqueEmail.cs` | Checks email uniqueness through `UserRepo` |
+| `Services/` | `ArticleService`, `CategoryService`, `CommentService`, `TagService`, `UserService`, `RoleService`, `AnalyticsService`, `AuthService`; each takes `DataAccessFactory` and `IMapper` |
+| `DTOs/` | Read DTOs, form DTOs (`ArticleFormDTO` prevents over-posting of author, views and status), `LoginDTO`, `RegisterDTO`, `AuthUserDTO`, `TokenDTO`, `PagedResultDTO<T>`, `ReviewDTO`, `CommentCreateDTO` |
+| `Mapping/MappingProfile.cs` | AutoMapper `Profile`, registered with `AddAutoMapper` and injected as `IMapper` |
+| `Security/PasswordHasher.cs` | PBKDF2-SHA256 (100,000 iterations, 16-byte salt), legacy MD5 verification with upgrade, token generation and SHA-256 token hashing, security stamp |
+| `Validations/UniqueEmail.cs` | Checks email uniqueness through `DataAccessFactory` |
 | `SlugHelper.cs` | URL slugs that keep Bangla and other Unicode letters |
 | `AppRoles.cs` | Role and article-status constants and display names |
-| `MapperConfig.cs` | AutoMapper entity ↔ DTO maps |
 
-On startup `ArticleService.EnsureSlugs()` and `CategoryService.EnsureSlugs()` fill missing slugs for existing rows.
+`AuthService` handles sign-in (`Authenticate`, with automatic hash upgrade), `Register`, `ChangePassword`, `IssueToken`, `ValidateTokenAsync`, `LogoutAsync`, `RevokeAllAsync` and `PurgeExpiredTokens`.
+
+On startup `ArticleService.EnsureSlugs()` and `CategoryService.EnsureSlugs()` fill missing slugs for existing rows, and `AuthService.PurgeExpiredTokens()` deletes tokens that expired or were revoked more than 30 days ago.
 
 ## Sections (categories)
 
@@ -156,9 +171,43 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | Admin | `AllUser`, `Create`, `Edit/{id}`, `Delete/{id}`, `Profile`, `ChangePassword` | Admin |
 | Category | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Member | `Profile`, `ChangePassword` | Reader, Author |
-| Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp` | Public |
+| Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 
-All controllers except `Seo` and `Pages` inherit `Controllers/AppController.cs`, which exposes `CurrentUserId`, `CurrentRoleId`, `Flash` and `SetArticleLookups`.
+Access is declared with `[CustomAuthorize(roles...)]` (`Filters/CustomAuthorize.cs`, an `IAuthorizationFilter`). Anonymous users are sent to `/Auth/Login?returnUrl=...`; signed-in users without the role are sent to `/Auth/AccessDenied` (HTTP 403).
+
+All MVC controllers except `Seo` and `Pages` inherit `Controllers/AppController.cs`, which reads `CurrentUserId`, `CurrentRoleId` and `CurrentEmail` from the authentication claims and exposes `SignInUserAsync`, `Flash` and `SetArticleLookups`.
+
+### REST API
+
+API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiController]`, `ControllerBase`, JSON only, CORS policy, antiforgery not required because the API never reads the MVC cookie) and return `ProblemDetails` for every error.
+
+| Method and route | Access | Success |
+|---|---|---|
+| `POST /api/auth/login?webClient=false` | Public, rate limited | 200 with `token`, `expiresAt`, `user` |
+| `POST /api/auth/login?webClient=true` | Public, rate limited | 200; token is set in the `AuthToken` cookie (HttpOnly, SameSite=Strict, Secure on HTTPS, path `/api`) and not returned in the body |
+| `POST /api/auth/register` | Public, rate limited | 201 (new Reader) |
+| `GET /api/auth/me` | Any token | 200 |
+| `POST /api/auth/logout` | Any token | 204, token revoked |
+| `POST /api/auth/logout-all` | Any token | 204, every token of the user revoked |
+| `GET /api/articles?q=&from=&to=&lang=&page=&pageSize=` | Public | 200 `PagedResultDTO<ArticleDTO>` (page size 1-50) |
+| `GET /api/articles/{id}` | Public; unpublished only for its author and admins | 200 / 404 |
+| `GET /api/articles/breaking`, `/trending`, `/{id}/related` | Public | 200 |
+| `GET /api/articles/mine` | Author, Admin | 200 |
+| `GET /api/articles/pending` | Admin | 200 |
+| `POST /api/articles?submit=` | Admin, Author | 201 with `Location` |
+| `PUT /api/articles/{id}?submit=` | Owner (unpublished) or Admin | 204 / 403 / 404 |
+| `DELETE /api/articles/{id}` | Owner (unpublished) or Admin | 204 / 403 / 404 |
+| `POST /api/articles/{id}/submit` | Author (owner) | 204 / 409 |
+| `POST /api/articles/{id}/approve`, `/reject` | Admin | 204 / 409 |
+| `GET /api/articles/{id}/comments` | Public | 200 |
+| `POST /api/articles/{id}/comments` | Any token, rate limited | 201 |
+| `DELETE /api/comments/{id}` | Comment owner or Admin | 204 / 403 |
+| `GET /api/categories`, `/{id}`, `/{id}/articles?lang=` | Public | 200 |
+| `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}?moveArticlesTo=` | Admin | 201 / 204 / 409 |
+
+Token authentication is declared with `[ApiAuthorize(roles...)]` (`Filters/ApiAuthorize.cs`, a `TypeFilterAttribute`) which runs `Filters/TokenAuthorizationFilter.cs` (`IAsyncAuthorizationFilter`). The filter reads `Authorization: Bearer {token}` or the `AuthToken` cookie, validates it through `AuthService`, and returns 401 (missing, unknown, expired or revoked token) or 403 (wrong role).
+
+Swagger UI is served at `/swagger` in Development, or anywhere when `Api:SwaggerEnabled` is `true`; use **Authorize** with the token from `/api/auth/login`.
 
 ### Views and design
 
@@ -183,7 +232,7 @@ All controllers except `Seo` and `Pages` inherit `Controllers/AppController.cs`,
 
 ## Theme
 
-Light, dark and system themes use Bootstrap 5.3 `data-bs-theme`. An inline script in `<head>` applies the saved choice before the page paints, `wwwroot/js/site.js` handles the switcher in the top bar and follows the operating system when **System** is selected. Colour tokens for both themes are defined in `wwwroot/css/site.css`.
+Light, dark and system themes use Bootstrap 5.3 `data-bs-theme`. `wwwroot/js/theme-init.js`, loaded first in `<head>`, applies the saved choice before the page paints (an external file so the Content Security Policy can forbid inline scripts), `wwwroot/js/site.js` handles the switcher in the top bar and follows the operating system when **System** is selected. Colour tokens for both themes are defined in `wwwroot/css/site.css`.
 
 ## Brand
 
@@ -212,25 +261,32 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 
 | Concern | Current implementation |
 |---|---|
-| Authentication | Session keys `Email`, `UserId`, `RoleId` set at login (30 min idle timeout, HttpOnly, SameSite=Lax) |
-| Authorization | `Filters/RoleAccess(params int[] roles)` and `Filters/Logged` |
-| CSRF | `AutoValidateAntiforgeryToken` applied globally to every POST |
-| XSS | Article content is HTML-encoded and rendered as paragraphs |
-| Security headers | `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`; HSTS outside Development |
-| Errors | `UseExceptionHandler("/error/500")` and `UseStatusCodePagesWithReExecute("/error/{0}")` |
+| MVC authentication | Cookie authentication (`Meridian.Auth`, HttpOnly, SameSite=Lax, Secure outside Development, 8 h sliding) with claims `NameIdentifier`, `Name`, `Email`, `Role`, `RoleId`, `SecurityStamp`; the session also stores `UserId`, `RoleId`, `Email`, `Name`. Logout signs out and clears the session |
+| Session validation | Every request re-checks the cookie against the database: a deleted user, a changed role or a changed password (security stamp) signs the cookie out immediately |
+| API authentication | Random 256-bit tokens; only the SHA-256 hash is stored in `UserTokens`, with client type, expiry (`Api:TokenLifetimeHours`, default 12) and revocation. Changing a password revokes every token of that user |
+| Authorization | `[CustomAuthorize]` for MVC, `[ApiAuthorize]` for the API, plus ownership checks in `ArticleService.CanEdit` / `CanView` and comment ownership checks |
+| Password storage | PBKDF2-SHA256, 100,000 iterations, random salt, constant-time comparison. Legacy MD5 hashes are verified once and upgraded on the next successful sign-in |
+| Password policy | At least 8 characters with at least one letter and one number |
+| Brute force | Per-account lockout after 5 failed sign-ins for 15 minutes (`Auth/LoginThrottle.cs`, MVC and API); per-IP rate limits: sign-in, sign-up and reset 20/min, comments 6/min, whole API 120/min; unknown emails cost the same time as known ones |
+| Password reset | 6-digit OTP from a cryptographic RNG, valid 5 minutes, single use, 5 attempts, same response whether or not the email exists; logged only in Development |
+| CSRF | `AutoValidateAntiforgeryToken` on every MVC POST (antiforgery cookie SameSite=Strict); API cookie is SameSite=Strict and the API only accepts JSON bodies |
+| XSS | Razor encoding everywhere, article content rendered as encoded paragraphs, JSON-LD serialized with the default JavaScript encoder, image paths limited to site paths or `https://` |
+| Open redirect | `returnUrl` is only followed when `Url.IsLocalUrl` accepts it |
+| Security headers | `Content-Security-Policy` (scripts from self only, no objects, frame-ancestors self), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cache-Control: no-store` on account and API responses, no `Server` header; HSTS outside Development |
+| Proxies | Forwarded headers are only trusted from loopback or from addresses listed in `Hosting:KnownProxies`, so clients cannot fake their IP to dodge rate limits |
+| CORS | Only origins listed in `Api:AllowedOrigins` |
+| Errors | MVC: `/error/500` and `/error/{code}` pages. API: JSON `ProblemDetails` for exceptions and status codes |
 | Compression | Response compression enabled for HTTPS |
-| Password storage | MD5 hash (to be replaced, see roadmap) |
-| Password reset | 6-digit OTP in session, valid 1 minute, written to the server console in development |
-| Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*` |
+| Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*`, `Api:*`, `Hosting:KnownProxies` |
 | Code style | No code comments; names must explain intent |
 | Responsive layout | Verified without horizontal overflow at 320, 375, 414, 768, 1024, 1366 and 1920 px in Chrome and Edge |
 
 ## Known limitations
 
-- MD5 password hashing and session-based authentication.
 - Images are referenced by typed path; there is no upload.
 - Tags exist in the schema but have no management UI.
-- No public JSON API yet.
+- The password reset code is not emailed yet; an email sender will be plugged in later.
+- Login lockout counters live in memory, so they reset when the app restarts and are per server.
 
 ## Roadmap
 
@@ -239,8 +295,8 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 1 | Foundation: `.gitignore`, remove duplicates, SQL-side queries, migrations, error pages | Done |
 | 1b | 3NF schema, roles (Admin/Author/Reader), approval workflow, SEO, new design | Done |
 | 1c | English + Bangla site, light/dark/system theme, flexible sections, brand, bilingual sample data | Done |
-| 2 | Course-aligned architecture: repository interfaces, generic repository, `DataAccessFactory`, AutoMapper profile via DI, cookie authentication with claims, stronger password hashing | Next |
-| 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger | Planned |
+| 2 | Course-aligned architecture: repository interfaces, generic repository, `DataAccessFactory`, AutoMapper profile via DI, cookie authentication with claims, PBKDF2 password hashing | Done |
+| 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger, security hardening | Done |
 | 4 | Rich text, image upload, tags UI, date archive, revisions, scheduling | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

@@ -1,18 +1,14 @@
-﻿using DAL.EF;
+using DAL.EF;
 using DAL.EF.Tables;
+using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace DAL.Repos
 {
-    public class ArticleRepo
+    internal class ArticleRepo : Repository<Article>, IArticleRepository
     {
-        NewsArchiveDbContext db;
-        public ArticleRepo(NewsArchiveDbContext db)
+        public ArticleRepo(NewsArchiveDbContext db) : base(db)
         {
-            this.db = db;
         }
 
         private IQueryable<Article> Published(string? language = null)
@@ -21,32 +17,9 @@ namespace DAL.Repos
             return string.IsNullOrEmpty(language) ? query : query.Where(a => a.LanguageCode == language);
         }
 
-        public bool Create(Article a)
-        {
-            db.Articles.Add(a);
-            return db.SaveChanges() > 0;
-        }
-        public Article? Get(int id)
-        {
-            return db.Articles.Find(id);
-        }
-        public List<Article> Get()
+        public override List<Article> Get()
         {
             return db.Articles.AsNoTracking().OrderByDescending(a => a.PublishDate).ToList();
-        }
-        public bool Update(Article a)
-        {
-            var exobj = Get(a.ArticleId);
-            if (exobj == null) return false;
-            db.Entry(exobj).CurrentValues.SetValues(a);
-            return db.SaveChanges() > 0;
-        }
-        public bool Delete(int id)
-        {
-            var exobj = Get(id);
-            if (exobj == null) return false;
-            db.Articles.Remove(exobj);
-            return db.SaveChanges() > 0;
         }
 
         public List<Article> GetByCategoryId(int categoryId, string? language = null)
@@ -205,15 +178,6 @@ namespace DAL.Repos
             return db.Articles.Where(a => a.Slug == null).ToList();
         }
 
-        public void SaveChanges()
-        {
-            db.SaveChanges();
-        }
-
-        public int Count()
-        {
-            return db.Articles.Count();
-        }
 
         public int CountByStatus(int statusId)
         {

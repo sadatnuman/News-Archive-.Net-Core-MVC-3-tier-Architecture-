@@ -1,3 +1,4 @@
+using BLL.Mapping;
 using BLL.Services;
 using DAL;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ namespace BLL
         public static IServiceCollection AddBusinessLayer(this IServiceCollection services, string connectionString)
         {
             services.AddDataLayer(connectionString);
+            services.AddAutoMapper(typeof(MappingProfile));
 
             services.AddScoped<ArticleService>();
             services.AddScoped<CategoryService>();
@@ -17,6 +19,7 @@ namespace BLL
             services.AddScoped<UserService>();
             services.AddScoped<RoleService>();
             services.AddScoped<AnalyticsService>();
+            services.AddScoped<AuthService>();
 
             return services;
         }

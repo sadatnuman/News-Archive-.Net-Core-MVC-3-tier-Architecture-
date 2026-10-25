@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DAL.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -402,6 +402,50 @@ namespace DAL.EF.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.UserToken", b =>
+                {
+                    b.Property<int>("TokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TokenId"));
+
+                    b.Property<string>("ClientType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TokenId")
+                        .HasName("PK_UserTokens");
+
+                    b.HasIndex(new[] { "UserId", "ExpiresAt" }, "IX_UserTokens_UserId_ExpiresAt");
+
+                    b.HasIndex(new[] { "TokenHash" }, "UX_UserTokens_TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("UserTokens");
+                });
+
             modelBuilder.Entity("ContentLabel", b =>
                 {
                     b.HasOne("DAL.EF.Tables.Article", null)
@@ -492,6 +536,18 @@ namespace DAL.EF.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.UserToken", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("Tokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_UserTokens_Users");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Article", b =>
                 {
                     b.Navigation("Comments");
@@ -524,6 +580,8 @@ namespace DAL.EF.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("ReviewedArticles");
+
+                    b.Navigation("Tokens");
                 });
 #pragma warning restore 612, 618
         }

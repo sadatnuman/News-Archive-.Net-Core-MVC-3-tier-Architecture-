@@ -1,47 +1,67 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BLL.DTOs;
+using BLL.Security;
 using DAL.EF.Tables;
-using DAL.Repos;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
     public class UserService
     {
-        UserRepo repo;
-        Mapper mapper;
-        public UserService(UserRepo repo)
+        private readonly IUserRepository repo;
+        private readonly IMapper mapper;
+
+        public UserService(DataAccessFactory factory, IMapper mapper)
         {
-            this.repo = repo;
-            mapper = MapperConfig.GetMapper();
+            repo = factory.GetUserRepository();
+            this.mapper = mapper;
         }
+
         public List<UserDTO> Get()
         {
             var data = repo.Get();
             var res = mapper.Map<List<UserDTO>>(data);
             return res;
-
         }
+
         public UserDTO Get(int id)
         {
             var data = repo.Get(id);
             var res = mapper.Map<UserDTO>(data);
             return res;
-
         }
+
         public bool Create(UserDTO c)
         {
             var converted = mapper.Map<User>(c);
+            converted.Name = converted.Name.Trim();
+            converted.Email = converted.Email.Trim();
+            converted.PasswordHash = PasswordHasher.Hash(c.PasswordHash);
+            converted.CreatedAt = DateTime.UtcNow;
             return repo.Create(converted);
         }
 
         public bool Update(UserDTO c)
         {
-            var converted = mapper.Map<User>(c);
-            return repo.Update(converted);
+            var existing = repo.Get(c.UserId);
+            if (existing == null) return false;
+            existing.Name = c.Name.Trim();
+            existing.RoleId = c.RoleId;
+            return repo.Update(existing);
         }
+
+        public List<UserDTO> Search(string? term)
+        {
+            var users = Get();
+            if (string.IsNullOrWhiteSpace(term)) return users;
+            term = term.Trim();
+            return users
+                .Where(u => u.Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                            u.Email.Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
         public bool Delete(int id)
         {
             return repo.Delete(id);
