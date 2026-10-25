@@ -46,6 +46,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - JSON-LD structured data (`NewsArticle`, `NewsMediaOrganization`, `WebSite`, `BreadcrumbList`)
 - `robots.txt`, XML sitemap for both languages, Google News sitemap and RSS feeds (`/rss.xml`, `/rss.xml?lang=bn`)
 
+**Design**
+- Light, dark and system themes with a 3D layer: rotating meridian globe, tilt cards with depth and glare, glass navigation, scroll reveal; all of it switches off for visitors who prefer reduced motion
+
 **Responsive design**
 - Checked without horizontal scrolling from 320 px phones to 1920 px desktops in Chrome and Edge
 

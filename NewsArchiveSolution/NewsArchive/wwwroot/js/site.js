@@ -103,6 +103,68 @@
         });
     });
 
+    var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+    function attachTilt(card) {
+        var max = parseFloat(card.getAttribute("data-tilt-max")) || 7;
+        var frame = 0;
+        var pending = null;
+
+        function render() {
+            frame = 0;
+            if (!pending) return;
+            var rect = card.getBoundingClientRect();
+            var x = (pending.x - rect.left) / rect.width;
+            var y = (pending.y - rect.top) / rect.height;
+            card.style.setProperty("--ry", ((x - 0.5) * 2 * max).toFixed(2) + "deg");
+            card.style.setProperty("--rx", ((0.5 - y) * 2 * max).toFixed(2) + "deg");
+            card.style.setProperty("--mx", (x * 100).toFixed(1) + "%");
+            card.style.setProperty("--my", (y * 100).toFixed(1) + "%");
+        }
+
+        card.addEventListener("pointerenter", function (event) {
+            if (event.pointerType !== "mouse" || reducedMotion.matches) return;
+            card.classList.add("is-tilting");
+        });
+
+        card.addEventListener("pointermove", function (event) {
+            if (event.pointerType !== "mouse" || reducedMotion.matches) return;
+            pending = { x: event.clientX, y: event.clientY };
+            if (!frame) frame = requestAnimationFrame(render);
+        });
+
+        card.addEventListener("pointerleave", function () {
+            pending = null;
+            card.classList.remove("is-tilting");
+            card.style.setProperty("--rx", "0deg");
+            card.style.setProperty("--ry", "0deg");
+        });
+    }
+
+    if (finePointer.matches) {
+        document.querySelectorAll("[data-tilt]").forEach(attachTilt);
+    }
+
+    if ("IntersectionObserver" in window && !reducedMotion.matches) {
+        var revealTargets = document.querySelectorAll("main .story-card, main .data-card, main .side-panel, main .section-head, main .story-compact");
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            });
+        }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+
+        revealTargets.forEach(function (element, index) {
+            var rect = element.getBoundingClientRect();
+            if (rect.top < window.innerHeight && rect.bottom > 0) return;
+            element.classList.add("reveal-ready");
+            element.style.transitionDelay = Math.min(index % 6, 5) * 60 + "ms";
+            observer.observe(element);
+        });
+    }
+
     media.addEventListener("change", function () {
         if (storedChoice() === "system") apply("system");
     });

@@ -272,6 +272,19 @@ Swagger UI is served at `/swagger` in Development, or anywhere when `Api:Swagger
 
 Light, dark and system themes use Bootstrap 5.3 `data-bs-theme`. `wwwroot/js/theme-init.js`, loaded first in `<head>`, applies the saved choice before the page paints (an external file so the Content Security Policy can forbid inline scripts), `wwwroot/js/site.js` handles the switcher in the top bar and follows the operating system when **System** is selected. Colour tokens for both themes are defined in `wwwroot/css/site.css`.
 
+## 3D design layer
+
+Pure CSS and a few lines of JavaScript; no WebGL library and no inline scripts, so the Content Security Policy stays strict.
+
+| Piece | Where |
+|---|---|
+| Depth tokens `--depth-1` to `--depth-4`, glare and ring colours for light and dark | `wwwroot/css/site.css` (`:root` and `[data-bs-theme="dark"]`) |
+| Rotating 3D meridian globe (six meridians, three parallels, orbiting satellite, `transform-style: preserve-3d`) | `Views/Shared/_Globe.cshtml`; masthead background, side panel of the information pages, 404/500 and 403 pages |
+| Tilt cards that follow the mouse with a moving glare and the picture and headline lifted on separate depth planes | `[data-tilt]` on `_StoryCard`, `_StoryLead` (gentler) and section cards; `site.js` `attachTilt` (requestAnimationFrame, mouse only) |
+| Glass sticky navigation (`backdrop-filter`, solid fallback), lifted compact stories, 3D topic chips, raised buttons | `site.css` |
+| Scroll reveal for cards and panels below the fold (opacity and transform only, no layout shift) | `site.js` with `IntersectionObserver` |
+| Accessibility | Everything stops under `prefers-reduced-motion`; touch devices get depth without tilt; the globe is `aria-hidden` and hidden in print |
+
 ## Brand
 
 | Asset | Path |

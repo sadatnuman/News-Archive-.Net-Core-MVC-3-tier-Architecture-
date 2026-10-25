@@ -22,6 +22,9 @@
             </div>
         </div>
         <aside class="col-lg-4">
+            <div class="globe-stage d-none d-lg-flex">
+                @await Html.PartialAsync("_Globe", "globe-lg")
+            </div>
             <div class="side-panel">
                 <h2 class="side-panel-title">@L["About {0}", SiteConfig.Value.Name]</h2>
                 <ul class="list-unstyled mb-0">
