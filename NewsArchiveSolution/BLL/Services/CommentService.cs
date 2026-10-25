@@ -47,7 +47,6 @@ namespace BLL.Services
             return repo.Delete(id);
         }
 
-        // NEW METHOD TO GET COMMENTS BY ARTICLE
         public List<CommentDTO> GetByArticleId(int articleId)
         {
             var data = repo.GetByArticleId(articleId);

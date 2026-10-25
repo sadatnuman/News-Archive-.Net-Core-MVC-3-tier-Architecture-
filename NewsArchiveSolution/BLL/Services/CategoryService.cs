@@ -47,7 +47,6 @@ namespace BLL.Services
             return repo.Delete(id);
         }
 
-        // NEW METHOD TO GET CATEGORY WITH ARTICLES
         public CategoryDTO GetWithArticles(int categoryId)
         {
             var data = repo.GetWithArticles(categoryId);

@@ -17,7 +17,6 @@
 }
 
 <div class="container py-5">
-    <!-- Page Header -->
     <div class="mb-5">
         <h1 class="display-5 fw-bold mb-2">Create New Article</h1>
         <p class="text-muted">Add a new article to the news archive</p>
@@ -31,35 +30,30 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                         @Html.AntiForgeryToken()
 
-                        <!-- Title -->
                         <div class="form-group mb-4">
                             <label asp-for="Title" class="form-label fw-semibold"></label>
                             <input asp-for="Title" class="form-control form-control-lg" placeholder="Enter article title" />
                             <span asp-validation-for="Title" class="text-danger small"></span>
                         </div>
 
-                        <!-- Summary -->
                         <div class="form-group mb-4">
                             <label asp-for="Summary" class="form-label fw-semibold"></label>
                             <textarea asp-for="Summary" class="form-control" rows="3" placeholder="Enter a brief summary (10-500 characters)"></textarea>
                             <span asp-validation-for="Summary" class="text-danger small"></span>
                         </div>
 
-                        <!-- Content -->
                         <div class="form-group mb-4">
                             <label asp-for="Content" class="form-label fw-semibold"></label>
                             <textarea asp-for="Content" class="form-control" rows="8" placeholder="Enter the full article content (20-5000 characters)"></textarea>
                             <span asp-validation-for="Content" class="text-danger small"></span>
                         </div>
 
-                        <!-- Publish Date -->
                         <div class="form-group mb-4">
                             <label asp-for="PublishDate" class="form-label fw-semibold"></label>
                             <input asp-for="PublishDate" type="datetime-local" class="form-control" />
                             <span asp-validation-for="PublishDate" class="text-danger small"></span>
                         </div>
 
-                        <!-- Category -->
                         <div class="form-group mb-4">
                             <label class="form-label fw-semibold">Category</label>
                             <select name="CategoryId" class="form-select" required>
@@ -74,18 +68,15 @@
                             <span asp-validation-for="CategoryId" class="text-danger small"></span>
                         </div>
 
-                        <!-- Author Info -->
                         <div class="form-group mb-4">
                             <label class="form-label fw-semibold">Author</label>
                             <input type="text" class="form-control" value="@userName" disabled />
                             <small class="text-muted d-block mt-2">
                                 <i class="bi bi-envelope"></i> @userEmail
                             </small>
-                            <!-- Hidden field to store UserId as AuthorId -->
                             <input type="hidden" name="AuthorId" value="@userId" />
                         </div>
 
-                        <!-- Image Path -->
                         <div class="form-group mb-4">
                             <label asp-for="ImagePath" class="form-label fw-semibold"></label>
                             <input asp-for="ImagePath" class="form-control" placeholder="e.g., Article/picture/imagename.jpg" />
@@ -95,7 +86,6 @@
                             <span asp-validation-for="ImagePath" class="text-danger small"></span>
                         </div>
 
-                        <!-- Breaking News -->
                         <div class="form-check mb-4">
                             <input asp-for="IsBreakingNews" class="form-check-input" id="breakingNews" />
                             <label asp-for="IsBreakingNews" class="form-check-label fw-semibold">
@@ -103,7 +93,6 @@
                             </label>
                         </div>
 
-                        <!-- Action Buttons -->
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="bi bi-check-circle"></i> Create Article
@@ -117,7 +106,6 @@
             </div>
         </div>
 
-        <!-- Info Sidebar -->
         <div class="col-lg-4">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-info text-white">

@@ -8,7 +8,6 @@
 }
 
 <div class="container py-5">
-    <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="@Url.Action("Index", "Article")">Home</a></li>
@@ -17,7 +16,6 @@
         </ol>
     </nav>
 
-    <!-- Category Header -->
     <div class="mb-5">
         <h1 class="display-4 fw-bold mb-2">@category?.Name</h1>
         @if (!string.IsNullOrEmpty(category?.Description))
@@ -30,7 +28,6 @@
         </p>
     </div>
 
-    <!-- Articles Grid -->
     @if (Model != null && Model.Count > 0)
     {
         <div class="row g-4">
@@ -70,26 +67,21 @@
                         }
 
                         <div class="card-body d-flex flex-column">
-                            <!-- Category Badge -->
                             <div class="mb-2">
                                 <span class="badge bg-info text-dark">@category?.Name</span>
                             </div>
 
-                            <!-- Title -->
                             <h5 class="card-title fw-bold">@article.Title</h5>
 
-                            <!-- Summary -->
                             <p class="card-text text-muted small flex-grow-1">
                                 @article.Summary
                             </p>
 
-                            <!-- Meta Info -->
                             <div class="text-muted small mb-3">
                                 <i class="bi bi-calendar"></i> 
                                 <span>@article.PublishDate.ToString("MMM dd, yyyy")</span>
                             </div>
 
-                            <!-- Action Button -->
                             <a href="@Url.Action("Details", "Article", new { id = article.ArticleId })" class="btn btn-sm btn-outline-primary">
                                 Read More →
                             </a>

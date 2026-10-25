@@ -1,4 +1,5 @@
-﻿using Auth.AuthFilters;
+﻿using BLL;
+using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Http;
@@ -81,7 +82,7 @@ namespace NewsArchive.Controllers
                 Email = obj.Email,
                 PasswordHash = hashed1,
                 ConfPassword = hashed2,
-                RoleId = 2, //Default to Member role
+                RoleId = AppRoles.Reader,
                 CreatedAt = DateTime.UtcNow
             };
 

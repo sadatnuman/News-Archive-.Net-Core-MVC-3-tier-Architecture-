@@ -28,7 +28,6 @@
                     </form>
                     <script>
                         (function () {
-                            // Dev-only: read OTP from server session and print to browser console
                             var otp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Context.Session.GetString($"PwdReset:Otp:{email}") ?? ""));
                             if (otp) {
                                 console.log('OTP: ' + otp);

@@ -14,19 +14,15 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
     <div class="container-fluid">
-        <!-- Brand -->
         <a class="navbar-brand fw-bold" asp-controller="Article" asp-action="Index">
             <i class="bi bi-newspaper"></i> NewsArchive
         </a>
 
-        <!-- Toggle Button -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Navbar Content -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            <!-- Categories in Middle (side-by-side links) -->
             <ul class="navbar-nav mx-auto">
                 @if (categories != null && categories.Count > 0)
                 {
@@ -68,11 +64,9 @@
                 }
             </ul>
 
-            <!-- Right Side Navigation -->
             <ul class="navbar-nav ms-auto">
                 @if (!isLoggedIn)
                 {
-                    <!-- Not Logged In: Show Home, Login, Sign Up -->
                     
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Auth" asp-action="Login">
@@ -87,7 +81,6 @@
                 }
                 else if (isAdmin)
                 {
-                    <!-- Admin Navigation -->
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Article" asp-action="Index">
                             <i class="bi bi-house"></i> Home
@@ -134,7 +127,6 @@
                 }
                 else if (isMember)
                 {
-                    <!-- Member Navigation -->
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Article" asp-action="Index">
                             <i class="bi bi-house"></i> Home

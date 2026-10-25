@@ -1,4 +1,5 @@
-﻿using Auth.AuthFilters;
+﻿using BLL;
+using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ using System.Text;
 
 namespace NewsArchive.Controllers
 {
-    [AdminAccess]
+    [RoleAccess(AppRoles.Admin)]
     [Logged]
     public class AdminController : Controller
     {

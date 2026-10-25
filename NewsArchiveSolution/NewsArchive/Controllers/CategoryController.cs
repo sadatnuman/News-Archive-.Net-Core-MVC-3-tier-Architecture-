@@ -1,4 +1,5 @@
-using Auth.AuthFilters;
+using BLL;
+using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +35,7 @@ namespace App.Controllers
             return View(articles);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Create()
         {
@@ -45,7 +46,7 @@ namespace App.Controllers
             return View(new CategoryDTO());
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Create(CategoryDTO c)
         {
@@ -64,7 +65,7 @@ namespace App.Controllers
             return View(c);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Edit(int id)
         {
@@ -76,7 +77,7 @@ namespace App.Controllers
             return View(data);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Edit(CategoryDTO c)
         {
@@ -95,7 +96,7 @@ namespace App.Controllers
             return View(c);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Delete(int id)
         {
@@ -107,7 +108,7 @@ namespace App.Controllers
             return View(data);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Delete(int id, string Decision)
         {

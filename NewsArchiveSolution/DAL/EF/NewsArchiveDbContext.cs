@@ -29,7 +29,10 @@ public partial class NewsArchiveDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=DbConn");
+    {
+        if (!optionsBuilder.IsConfigured)
+            optionsBuilder.UseSqlServer("Name=DbConn");
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

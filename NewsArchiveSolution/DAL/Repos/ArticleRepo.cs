@@ -76,7 +76,6 @@ namespace DAL.Repos
             if (from.HasValue)
                 query = query.Where(a => a.PublishDate >= from.Value);
             if (to.HasValue)
-                // "to" is a date picked by the user, so include that whole day
                 query = query.Where(a => a.PublishDate < to.Value.Date.AddDays(1));
 
             total = query.Count();
@@ -99,7 +98,6 @@ namespace DAL.Repos
             return db.Articles.Any(a => a.IsBreakingNews);
         }
 
-        // Trending score: one point per view, two points per comment
         public List<Article> GetTrending(int count)
         {
             return db.Articles.AsNoTracking()
@@ -117,7 +115,6 @@ namespace DAL.Repos
                 .ToList();
         }
 
-        // Same category first, then articles sharing a tag, then most popular
         public List<Article> GetRecommended(int articleId, int count)
         {
             var target = db.Articles.AsNoTracking()

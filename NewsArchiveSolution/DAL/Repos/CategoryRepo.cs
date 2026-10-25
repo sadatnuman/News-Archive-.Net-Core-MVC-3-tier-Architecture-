@@ -41,7 +41,6 @@ namespace DAL.Repos
             return db.SaveChanges() > 0;
         }
 
-        // NEW METHOD TO GET CATEGORY WITH ARTICLES
         public Category GetWithArticles(int categoryId)
         {
             return db.Categories

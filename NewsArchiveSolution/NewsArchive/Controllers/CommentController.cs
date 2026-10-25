@@ -1,4 +1,5 @@
-using Auth.AuthFilters;
+using BLL;
+using NewsArchive.Filters;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;

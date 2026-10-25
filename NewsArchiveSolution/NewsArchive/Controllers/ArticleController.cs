@@ -1,4 +1,5 @@
-﻿using Auth.AuthFilters;
+﻿using BLL;
+using NewsArchive.Filters;
 using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,6 @@ namespace App.Controllers
             this.userService = userService;
         }
 
-        // Fills the author/category name lookups used by the article list view
         private void SetListNames(List<ArticleDTO> articles)
         {
             var users = userService.GetNames(articles.Select(a => a.AuthorId));
@@ -117,7 +117,7 @@ namespace App.Controllers
             return View(article);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Create()
         {
@@ -137,7 +137,7 @@ namespace App.Controllers
             return View(new ArticleDTO());
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Create(ArticleDTO a)
         {
@@ -171,7 +171,7 @@ namespace App.Controllers
             return View(a);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Edit(int id)
         {
@@ -192,7 +192,7 @@ namespace App.Controllers
             return View(data);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Edit(ArticleDTO a)
         {
@@ -222,7 +222,7 @@ namespace App.Controllers
             return View(a);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpGet]
         public IActionResult Delete(int id)
         {
@@ -235,7 +235,7 @@ namespace App.Controllers
             return View(data);
         }
 
-        [AdminAccess]
+        [RoleAccess(AppRoles.Admin)]
         [HttpPost]
         public IActionResult Delete(int id, string Decision)
         {
