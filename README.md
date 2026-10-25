@@ -14,6 +14,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - Home page with a lead story, latest news, trending stories and a breaking-news ticker
 - Sections, topics (tags), trending and breaking news, search by keyword and date range
 - Date archive by year, month and day with a calendar (`/archive/2026/10`) and an "On this day" panel on the home page
+- Author pages with picture, bio and every story (`/authors`, `/author/{id}/{name}`); bylines link there
 - Article pages with byline, reading time, share buttons (LinkedIn, X, Facebook, WhatsApp), comments and related stories
 - Sign up, sign in, profile with a profile picture, password change and password reset with a one-time code; every password field has a show/hide eye button
 

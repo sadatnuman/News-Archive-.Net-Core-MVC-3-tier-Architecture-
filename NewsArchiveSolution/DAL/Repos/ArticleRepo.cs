@@ -187,6 +187,24 @@ namespace DAL.Repos
                 .ToList();
         }
 
+        public List<Article> GetPublishedByAuthor(int authorId, string? language, int page, int pageSize, out int total)
+        {
+            var query = Published(language).Where(a => a.AuthorId == authorId);
+            total = query.Count();
+            return query.OrderByDescending(a => a.PublishDate)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+        }
+
+        public Dictionary<int, int> CountPublishedByAuthor(string? language = null)
+        {
+            return Published(language)
+                .GroupBy(a => a.AuthorId)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionary(x => x.Key, x => x.Count);
+        }
+
         public List<Article> GetByStatus(int statusId)
         {
             return db.Articles.AsNoTracking()

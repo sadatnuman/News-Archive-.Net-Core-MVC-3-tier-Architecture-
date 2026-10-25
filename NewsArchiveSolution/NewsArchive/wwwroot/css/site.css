@@ -1794,3 +1794,75 @@ img {
     align-self: center;
   }
 }
+
+.avatar-lg {
+  width: 56px;
+  height: 56px;
+  font-size: 1.3rem;
+}
+
+.avatar-hero {
+  width: 132px;
+  height: 132px;
+  font-size: 3rem;
+  border: 4px solid var(--gold);
+  box-shadow: var(--depth-3);
+}
+
+.author-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 6px);
+  background:
+    radial-gradient(500px 220px at 0% 0%, var(--accent-soft), transparent 70%),
+    var(--paper);
+  box-shadow: var(--depth-2);
+}
+
+.author-hero .avatar-hero {
+  transform: translateZ(40px);
+}
+
+.author-card {
+  color: var(--ink);
+}
+
+.author-card:hover {
+  color: var(--ink);
+}
+
+.author-card-name {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.byline-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.byline-link:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+@media (max-width: 575.98px) {
+  .author-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+  }
+
+  .avatar-hero {
+    width: 96px;
+    height: 96px;
+  }
+}

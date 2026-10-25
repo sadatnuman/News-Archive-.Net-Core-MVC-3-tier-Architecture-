@@ -49,6 +49,8 @@ namespace BLL.Services
             if (existing == null) return false;
             existing.Name = c.Name.Trim();
             existing.RoleId = c.RoleId;
+            var bio = c.Bio?.Trim();
+            existing.Bio = string.IsNullOrEmpty(bio) ? null : bio.Length > 500 ? bio[..500] : bio;
             return repo.Update(existing);
         }
 

@@ -56,7 +56,7 @@
         ["image"] = new[] { Urls.AbsoluteImage(Model.ImagePath) },
         ["datePublished"] = Iso(Model.PublishDate),
         ["dateModified"] = Iso(modified ?? Model.PublishDate),
-        ["author"] = new[] { new Dictionary<string, object?> { ["@type"] = "Person", ["name"] = authorName } },
+        ["author"] = new[] { new Dictionary<string, object?> { ["@type"] = "Person", ["name"] = authorName, ["url"] = Urls.Absolute(SeoUrls.AuthorPath(Model.AuthorId, authorName)) } },
         ["publisher"] = new Dictionary<string, object?> { ["@id"] = Urls.Absolute("/#organization") },
         ["articleSection"] = sectionForSchema,
         ["wordCount"] = wordCount,
@@ -125,7 +125,7 @@
             <div class="byline">
                 @await Html.PartialAsync("_Avatar", (authorName, AvatarOf(Model.AuthorId), "avatar-md"))
                 <div>
-                    <div>@L["By"] <strong>@authorName</strong></div>
+                    <div>@L["By"] <a class="byline-link" href="@SeoUrls.Author(Model.AuthorId, authorName)"><strong>@authorName</strong></a></div>
                     <div>
                         <time datetime="@Iso(Model.PublishDate)">@Model.PublishDate.ToString("d MMMM yyyy, h:mm tt")</time>
                         @if (modified.HasValue)

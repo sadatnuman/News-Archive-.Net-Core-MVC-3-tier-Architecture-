@@ -1,0 +1,47 @@
+@model List<BLL.DTOs.AuthorDTO>
+
+@{
+    var meta = ViewData.Meta();
+    meta.Title = L["Our authors"];
+    meta.Description = L["Meet the reporters and editors behind The Meridian Newsfolio: {0}.", string.Join(", ", Model.Take(10).Select(a => a.Name))];
+    meta.CanonicalPath = SeoUrls.Page("/authors");
+    meta.Breadcrumbs.Add((L["Authors"], SeoUrls.Page("/authors")));
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@L["Authors"]</li>
+        </ol>
+    </nav>
+
+    <header class="mb-4">
+        <h1 class="page-title">@L["Our authors"]</h1>
+        <p class="page-intro mb-0">@L["The reporters and editors whose stories fill the archive."]</p>
+    </header>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <h2 class="h5 mt-3">@L["No published authors yet"]</h2>
+        </div>
+    }
+
+    <div class="row g-4">
+        @foreach (var author in Model)
+        {
+            var url = SeoUrls.Author(author.UserId, author.Name);
+            <div class="col-sm-6 col-lg-4">
+                <a class="author-card data-card d-flex align-items-center gap-3" href="@url" data-tilt data-tilt-max="6">
+                    @await Html.PartialAsync("_Avatar", (author.Name, author.AvatarPath, "avatar-lg"))
+                    <span class="d-block">
+                        <span class="author-card-name">@author.Name</span>
+                        <span class="meta d-block">@L[author.RoleName] <span class="sep">&bull;</span> @L["{0} stories", author.ArticleCount]</span>
+                    </span>
+                </a>
+            </div>
+        }
+    </div>
+</div>

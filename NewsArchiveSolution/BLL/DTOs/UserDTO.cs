@@ -37,6 +37,10 @@ namespace BLL.DTOs
 
         public string? AvatarPath { get; set; }
 
+        [Display(Name = "Short bio")]
+        [StringLength(500, ErrorMessage = "Bio cannot exceed 500 characters")]
+        public string? Bio { get; set; }
+
         [Required(ErrorMessage = "Created date is required")]
         public DateTime CreatedAt { get; set; }
     }

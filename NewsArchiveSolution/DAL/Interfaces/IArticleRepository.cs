@@ -34,6 +34,10 @@ namespace DAL.Interfaces
 
         List<Article> GetByAuthor(int authorId);
 
+        List<Article> GetPublishedByAuthor(int authorId, string? language, int page, int pageSize, out int total);
+
+        Dictionary<int, int> CountPublishedByAuthor(string? language = null);
+
         List<Article> GetByStatus(int statusId);
 
         List<Article> GetPublishedForSitemap();

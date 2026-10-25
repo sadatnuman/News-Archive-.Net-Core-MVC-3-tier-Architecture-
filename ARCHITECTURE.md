@@ -62,6 +62,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `AddUserTokens` | `UserTokens` table for API tokens (hash only, expiry, revocation) |
 | `AddTagTranslationsAndSlugs` | Bangla tag names and unique slugs for tag pages |
 | `AddUserAvatars` | `Users.AvatarPath` for profile pictures |
+| `AddUserBio` | `Users.Bio` (up to 500 characters) for author pages |
 
 ### Tables (3NF)
 
@@ -121,6 +122,8 @@ Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 - `IncrementViewCount` single `UPDATE` through `ExecuteUpdate`.
 
 `ArticleRepo` also groups published articles by month and by day in SQL (`CountByMonth`, `CountByDay`), pages a date range (`GetByPeriod`) and finds stories published on the same day in earlier years (`GetOnThisDay`), used by the archive pages and the home page's **On this day** panel.
+
+`BLL/Services/AuthorService` combines `ArticleRepo.CountPublishedByAuthor` / `GetPublishedByAuthor` with the user repository; bylines and the `NewsArticle` JSON-LD link to the author page.
 
 `TagRepo` counts published articles per tag in SQL (`CountPublished`, `GetPopular`), pages the published articles of a tag (`GetArticles`) and replaces an article's tags in one save (`SetArticleTags`).
 
@@ -186,6 +189,8 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | `/archive` | `Archive/Index` | Every year with month tiles and story counts in the current language |
 | `/archive/{year}` | `Archive/Year` | Twelve month tiles for one year |
 | `/archive/{year}/{MM}`, `/archive/{year}/{MM}/{DD}?page=` | `Archive/Period` | Paged stories of a month or day with a calendar; unpadded numbers redirect (301); empty periods are `noindex` |
+| `/authors` | `Author/Index` | Everyone with at least one published story, with picture, role and count |
+| `/author/{id}/{slug}?page=` | `Author/Profile` | Bio, picture, paged stories, `ProfilePage` + `Person` JSON-LD; the slug comes from the name and wrong slugs redirect (301); people without published stories get 404 |
 | `/tags` | `Tag/Index` | Topics with article counts in the current language (management table for admins) |
 | `/tag/{id}/{slug}?page=` | `Tag/Articles` | Paged published stories of a topic; wrong or missing slug redirects (301) |
 | `/trending`, `/breaking-news` | `Article/TrendingNews`, `Article/BreakingNews` | |
@@ -243,6 +248,7 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `GET /api/categories`, `/{id}`, `/{id}/articles?lang=` | Public | 200 |
 | `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}?moveArticlesTo=` | Admin | 201 / 204 / 409 |
 | `GET /api/tags?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 |
+| `GET /api/authors?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 / 404 |
 | `GET /api/archive?lang=`, `/api/archive/{year}/{month}?day=&lang=&page=&pageSize=`, `/api/archive/{year}/{month}/days` | Public | 200 / 404 for impossible dates |
 | `POST /api/tags`, `PUT /api/tags/{id}`, `DELETE /api/tags/{id}` | Admin | 201 / 204 / 409 |
 
@@ -360,6 +366,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 4 | Tags and topic pages | Done |
 | 4b | Show/hide password, image upload for articles and profile pictures | Done |
 | 4c | Date archive with calendar and "On this day" | Done |
-| 4d | Author pages, bookmarks, rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
+| 4d | Author pages with bios | Done |
+| 4e | Bookmarks, rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

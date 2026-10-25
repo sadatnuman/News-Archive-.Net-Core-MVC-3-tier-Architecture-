@@ -15,6 +15,8 @@ public partial class User
 
     public string? AvatarPath { get; set; }
 
+    public string? Bio { get; set; }
+
     public int RoleId { get; set; }
 
     public DateTime CreatedAt { get; set; }

@@ -236,6 +236,7 @@ public partial class NewsArchiveDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(100);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.AvatarPath).HasMaxLength(255);
+            entity.Property(e => e.Bio).HasMaxLength(500);
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)

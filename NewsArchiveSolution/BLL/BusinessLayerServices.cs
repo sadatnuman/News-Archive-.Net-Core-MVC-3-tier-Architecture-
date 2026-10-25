@@ -22,6 +22,7 @@ namespace BLL
             services.AddScoped<AuthService>();
             services.AddScoped<MediaService>();
             services.AddScoped<SystemService>();
+            services.AddScoped<AuthorService>();
 
             return services;
         }

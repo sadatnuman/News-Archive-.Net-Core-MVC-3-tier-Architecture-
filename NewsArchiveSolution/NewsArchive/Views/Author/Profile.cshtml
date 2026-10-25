@@ -1,0 +1,112 @@
+@model List<BLL.DTOs.ArticleDTO>
+@inject SeoUrls Urls
+
+@{
+    var lang = UiLanguage.Current;
+    var author = (BLL.DTOs.AuthorDTO)ViewBag.Author;
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var total = (int)ViewBag.Total;
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    var path = SeoUrls.Author(author.UserId, author.Name, page: page);
+    var absolute = Urls.Absolute(SeoUrls.AuthorPath(author.UserId, author.Name));
+
+    var meta = ViewData.Meta();
+    meta.Title = page > 1 ? L["Stories by {0}, page {1}", author.Name, page] : L["Stories by {0}", author.Name];
+    meta.Description = string.IsNullOrWhiteSpace(author.Bio)
+        ? L["{0} writes for The Meridian Newsfolio. Read every story by {0}.", author.Name]
+        : author.Bio;
+    meta.CanonicalPath = path;
+    meta.Image = author.AvatarPath ?? Model.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagePath))?.ImagePath;
+    meta.Type = "profile";
+    meta.Breadcrumbs.Add((L["Authors"], SeoUrls.Page("/authors")));
+    meta.Breadcrumbs.Add((author.Name, SeoUrls.Author(author.UserId, author.Name)));
+    meta.JsonLd.Add(new Dictionary<string, object?>
+    {
+        ["@type"] = "ProfilePage",
+        ["url"] = Urls.Absolute(path),
+        ["inLanguage"] = lang,
+        ["mainEntity"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "Person",
+            ["@id"] = absolute + "#person",
+            ["name"] = author.Name,
+            ["url"] = absolute,
+            ["description"] = author.Bio,
+            ["image"] = author.AvatarPath == null ? null : Urls.AbsoluteImage(author.AvatarPath),
+            ["worksFor"] = new Dictionary<string, object?> { ["@id"] = Urls.Absolute("/#organization") }
+        }
+    });
+}
+
+@section Head {
+    @if (page > 1)
+    {
+        <link rel="prev" href="@SeoUrls.Author(author.UserId, author.Name, page: page - 1)" />
+    }
+    @if (page < totalPages)
+    {
+        <link rel="next" href="@SeoUrls.Author(author.UserId, author.Name, page: page + 1)" />
+    }
+}
+
+<div class="container py-4 py-lg-5">
+    <nav class="crumbs" aria-label="@L["Breadcrumb"]">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/")">@L["Home"]</a></li>
+            <li class="breadcrumb-item"><a href="@SeoUrls.Page("/authors")">@L["Authors"]</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@author.Name</li>
+        </ol>
+    </nav>
+
+    <header class="author-hero mb-5" data-tilt data-tilt-max="2">
+        @await Html.PartialAsync("_Avatar", (author.Name, author.AvatarPath, "avatar-hero"))
+        <div>
+            <span class="kicker">@L[author.RoleName]</span>
+            <h1 class="page-title mt-1 mb-2">@author.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(author.Bio))
+            {
+                <p class="page-intro mb-2">@author.Bio</p>
+            }
+            <p class="meta mb-0">@L["{0} stories", author.ArticleCount] <span class="sep">&bull;</span> @L["Joined {0}", author.JoinedAt.ToString("MMMM yyyy")]</p>
+        </div>
+    </header>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-journal-text"></i>
+            <h2 class="h5 mt-3">@L["No stories in this language yet"]</h2>
+        </div>
+    }
+    else
+    {
+        <section aria-labelledby="author-stories">
+            <div class="section-head">
+                <h2 id="author-stories">@L["Latest from {0}", author.Name]</h2>
+            </div>
+            <div class="row g-4">
+                @foreach (var item in Model)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <partial name="_StoryCard" model="item" />
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (totalPages > 1)
+        {
+            <nav class="mt-5" aria-label="@L["Pages"]">
+                <ul class="pagination justify-content-center flex-wrap">
+                    @for (var i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == page ? "active" : "")">
+                            <a class="page-link" href="@SeoUrls.Author(author.UserId, author.Name, page: i)" aria-current="@(i == page ? "page" : null)">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+</div>
