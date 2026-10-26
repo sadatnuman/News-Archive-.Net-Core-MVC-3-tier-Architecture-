@@ -4,6 +4,7 @@ using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using BLL.Email;
+using NewsArchive.Auth;
 using NewsArchive.Email;
 using NewsArchive.Filters;
 
@@ -24,6 +25,7 @@ namespace NewsArchive.Controllers
         private readonly INewsletterService newsletterService;
         private readonly IEmailSender emailSender;
         private readonly MailComposer mail;
+        private readonly PasswordChanger passwordChanger;
 
         private const int ModerationPageSize = 20;
         private const int AuditPageSize = 30;
@@ -31,9 +33,10 @@ namespace NewsArchive.Controllers
 
         public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService,
             ICategoryService categoryService, IAuthService authService, ICommentService commentService, IAuditService auditService,
-            INewsletterService newsletterService, IEmailSender emailSender, MailComposer mail, IStringLocalizer<SharedResource> localizer)
+            INewsletterService newsletterService, IEmailSender emailSender, MailComposer mail, PasswordChanger passwordChanger, IStringLocalizer<SharedResource> localizer)
         {
             L = localizer;
+            this.passwordChanger = passwordChanger;
             this.newsletterService = newsletterService;
             this.emailSender = emailSender;
             this.mail = mail;
@@ -285,6 +288,7 @@ namespace NewsArchive.Controllers
         {
             var user = _userService.GetByEmail(CurrentEmail);
             if (user == null) return NotFound();
+            ViewBag.ResetVerified = PasswordChanger.IsResetVerified(HttpContext.Session);
             return View(new ChangePasswordDTO { UserId = user.UserId, Email = user.Email });
         }
 
@@ -294,19 +298,26 @@ namespace NewsArchive.Controllers
             var userId = CurrentUserId ?? 0;
             obj.UserId = userId;
             obj.Email = CurrentEmail;
+            ViewBag.ResetVerified = PasswordChanger.IsResetVerified(HttpContext.Session);
             if (!ModelState.IsValid) return View(obj);
 
-            if (authService.ChangePassword(userId, obj.PasswordHash))
+            switch (await passwordChanger.ChangeAsync(HttpContext.Session, userId, CurrentEmail, obj))
             {
-                await authService.RevokeAllAsync(userId);
-                var refreshed = authService.GetUser(userId);
-                if (refreshed != null) await SignInUserAsync(refreshed);
-                Flash("success", "Password updated");
-                return RedirectToAction("Profile", "Admin");
+                case PasswordChanger.Outcome.Changed:
+                    var refreshed = authService.GetUser(userId);
+                    if (refreshed != null) await SignInUserAsync(refreshed);
+                    Flash("success", "Password updated");
+                    return RedirectToAction("Profile", "Admin");
+                case PasswordChanger.Outcome.WrongCurrentPassword:
+                    ModelState.AddModelError(nameof(obj.CurrentPassword), L["Your current password is not correct."]);
+                    return View(obj);
+                case PasswordChanger.Outcome.Locked:
+                    Flash("danger", "Too many failed attempts. Try again in 15 minutes.");
+                    return View(obj);
+                default:
+                    Flash("danger", "Update failed");
+                    return View(obj);
             }
-
-            Flash("danger", "Update failed");
-            return View(obj);
         }
 
         [HttpGet]
@@ -356,10 +367,20 @@ namespace NewsArchive.Controllers
 
             var existing = _userService.Get(obj.UserId);
             if (existing == null) return NotFound();
-            if (existing.UserId == CurrentUserId || _roleService.Get(obj.RoleId) == null)
+            if (existing.UserId == CurrentUserId)
             {
-                Flash("danger", "Update failed");
+                Flash("danger", "You cannot change your own role. Use your profile page instead.");
                 return RedirectToAction("AllUser");
+            }
+            if (_roleService.Get(obj.RoleId) == null)
+            {
+                ModelState.AddModelError(nameof(obj.RoleId), L["Please choose a role"]);
+                return View(existing);
+            }
+            if (string.IsNullOrWhiteSpace(obj.Name) || obj.Name.Trim().Length is < 2 or > 100)
+            {
+                ModelState.AddModelError(nameof(obj.Name), L["Name must be between 2 and 100 characters"]);
+                return View(existing);
             }
 
             existing.Name = obj.Name;

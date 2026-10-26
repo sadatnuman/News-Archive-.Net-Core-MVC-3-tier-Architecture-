@@ -1,4 +1,5 @@
 using BLL.Audit;
+using BLL.Caching;
 using BLL.DTOs;
 using BLL.Interfaces;
 using DAL.EF.Tables;
@@ -13,21 +14,24 @@ namespace BLL.Services
         private readonly ITagRepository tagRepo;
         private readonly IMapper mapper;
         private readonly IAuditService audit;
+        private readonly IAppCache cache;
 
-        public ArticleService(IDataAccessFactory factory, IMapper mapper, IAuditService audit)
+        public ArticleService(IDataAccessFactory factory, IMapper mapper, IAuditService audit, IAppCache cache)
         {
             repo = factory.GetArticleRepository();
             tagRepo = factory.GetTagRepository();
             this.mapper = mapper;
             this.audit = audit;
+            this.cache = cache;
         }
 
         private void Log(string action, Article article, string? details = null, int? actorId = null)
         {
+            cache.Invalidate(CacheRegions.Content);
             audit.Record(action, AuditEntities.Article, article.ArticleId, details == null ? article.Title : $"{article.Title}; {details}", actorId);
         }
 
-        private static string When(DateTime value) => value.ToString("yyyy-MM-dd HH:mm");
+        private static string When(DateTime value) => value.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
 
         private void SaveTags(int articleId, IEnumerable<int>? tagIds)
         {
@@ -123,6 +127,7 @@ namespace BLL.Services
 
             if (!repo.Update(article)) return false;
             SaveTags(articleId, form.TagIds);
+            cache.Invalidate(CacheRegions.Content);
             if (isAdmin && (wasPublished || article.AuthorId != editorId))
                 Log(AuditActions.ArticleEdited, article, ArticleStatus.Name(article.StatusId), editorId);
             return true;
@@ -201,7 +206,10 @@ namespace BLL.Services
         {
             var count = repo.PublishDue(DateTime.Now);
             if (count > 0)
+            {
+                cache.Invalidate(CacheRegions.Content);
                 audit.Record(AuditActions.ArticlePublishedOnSchedule, AuditEntities.Article, null, $"{count} scheduled articles went live");
+            }
             return count;
         }
 
@@ -234,6 +242,7 @@ namespace BLL.Services
             var status = ArticleStatus.Name(article.StatusId);
             var byAdmin = roleId == AppRoles.Admin;
             if (!repo.Delete(articleId)) return false;
+            cache.Invalidate(CacheRegions.Content);
 
             if (byAdmin)
                 audit.Record(AuditActions.ArticleDeleted, AuditEntities.Article, articleId, $"{title}; {status}", userId);
@@ -276,9 +285,11 @@ namespace BLL.Services
             return repo.CountByStatus(ArticleStatus.Pending);
         }
 
-        public List<ArticleDTO> GetByCategoryId(int categoryId, string? language = null)
+        public List<ArticleDTO> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total)
         {
-            var data = repo.GetByCategoryId(categoryId, language);
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 13;
+            var data = repo.GetByCategoryId(categoryId, language, page, pageSize, out total);
             var res = mapper.Map<List<ArticleDTO>>(data);
             return res;
         }
@@ -338,7 +349,9 @@ namespace BLL.Services
 
         public List<ArticleDTO> GetTrendingArticles(int count, string? language = null)
         {
-            return mapper.Map<List<ArticleDTO>>(repo.GetTrending(count, language));
+            var cached = cache.GetOrCreate(CacheRegions.Content, $"trending:{language ?? "all"}:{count}", CacheTimes.Listings,
+                () => mapper.Map<List<ArticleDTO>>(repo.GetTrending(count, language)));
+            return cached.ToList();
         }
 
         public List<ArticleDTO> GetLatest(int count, string? language = null)

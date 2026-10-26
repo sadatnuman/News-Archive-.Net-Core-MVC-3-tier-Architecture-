@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace NewsArchive.Email
 {
-    public class SmtpEmailSender : IEmailSender
+    public partial class SmtpEmailSender : IEmailSender
     {
         private readonly EmailOptions options;
         private readonly ILogger<SmtpEmailSender> logger;
@@ -55,9 +55,12 @@ namespace NewsArchive.Email
             }
             catch (Exception ex) when (ex is SmtpException or InvalidOperationException or FormatException)
             {
-                logger.LogError(ex, "Email ({Category}) could not be sent", message.Category ?? "general");
+                LogSendFailed(ex, message.Category ?? "general");
                 return false;
             }
         }
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Email ({Category}) could not be sent")]
+        private partial void LogSendFailed(Exception exception, string category);
     }
 }

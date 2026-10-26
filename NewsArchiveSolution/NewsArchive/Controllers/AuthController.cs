@@ -191,6 +191,7 @@ namespace NewsArchive.Controllers
             }
 
             await SignInUserAsync(user);
+            PasswordChanger.MarkResetVerified(HttpContext.Session);
 
             return user.RoleId == AppRoles.Admin
                 ? RedirectToAction("ChangePassword", "Admin")

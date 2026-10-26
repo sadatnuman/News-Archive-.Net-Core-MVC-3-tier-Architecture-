@@ -2,7 +2,7 @@ using BLL.Interfaces;
 
 namespace NewsArchive.Publishing
 {
-    public class ScheduledPublisher : BackgroundService
+    public partial class ScheduledPublisher : BackgroundService
     {
         private static readonly TimeSpan Interval = TimeSpan.FromSeconds(30);
 
@@ -25,14 +25,20 @@ namespace NewsArchive.Publishing
                     using var scope = scopeFactory.CreateScope();
                     var published = scope.ServiceProvider.GetRequiredService<IArticleService>().PublishDue();
                     if (published > 0)
-                        logger.LogInformation("Published {Count} scheduled article(s)", published);
+                        LogPublished(published);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    logger.LogError(ex, "Publishing scheduled articles failed");
+                    LogFailed(ex);
                 }
             }
             while (await timer.WaitForNextTickAsync(stoppingToken));
         }
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Published {Count} scheduled article(s)")]
+        private partial void LogPublished(int count);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Publishing scheduled articles failed")]
+        private partial void LogFailed(Exception exception);
     }
 }

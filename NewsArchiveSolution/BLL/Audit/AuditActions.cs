@@ -49,6 +49,7 @@ namespace BLL.Audit
         public const string AllSessionsRevoked = "AllSessionsRevoked";
         public const string AccountRegistered = "AccountRegistered";
         public const string PasswordResetRequested = "PasswordResetRequested";
+        public const string PasswordChangeRejected = "PasswordChangeRejected";
 
         public const string NewsletterSent = "NewsletterSent";
         public const string SubscriberRemoved = "SubscriberRemoved";

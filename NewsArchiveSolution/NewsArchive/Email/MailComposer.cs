@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text;
 using BLL;
@@ -72,26 +73,26 @@ namespace NewsArchive.Email
 
             var text = new StringBuilder().AppendLine(Brand(lang)).AppendLine().AppendLine(intro).AppendLine();
             var html = new StringBuilder()
-                .Append($"<h1 style=\"font-size:22px;margin:0 0 6px\">{WebUtility.HtmlEncode(Brand(lang))}</h1>")
-                .Append($"<p style=\"color:#454545;margin:0 0 20px\">{WebUtility.HtmlEncode(intro)}</p>");
+                .Append(CultureInfo.InvariantCulture, $"<h1 style=\"font-size:22px;margin:0 0 6px\">{WebUtility.HtmlEncode(Brand(lang))}</h1>")
+                .Append(CultureInfo.InvariantCulture, $"<p style=\"color:#454545;margin:0 0 20px\">{WebUtility.HtmlEncode(intro)}</p>");
 
             foreach (var story in digest.Stories)
             {
                 var link = urls.Absolute(SeoUrls.Article(story));
                 var section = sections.TryGetValue(story.CategoryId, out var name) ? name : string.Empty;
-                text.AppendLine($"{(section.Length > 0 ? section.ToUpperInvariant() + " | " : string.Empty)}{story.Title}")
+                text.AppendLine(CultureInfo.InvariantCulture, $"{(section.Length > 0 ? section.ToUpperInvariant() + " | " : string.Empty)}{story.Title}")
                     .AppendLine(story.Summary)
                     .AppendLine(link)
                     .AppendLine();
                 html.Append("<div style=\"border-top:1px solid #e7e4dd;padding:14px 0\">")
                     .Append(section.Length > 0 ? $"<div style=\"color:#c8102e;font:600 11px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase\">{WebUtility.HtmlEncode(section)}</div>" : string.Empty)
-                    .Append($"<h2 style=\"font-size:18px;margin:4px 0 6px\"><a href=\"{WebUtility.HtmlEncode(link)}\" style=\"color:#121212;text-decoration:none\">{WebUtility.HtmlEncode(story.Title)}</a></h2>")
-                    .Append($"<p style=\"margin:0 0 6px;color:#454545\">{WebUtility.HtmlEncode(story.Summary)}</p>")
-                    .Append($"<a href=\"{WebUtility.HtmlEncode(link)}\" style=\"color:#c8102e;font:600 13px Arial,sans-serif\">{WebUtility.HtmlEncode(read)} &rarr;</a></div>");
+                    .Append(CultureInfo.InvariantCulture, $"<h2 style=\"font-size:18px;margin:4px 0 6px\"><a href=\"{WebUtility.HtmlEncode(link)}\" style=\"color:#121212;text-decoration:none\">{WebUtility.HtmlEncode(story.Title)}</a></h2>")
+                    .Append(CultureInfo.InvariantCulture, $"<p style=\"margin:0 0 6px;color:#454545\">{WebUtility.HtmlEncode(story.Summary)}</p>")
+                    .Append(CultureInfo.InvariantCulture, $"<a href=\"{WebUtility.HtmlEncode(link)}\" style=\"color:#c8102e;font:600 13px Arial,sans-serif\">{WebUtility.HtmlEncode(read)} &rarr;</a></div>");
             }
 
-            text.AppendLine(footer).AppendLine($"{leave}: {unsubscribe}");
-            html.Append($"<p style=\"color:#6b6b6b;font-size:12px;border-top:1px solid #e7e4dd;padding-top:14px\">{WebUtility.HtmlEncode(footer)} " +
+            text.AppendLine(footer).AppendLine(CultureInfo.InvariantCulture, $"{leave}: {unsubscribe}");
+            html.Append(CultureInfo.InvariantCulture, $"<p style=\"color:#6b6b6b;font-size:12px;border-top:1px solid #e7e4dd;padding-top:14px\">{WebUtility.HtmlEncode(footer)} " +
                         $"<a href=\"{WebUtility.HtmlEncode(unsubscribe)}\" style=\"color:#6b6b6b\">{WebUtility.HtmlEncode(leave)}</a></p>");
             return new EmailMessage(recipient.Email, subject, text.ToString(), Html(lang, subject, html.ToString()), "newsletter-digest", unsubscribe);
         }

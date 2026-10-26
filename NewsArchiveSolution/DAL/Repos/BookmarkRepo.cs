@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class BookmarkRepo : IBookmarkRepository
+    internal sealed class BookmarkRepo : IBookmarkRepository
     {
         private readonly NewsArchiveDbContext db;
 

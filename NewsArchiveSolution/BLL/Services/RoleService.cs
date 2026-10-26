@@ -18,19 +18,15 @@ namespace BLL.Services
             this.mapper = mapper;
         }
 
-
         public List<RoleDTO> Get()
         {
-            var data = repo.Get();
-            var res = mapper.Map<List<RoleDTO>>(data);
-            return res;
+            return mapper.Map<List<RoleDTO>>(repo.Get());
         }
 
-        public RoleDTO Get(int id)
+        public RoleDTO? Get(int id)
         {
             var data = repo.Get(id);
-            var res = mapper.Map<RoleDTO>(data);
-            return res;
+            return data == null ? null : mapper.Map<RoleDTO>(data);
         }
 
         public bool Create(RoleDTO c)

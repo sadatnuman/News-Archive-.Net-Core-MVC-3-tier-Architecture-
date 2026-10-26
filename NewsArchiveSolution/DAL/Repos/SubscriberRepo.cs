@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class SubscriberRepo : ISubscriberRepository
+    internal sealed class SubscriberRepo : ISubscriberRepository
     {
         private readonly NewsArchiveDbContext db;
 

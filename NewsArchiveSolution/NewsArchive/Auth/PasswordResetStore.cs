@@ -63,7 +63,7 @@ namespace NewsArchive.Auth
                 if (counter.Issued >= MaxCodesPerWindow || counter.FailedAttempts >= MaxAttempts * MaxCodesPerWindow) return null;
                 counter.Issued++;
 
-                var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+                var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString(System.Globalization.CultureInfo.InvariantCulture);
                 cache.Set("PwdReset:Code:" + Normalize(email), new Entry
                 {
                     CodeHash = Hash(code),

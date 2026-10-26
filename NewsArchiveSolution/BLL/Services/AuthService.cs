@@ -85,6 +85,20 @@ namespace BLL.Services
             return true;
         }
 
+        public bool VerifyPassword(int userId, string? password)
+        {
+            var user = userRepo.Get(userId);
+            if (user == null || string.IsNullOrEmpty(password))
+            {
+                PasswordHasher.SimulateVerify(password);
+                return false;
+            }
+            if (PasswordHasher.Verify(password, user.PasswordHash, out _)) return true;
+
+            audit.Record(AuditActions.PasswordChangeRejected, AuditEntities.Security, userId, "Wrong current password", userId);
+            return false;
+        }
+
         public TokenDTO? IssueToken(AuthUserDTO user, string clientType, TimeSpan lifetime)
         {
             var token = PasswordHasher.NewToken();

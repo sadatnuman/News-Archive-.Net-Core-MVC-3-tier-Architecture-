@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class UserRepo : Repository<User>, IUserRepository
+    internal sealed class UserRepo : Repository<User>, IUserRepository
     {
         public UserRepo(NewsArchiveDbContext db) : base(db)
         {

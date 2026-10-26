@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class ArticleRepo : Repository<Article>, IArticleRepository
+    internal sealed class ArticleRepo : Repository<Article>, IArticleRepository
     {
         public ArticleRepo(NewsArchiveDbContext db) : base(db)
         {
@@ -22,12 +22,14 @@ namespace DAL.Repos
             return db.Articles.AsNoTracking().OrderByDescending(a => a.PublishDate).ToList();
         }
 
-        public List<Article> GetByCategoryId(int categoryId, string? language = null)
+        public List<Article> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total)
         {
-            return Published(language)
-                .Where(a => a.CategoryId == categoryId)
-                .OrderByDescending(a => a.PublishDate)
-                .ToList();
+            var query = Published(language).Where(a => a.CategoryId == categoryId);
+            total = query.Count();
+            return query.OrderByDescending(a => a.PublishDate)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
         }
 
         public Article? GetWithDetails(int id)

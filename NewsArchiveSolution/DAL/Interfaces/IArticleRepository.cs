@@ -4,7 +4,7 @@ namespace DAL.Interfaces
 {
     public interface IArticleRepository : IRepository<Article>
     {
-        List<Article> GetByCategoryId(int categoryId, string? language = null);
+        List<Article> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total);
 
         Article? GetWithDetails(int id);
 

@@ -35,11 +35,14 @@ namespace NewsArchive.Controllers.Api
         }
 
         [HttpGet("{id:int}/articles")]
-        [ProducesResponseType(typeof(List<ArticleDTO>), StatusCodes.Status200OK)]
-        public IActionResult Articles(int id, [FromQuery] string? lang)
+        [ProducesResponseType(typeof(PagedResultDTO<ArticleDTO>), StatusCodes.Status200OK)]
+        public IActionResult Articles(int id, [FromQuery] string? lang, [FromQuery] int page = 1, [FromQuery] int pageSize = 12)
         {
             if (categoryService.Get(id) == null) return NotFound();
-            return Ok(articleService.GetByCategoryId(id, ParseLanguage(lang)));
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 50);
+            var items = articleService.GetByCategoryId(id, ParseLanguage(lang), page, pageSize, out var total);
+            return Ok(new PagedResultDTO<ArticleDTO> { Items = items, Page = page, PageSize = pageSize, Total = total });
         }
 
         [HttpPost]

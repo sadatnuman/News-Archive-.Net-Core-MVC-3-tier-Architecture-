@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class TagRepo : Repository<Tag>, ITagRepository
+    internal sealed class TagRepo : Repository<Tag>, ITagRepository
     {
         public TagRepo(NewsArchiveDbContext db) : base(db)
         {

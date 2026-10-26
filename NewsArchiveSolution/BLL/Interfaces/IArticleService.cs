@@ -36,7 +36,7 @@ namespace BLL.Interfaces
 
         int CountPending();
 
-        List<ArticleDTO> GetByCategoryId(int categoryId, string? language = null);
+        List<ArticleDTO> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total);
 
         ArticleDTO? GetWithDetails(int id);
 

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class CategoryRepo : Repository<Category>, ICategoryRepository
+    internal sealed class CategoryRepo : Repository<Category>, ICategoryRepository
     {
         public CategoryRepo(NewsArchiveDbContext db) : base(db)
         {
@@ -34,6 +34,15 @@ namespace DAL.Repos
         public int CountArticles(int categoryId)
         {
             return db.Articles.Count(a => a.CategoryId == categoryId);
+        }
+
+        public Dictionary<int, int> CountPublished(string? language)
+        {
+            return db.Articles.AsNoTracking()
+                .Where(a => a.StatusId == ArticleStatusIds.Published && (language == null || a.LanguageCode == language))
+                .GroupBy(a => a.CategoryId)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionary(x => x.Key, x => x.Count);
         }
 
         public bool DeleteMovingArticles(int categoryId, int targetCategoryId)

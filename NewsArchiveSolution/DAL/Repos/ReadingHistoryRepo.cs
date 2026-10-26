@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class ReadingHistoryRepo : IReadingHistoryRepository
+    internal sealed class ReadingHistoryRepo : IReadingHistoryRepository
     {
         private readonly NewsArchiveDbContext db;
 

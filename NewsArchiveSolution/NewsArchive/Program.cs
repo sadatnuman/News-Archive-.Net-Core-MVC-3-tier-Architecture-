@@ -1,5 +1,6 @@
 using BLL;
 using BLL.Audit;
+using BLL.Caching;
 using BLL.Email;
 using BLL.Interfaces;
 using BLL.Media;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.WebEncoders;
 using Microsoft.OpenApi;
 using NewsArchive;
 using NewsArchive.Auth;
+using NewsArchive.Caching;
 using NewsArchive.Email;
 using NewsArchive.Health;
 using NewsArchive.Media;
@@ -49,6 +51,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddScoped<CookieSessionValidator>();
 builder.Services.AddScoped<IActorContext, HttpActorContext>();
+builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
 builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
 builder.Services.AddHostedService<ScheduledPublisher>();
 builder.Services.AddAntiforgery(options =>
@@ -110,6 +113,7 @@ else
     builder.Services.AddSingleton<IEmailSender, OutboxEmailSender>();
 builder.Services.AddScoped<MailComposer>();
 builder.Services.AddSingleton<PasswordResetStore>();
+builder.Services.AddScoped<PasswordChanger>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
@@ -258,7 +262,19 @@ if (app.Environment.IsDevelopment() || apiOptions.SwaggerEnabled)
         options.DocumentTitle = "The Meridian Newsfolio API";
     });
 }
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        var headers = context.Context.Response.Headers;
+        if (context.Context.Request.Path == "/sw.js")
+            headers.CacheControl = "no-cache";
+        else if (context.Context.Request.Query.ContainsKey("v"))
+            headers.CacheControl = "public, max-age=31536000, immutable";
+        else if (context.Context.Request.Path.StartsWithSegments("/images") || context.Context.Request.Path.StartsWithSegments("/uploads"))
+            headers.CacheControl = "public, max-age=86400";
+    }
+});
 app.UseRequestLocalization();
 
 app.Use(async (context, next) =>

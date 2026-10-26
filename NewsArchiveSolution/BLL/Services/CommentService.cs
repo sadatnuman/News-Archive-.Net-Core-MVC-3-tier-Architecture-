@@ -1,4 +1,5 @@
 using BLL.Audit;
+using BLL.Caching;
 using BLL.DTOs;
 using BLL.Interfaces;
 using DAL.EF.Tables;
@@ -17,9 +18,11 @@ namespace BLL.Services
         private readonly IMapper mapper;
         private readonly IAuditService audit;
         private readonly IActorContext actor;
+        private readonly IAppCache cache;
 
-        public CommentService(IDataAccessFactory factory, IMapper mapper, IAuditService audit, IActorContext actor)
+        public CommentService(IDataAccessFactory factory, IMapper mapper, IAuditService audit, IActorContext actor, IAppCache cache)
         {
+            this.cache = cache;
             repo = factory.GetCommentRepository();
             articleRepo = factory.GetArticleRepository();
             this.mapper = mapper;
@@ -62,6 +65,7 @@ namespace BLL.Services
         {
             var comment = repo.Get(id);
             if (comment == null || !repo.Delete(id)) return false;
+            cache.Invalidate(CacheRegions.Content);
 
             if (actor.UserId != comment.UserId)
                 audit.Record(AuditActions.CommentRemoved, AuditEntities.Comment, id, Excerpt(comment.Text));
@@ -96,6 +100,7 @@ namespace BLL.Services
             if (ModerationRules.ShouldAutoHide(reports))
             {
                 repo.SetHidden(commentId, true, null, DateTime.Now);
+                cache.Invalidate(CacheRegions.Content);
                 audit.Record(AuditActions.CommentAutoHidden, AuditEntities.Comment, commentId, $"{reports} reports; {Excerpt(comment.Text)}");
                 return ReportResult.AutoHidden;
             }
@@ -123,6 +128,7 @@ namespace BLL.Services
             if (comment == null || !repo.SetHidden(commentId, hidden, moderatorId, DateTime.Now)) return false;
 
             var cleared = repo.ClearReports(commentId);
+            cache.Invalidate(CacheRegions.Content);
             audit.Record(action, AuditEntities.Comment, commentId, $"{cleared} reports cleared; {Excerpt(comment.Text)}", moderatorId);
             return true;
         }

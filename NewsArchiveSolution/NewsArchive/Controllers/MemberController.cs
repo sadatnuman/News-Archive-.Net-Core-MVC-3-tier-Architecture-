@@ -2,6 +2,8 @@ using BLL;
 using BLL.DTOs;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
+using NewsArchive.Auth;
 using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
@@ -11,11 +13,15 @@ namespace NewsArchive.Controllers
     {
         private readonly IUserService userService;
         private readonly IAuthService authService;
+        private readonly PasswordChanger passwordChanger;
+        private readonly IStringLocalizer<SharedResource> L;
 
-        public MemberController(IUserService userService, IAuthService authService)
+        public MemberController(IUserService userService, IAuthService authService, PasswordChanger passwordChanger, IStringLocalizer<SharedResource> localizer)
         {
+            L = localizer;
             this.userService = userService;
             this.authService = authService;
+            this.passwordChanger = passwordChanger;
         }
 
         [HttpGet]
@@ -55,6 +61,7 @@ namespace NewsArchive.Controllers
         {
             var user = userService.GetByEmail(CurrentEmail);
             if (user == null) return NotFound();
+            ViewBag.ResetVerified = PasswordChanger.IsResetVerified(HttpContext.Session);
             return View(new ChangePasswordDTO { UserId = user.UserId, Email = user.Email });
         }
 
@@ -64,19 +71,26 @@ namespace NewsArchive.Controllers
             var userId = CurrentUserId ?? 0;
             obj.UserId = userId;
             obj.Email = CurrentEmail;
+            ViewBag.ResetVerified = PasswordChanger.IsResetVerified(HttpContext.Session);
             if (!ModelState.IsValid) return View(obj);
 
-            if (authService.ChangePassword(userId, obj.PasswordHash))
+            switch (await passwordChanger.ChangeAsync(HttpContext.Session, userId, CurrentEmail, obj))
             {
-                await authService.RevokeAllAsync(userId);
-                var refreshed = authService.GetUser(userId);
-                if (refreshed != null) await SignInUserAsync(refreshed);
-                Flash("success", "Password updated");
-                return RedirectToAction("Profile", "Member");
+                case PasswordChanger.Outcome.Changed:
+                    var refreshed = authService.GetUser(userId);
+                    if (refreshed != null) await SignInUserAsync(refreshed);
+                    Flash("success", "Password updated");
+                    return RedirectToAction("Profile", "Member");
+                case PasswordChanger.Outcome.WrongCurrentPassword:
+                    ModelState.AddModelError(nameof(obj.CurrentPassword), L["Your current password is not correct."]);
+                    return View(obj);
+                case PasswordChanger.Outcome.Locked:
+                    Flash("danger", "Too many failed attempts. Try again in 15 minutes.");
+                    return View(obj);
+                default:
+                    Flash("danger", "Update failed");
+                    return View(obj);
             }
-
-            Flash("danger", "Update failed");
-            return View(obj);
         }
     }
 }

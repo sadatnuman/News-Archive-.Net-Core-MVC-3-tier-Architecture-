@@ -17,6 +17,7 @@ namespace BLL.Security
             return $"{Scheme}${Iterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(key)}";
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351", Justification = "MD5 is only used to recognise legacy hashes so they can be upgraded to PBKDF2 on the next sign-in.")]
         public static bool Verify(string password, string storedHash, out bool needsUpgrade)
         {
             needsUpgrade = false;

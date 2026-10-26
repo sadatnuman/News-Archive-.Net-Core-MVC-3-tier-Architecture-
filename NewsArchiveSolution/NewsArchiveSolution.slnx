@@ -2,4 +2,5 @@
   <Project Path="BLL/BLL.csproj" />
   <Project Path="DAL/DAL.csproj" />
   <Project Path="NewsArchive/NewsArchive.csproj" />
+  <Project Path="NewsArchive.Tests/NewsArchive.Tests.csproj" />
 </Solution>

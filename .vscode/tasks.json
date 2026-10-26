@@ -18,6 +18,14 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "test",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "${workspaceFolder}/NewsArchiveSolution/NewsArchive.Tests/NewsArchive.Tests.csproj"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "database update",
       "type": "process",
       "command": "dotnet",

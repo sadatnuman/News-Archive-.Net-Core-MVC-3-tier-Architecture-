@@ -363,6 +363,9 @@
   <data name="Created date is required" xml:space="preserve">
     <value>তৈরির তারিখ প্রয়োজন</value>
   </data>
+  <data name="Current password" xml:space="preserve">
+    <value>বর্তমান পাসওয়ার্ড</value>
+  </data>
   <data name="Dark" xml:space="preserve">
     <value>ডার্ক</value>
   </data>
@@ -905,6 +908,9 @@
   </data>
   <data name="Password" xml:space="preserve">
     <value>পাসওয়ার্ড</value>
+  </data>
+  <data name="Password change refused" xml:space="preserve">
+    <value>পাসওয়ার্ড বদল প্রত্যাখ্যাত</value>
   </data>
   <data name="Password is required" xml:space="preserve">
     <value>পাসওয়ার্ড প্রয়োজন</value>
@@ -1626,6 +1632,9 @@
   <data name="You can only delete your own comments." xml:space="preserve">
     <value>আপনি শুধু নিজের মন্তব্য মুছতে পারবেন।</value>
   </data>
+  <data name="You cannot change your own role. Use your profile page instead." xml:space="preserve">
+    <value>নিজের ভূমিকা এখান থেকে বদলানো যায় না। প্রোফাইল পাতা ব্যবহার করুন।</value>
+  </data>
   <data name="You cannot delete your own account." xml:space="preserve">
     <value>নিজের অ্যাকাউন্ট নিজে মুছতে পারবেন না।</value>
   </data>
@@ -1665,8 +1674,14 @@
   <data name="Your comment" xml:space="preserve">
     <value>আপনার মন্তব্য</value>
   </data>
+  <data name="Your current password is not correct." xml:space="preserve">
+    <value>আপনার বর্তমান পাসওয়ার্ড সঠিক নয়।</value>
+  </data>
   <data name="Your email address" xml:space="preserve">
     <value>আপনার ইমেইল ঠিকানা</value>
+  </data>
+  <data name="Your email code was confirmed. Choose a new password." xml:space="preserve">
+    <value>আপনার ইমেইল কোড নিশ্চিত হয়েছে। নতুন পাসওয়ার্ড দিন।</value>
   </data>
   <data name="Your reading history" xml:space="preserve">
     <value>আপনার পড়ার ইতিহাস</value>

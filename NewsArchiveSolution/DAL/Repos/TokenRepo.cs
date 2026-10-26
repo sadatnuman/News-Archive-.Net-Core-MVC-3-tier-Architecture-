@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class TokenRepo : Repository<UserToken>, ITokenRepository
+    internal sealed class TokenRepo : Repository<UserToken>, ITokenRepository
     {
         public TokenRepo(NewsArchiveDbContext db) : base(db)
         {

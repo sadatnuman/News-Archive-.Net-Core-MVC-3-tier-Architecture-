@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class CommentRepo : Repository<Comment>, ICommentRepository
+    internal sealed class CommentRepo : Repository<Comment>, ICommentRepository
     {
         public CommentRepo(NewsArchiveDbContext db) : base(db)
         {
@@ -79,7 +79,7 @@ namespace DAL.Repos
             return db.CommentReports.Where(r => r.CommentId == commentId).ExecuteDelete();
         }
 
-        private IQueryable<Comment> WithDetails(IQueryable<Comment> query)
+        private static IQueryable<Comment> WithDetails(IQueryable<Comment> query)
         {
             return query
                 .Include(c => c.User)

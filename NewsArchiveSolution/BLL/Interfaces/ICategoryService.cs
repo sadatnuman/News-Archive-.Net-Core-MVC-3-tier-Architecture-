@@ -18,6 +18,8 @@ namespace BLL.Interfaces
 
         int CountArticles(int id);
 
+        Dictionary<int, int> CountPublishedPerSection(string? language);
+
         void EnsureSlugs();
     }
 }
