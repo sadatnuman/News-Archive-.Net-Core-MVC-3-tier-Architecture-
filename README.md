@@ -144,7 +144,7 @@ sqlcmd -S "localhost\SQLEXPRESS" -E -d NewsArchiveDB -f 65001 -i database/sample
 | Audit log entries | 14 |
 | Expired and revoked API tokens (cannot be used) | 6 |
 
-Sample accounts all use the password `Meridian@2026`. Change them before going live.
+Sample accounts all use the password `Meridian@2026`. On the sign-in page, the **Demo Admin**, **Demo Author** and **Demo Reader** buttons fill them in with one click. Change them before going live.
 
 | Email | Role |
 |---|---|
@@ -196,7 +196,8 @@ curl "http://localhost:5096/api/search/suggest?q=rail&lang=en"
 | `Site:Name`, `Site:Tagline`, `Site:Description` | Brand text for titles, meta tags, feeds and emails |
 | `Site:BaseUrl` | Public address for canonical URLs, sitemaps, share images and email links |
 | `Site:SocialProfiles`, `Site:TwitterHandle`, `Site:ContactEmail` | Social links (shown as footer icons) and contact details |
-| `Site:ShowDemoNotice` | Sample-content banner |
+| `Site:ShowDemoNotice` | Sample-content banner; also shows the demo account buttons on the sign-in page |
+| `Site:DemoAccounts` | Demo Admin, Author and Reader buttons on the sign-in page that fill in the email and password with one click |
 | `Api:SwaggerEnabled`, `Api:TokenLifetimeHours`, `Api:AllowedOrigins` | Swagger outside Development, token lifetime (default 12 h), CORS origins |
 | `Email:FromAddress`, `Email:FromName` | Sender of all emails |
 | `Email:Smtp:Host`, `Port`, `UseSsl`, `UserName`, `Password` | SMTP server; leave `Host` empty to keep emails in the log |
@@ -219,7 +220,7 @@ The newsletter confirmations, digests and password reset codes then go out throu
 
 ### Before going live
 
-- Change the sample passwords and set `Site:ShowDemoNotice` to `false`.
+- Change the sample passwords, set `Site:ShowDemoNotice` to `false` and empty `Site:DemoAccounts`.
 - Set `Site:BaseUrl`.
 - Serve the site over HTTPS (cookies are Secure outside Development).
 - Configure SMTP.

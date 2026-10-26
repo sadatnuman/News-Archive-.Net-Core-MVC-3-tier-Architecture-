@@ -26,6 +26,21 @@
             return;
         }
 
+        var demoButton = event.target.closest("[data-demo-email]");
+        if (demoButton) {
+            var emailField = document.querySelector("form input[name=Email]");
+            var passwordField = document.querySelector("form input[name=Password]");
+            if (emailField && passwordField) {
+                emailField.value = demoButton.getAttribute("data-demo-email");
+                passwordField.value = demoButton.getAttribute("data-demo-password");
+                emailField.dispatchEvent(new Event("input", { bubbles: true }));
+                passwordField.dispatchEvent(new Event("input", { bubbles: true }));
+                document.querySelectorAll("[data-demo-email]").forEach(function (b) { b.classList.toggle("active", b === demoButton); });
+                passwordField.form.querySelector("button[type=submit]").focus();
+            }
+            return;
+        }
+
         var copyButton = event.target.closest("[data-copy-link]");
         if (copyButton && navigator.clipboard) {
             navigator.clipboard.writeText(copyButton.getAttribute("data-copy-link")).then(function () {
