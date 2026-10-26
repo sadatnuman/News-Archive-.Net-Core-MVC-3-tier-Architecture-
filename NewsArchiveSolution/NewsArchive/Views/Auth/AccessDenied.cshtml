@@ -14,7 +14,10 @@
         <p class="page-intro mx-auto">@L["Your account does not have permission to open this page."]</p>
         <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
             <a href="@SeoUrls.Page("/")" class="btn btn-dark">@L["Go to the homepage"]</a>
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-secondary" rel="nofollow">@L["Sign in with another account"]</a>
+            <form asp-controller="Auth" asp-action="Logout" method="post">
+                <input type="hidden" name="next" value="login" />
+                <button type="submit" class="btn btn-outline-secondary">@L["Sign in with another account"]</button>
+            </form>
         </div>
     </div>
 </div>

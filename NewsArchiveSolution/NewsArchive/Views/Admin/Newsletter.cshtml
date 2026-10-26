@@ -1,0 +1,104 @@
+@model List<BLL.DTOs.SubscriberDTO>
+
+@{
+    var stats = (BLL.DTOs.NewsletterStatsDTO)ViewBag.Stats;
+    var editions = new[] { (BLL.DTOs.NewsletterDigestDTO)ViewBag.DigestEnglish, (BLL.DTOs.NewsletterDigestDTO)ViewBag.DigestBangla };
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var total = (int)ViewBag.Total;
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    ViewData["Title"] = L["Newsletter"];
+    ViewData["NoIndex"] = true;
+}
+
+<div class="container py-4 py-lg-5">
+    <header class="mb-4">
+        <h1 class="page-title"><i class="bi bi-envelope-paper text-accent" aria-hidden="true"></i> @L["Newsletter"]</h1>
+        <p class="page-intro mb-0">@L["Readers confirm their email before they receive anything. Every email has an unsubscribe link."]</p>
+    </header>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3"><div class="data-card"><div class="label">@L["Active subscribers"]</div><div class="value">@stats.Active</div></div></div>
+        <div class="col-6 col-lg-3"><div class="data-card"><div class="label">English</div><div class="value">@stats.ActiveEnglish</div></div></div>
+        <div class="col-6 col-lg-3"><div class="data-card"><div class="label">বাংলা</div><div class="value">@stats.ActiveBangla</div></div></div>
+        <div class="col-6 col-lg-3"><div class="data-card"><div class="label">@L["Waiting for confirmation"]</div><div class="value">@stats.Pending</div></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        @foreach (var edition in editions)
+        {
+            var native = AppLanguages.NativeName(edition.LanguageCode);
+            <section class="col-lg-6" aria-label="@native">
+                <div class="side-panel h-100">
+                    <h2 class="side-panel-title">@L["{0} edition", native]</h2>
+                    <p class="small text-muted">@L["{0} stories from the past {1} days, {2} subscribers.", edition.Stories.Count, NewsletterRules.DigestDays, edition.Recipients.Count]</p>
+                    <ol class="small ps-3" lang="@edition.LanguageCode">
+                        @foreach (var story in edition.Stories)
+                        {
+                            <li><a href="@SeoUrls.Article(story)">@story.Title</a></li>
+                        }
+                    </ol>
+                    <form asp-action="SendDigest" method="post" data-confirm="@L["Send this digest to {0} subscribers now?", edition.Recipients.Count]">
+                        <input type="hidden" name="language" value="@edition.LanguageCode" />
+                        <button type="submit" class="btn btn-primary btn-sm" disabled="@(edition.Stories.Count == 0 || edition.Recipients.Count == 0 ? "disabled" : null)"><i class="bi bi-send" aria-hidden="true"></i> @L["Send now"]</button>
+                    </form>
+                </div>
+            </section>
+        }
+    </div>
+
+    <section aria-labelledby="subs-heading">
+        <div class="section-head"><h2 id="subs-heading">@L["Subscribers"]</h2></div>
+        @if (Model.Count == 0)
+        {
+            <p class="text-muted">@L["No one has subscribed yet."]</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">@L["Email"]</th>
+                            <th scope="col">@L["Language"]</th>
+                            <th scope="col">@L["Status"]</th>
+                            <th scope="col">@L["Joined"]</th>
+                            <th scope="col">@L["Last sent"]</th>
+                            <th scope="col"><span class="visually-hidden">@L["Actions"]</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model)
+                        {
+                            <tr>
+                                <td class="small text-break">@s.Email</td>
+                                <td class="small">@AppLanguages.NativeName(s.LanguageCode)</td>
+                                <td class="small"><span class="badge @(s.UnsubscribedAt != null ? "text-bg-secondary" : s.ConfirmedAt != null ? "text-bg-success" : "text-bg-warning")">@L[s.Status]</span></td>
+                                <td class="small text-nowrap">@s.CreatedAt.ToString("d MMM yyyy")</td>
+                                <td class="small text-nowrap">@(s.LastSentAt?.ToString("d MMM yyyy") ?? "—")</td>
+                                <td class="text-end">
+                                    <form asp-action="RemoveSubscriber" method="post" data-confirm="@L["Remove {0} from the list?", s.Email]">
+                                        <input type="hidden" name="id" value="@s.SubscriberId" />
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">@L["Remove"]</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (totalPages > 1)
+        {
+            <nav class="mt-4" aria-label="@L["Pages"]">
+                <ul class="pagination justify-content-center flex-wrap">
+                    @for (var i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == page ? "active" : "")"><a class="page-link" href="@Url.Action("Newsletter", new { page = i > 1 ? i : (int?)null })" aria-current="@(i == page ? "page" : null)">@i</a></li>
+                    }
+                </ul>
+            </nav>
+        }
+    </section>
+</div>

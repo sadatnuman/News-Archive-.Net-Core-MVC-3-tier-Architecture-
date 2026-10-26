@@ -6,7 +6,7 @@ namespace BLL.Interfaces
     {
         List<CategoryDTO> Get();
 
-        CategoryDTO Get(int id);
+        CategoryDTO? Get(int id);
 
         bool NameExists(string name, int categoryId);
 
@@ -17,6 +17,8 @@ namespace BLL.Interfaces
         bool Delete(int id, int? moveArticlesTo);
 
         int CountArticles(int id);
+
+        Dictionary<int, int> CountPublishedPerSection(string? language);
 
         void EnsureSlugs();
     }

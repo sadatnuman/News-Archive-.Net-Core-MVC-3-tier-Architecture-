@@ -49,7 +49,9 @@
                         <span class="d-none d-sm-inline">@L["Signed in as {0}", RoleName(roleId)]</span>
                     </span>
                     <span class="divider d-none d-sm-inline">|</span>
-                    <a asp-controller="Auth" asp-action="Logout" rel="nofollow">@L["Sign out"]</a>
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-link p-0 topbar-link">@L["Sign out"]</button>
+                    </form>
                 }
             </div>
         </div>
@@ -57,10 +59,11 @@
 </div>
 
 <header class="masthead">
-    @await Html.PartialAsync("_Globe", "globe-masthead")
+    <div class="masthead-art" aria-hidden="true">@await Html.PartialAsync("_Globe", "globe-masthead")</div>
     <div class="container masthead-inner d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-3">
         <a class="brand" href="@SeoUrls.Page("/")" aria-label="@L["{0} home", site.Name]">
-            <img class="brand-logo" src="~/images/brand/logo-mark.svg" width="60" height="51" alt="" />
+            <img class="brand-logo brand-logo-light" src="~/images/brand/logo-mark-ink.svg" width="60" height="51" alt="" />
+            <img class="brand-logo brand-logo-dark" src="~/images/brand/logo-mark-light.svg" width="60" height="51" alt="" />
             <span class="brand-text">
                 <span class="brand-the">THE</span>
                 <span class="brand-name">MERIDIAN</span>
@@ -75,7 +78,10 @@
             }
             <label for="site-search" class="visually-hidden">@L["Search news"]</label>
             <i class="bi bi-search" aria-hidden="true"></i>
-            <input id="site-search" type="search" name="keyword" class="form-control" placeholder="@L["Search news, topics, people"]" />
+            <input id="site-search" type="search" name="keyword" class="form-control" placeholder="@L["Search news, topics, people"]" maxlength="60" autocomplete="off"
+                   data-suggest="/api/search/suggest" data-lang="@lang"
+                   data-label-story="@L["Stories"]" data-label-topic="@L["Topics"]" data-label-section="@L["Sections"]" data-label-author="@L["Authors"]"
+                   data-label-all="@L["See all results for “{0}”", "{0}"]" data-label-none="@L["No matches. Press Enter to search the archive."]" />
         </form>
     </div>
 </header>
@@ -145,6 +151,9 @@
                             {
                                 <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-2"></i>@L["Dashboard"]</a></li>
                                 <li><a class="dropdown-item" asp-controller="Admin" asp-action="PendingArticles"><i class="bi bi-inbox me-2"></i>@L["Pending articles"]</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Comments"><i class="bi bi-shield-check me-2"></i>@L["Comment moderation"]</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Newsletter"><i class="bi bi-envelope-paper me-2"></i>@L["Newsletter"]</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Audit"><i class="bi bi-journal-text me-2"></i>@L["Audit log"]</a></li>
                                 <li><a class="dropdown-item" asp-controller="Admin" asp-action="AllUser"><i class="bi bi-people me-2"></i>@L["Users"]</a></li>
                                 <li><a class="dropdown-item" asp-controller="Category" asp-action="Index"><i class="bi bi-folder me-2"></i>@L["Sections"]</a></li>
                                 <li><a class="dropdown-item" href="@SeoUrls.Page("/tags")"><i class="bi bi-tags me-2"></i>@L["Tags"]</a></li>
@@ -161,7 +170,12 @@
                                 <li><a class="dropdown-item" asp-controller="Member" asp-action="Profile"><i class="bi bi-person me-2"></i>@L["Profile"]</a></li>
                             }
                             <li><a class="dropdown-item" href="@SeoUrls.Page("/bookmarks")"><i class="bi bi-bookmark me-2"></i>@L["Saved stories"]</a></li>
-                            <li><a class="dropdown-item" asp-controller="Auth" asp-action="Logout"><i class="bi bi-box-arrow-right me-2"></i>@L["Sign out"]</a></li>
+                            <li><a class="dropdown-item" href="@SeoUrls.Page("/history")"><i class="bi bi-clock-history me-2"></i>@L["Reading history"]</a></li>
+                            <li>
+                                <form asp-controller="Auth" asp-action="Logout" method="post">
+                                    <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i>@L["Sign out"]</button>
+                                </form>
+                            </li>
                         </ul>
                     </li>
                 </ul>

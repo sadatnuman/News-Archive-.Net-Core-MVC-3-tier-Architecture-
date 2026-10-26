@@ -10,6 +10,8 @@ namespace NewsArchive.Controllers
 {
     public class CategoryController : AppController
     {
+        private const int SectionPageSize = 13;
+
         private readonly IStringLocalizer<SharedResource> L;
         private readonly IArticleLookupService lookupService;
         private readonly ICategoryService categoryService;
@@ -26,25 +28,30 @@ namespace NewsArchive.Controllers
         public IActionResult Index()
         {
             var data = categoryService.Get();
-            ViewBag.ArticleCounts = data.ToDictionary(c => c.CategoryId, c => categoryService.CountArticles(c.CategoryId));
+            ViewBag.ArticleCounts = categoryService.CountPublishedPerSection(CurrentLanguage);
             return View(data);
         }
 
         [HttpGet("category/{id:int}/{slug?}", Order = 0)]
         [HttpGet("Category/ArticlesByCategory/{id:int}", Order = 1)]
-        public IActionResult ArticlesByCategory(int id, string? slug)
+        public IActionResult ArticlesByCategory(int id, string? slug, int page = 1)
         {
             var category = categoryService.Get(id);
             if (category == null)
                 return NotFound();
 
             if (slug != category.Slug)
-                return RedirectPermanent(SeoUrls.Category(category.CategoryId, category.Slug));
+                return RedirectPermanent(SeoUrls.Category(category.CategoryId, category.Slug, page: page));
 
-            var articles = articleService.GetByCategoryId(id, CurrentLanguage);
+            page = Math.Max(page, 1);
+            var articles = articleService.GetByCategoryId(id, CurrentLanguage, page, SectionPageSize, out var total);
+            if (page > 1 && articles.Count == 0) return NotFound();
             SetArticleLookups(lookupService.Build(articles, CurrentUserId, CurrentLanguage));
 
             ViewBag.Category = category;
+            ViewBag.Page = page;
+            ViewBag.PageSize = SectionPageSize;
+            ViewBag.Total = total;
             return View(articles);
         }
 

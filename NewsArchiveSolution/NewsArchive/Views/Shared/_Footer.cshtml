@@ -13,7 +13,7 @@
         <div class="row g-4">
             <div class="col-lg-4">
                 <a class="brand mb-3" href="@SeoUrls.Page("/")" aria-label="@L["{0} home", site.Name]">
-                    <img class="brand-logo" src="~/images/brand/logo-mark.svg" width="52" height="44" alt="" />
+                    <img class="brand-logo" src="~/images/brand/logo-mark-light.svg" width="52" height="44" alt="" />
                     <span class="brand-text">
                         <span class="brand-the">THE</span>
                         <span class="brand-name">MERIDIAN</span>
@@ -28,6 +28,11 @@
                         <a href="@profile" rel="noopener me" target="_blank" aria-label="@icon"><i class="bi bi-@icon"></i></a>
                     }
                     <a href="@SeoUrls.Page("/rss.xml")" aria-label="@L["RSS feed"]"><i class="bi bi-rss"></i></a>
+                </div>
+                <div class="footer-newsletter mt-4">
+                    <h2 id="footer-newsletter-heading">@L["Weekly digest"]</h2>
+                    <p class="small mb-2">@L["The week's most important stories, once a week. Unsubscribe any time."]</p>
+                    @await Html.PartialAsync("_NewsletterForm", "footer")
                 </div>
             </div>
 
@@ -72,7 +77,7 @@
     <div class="footer-bottom">
         <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 py-3">
             <span>&copy; @DateTime.Now.Year @site.Name. @L["All rights reserved."]</span>
-            <span>@L[site.Tagline].</span>
+            <span>@L[site.Tagline]</span>
         </div>
     </div>
 </footer>

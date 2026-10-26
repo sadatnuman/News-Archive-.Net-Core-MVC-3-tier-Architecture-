@@ -1,0 +1,27 @@
+@model BLL.DTOs.ConfirmResultDTO
+
+@{
+    ViewData["Title"] = L["Newsletter"];
+    ViewData["NoIndex"] = true;
+    var unsubscribeUrl = ViewBag.UnsubscribeUrl as string;
+    var (icon, heading, text) = Model.Status switch
+    {
+        ConfirmStatus.Confirmed => ("bi-envelope-check", L["You're subscribed"].Value, L["Your subscription is confirmed. The weekly digest will arrive in your inbox."].Value),
+        ConfirmStatus.AlreadyConfirmed => ("bi-envelope-check", L["You're already subscribed"].Value, L["This email address is already on the list."].Value),
+        ConfirmStatus.Expired => ("bi-hourglass-bottom", L["This link has expired"].Value, L["Confirmation links work for 48 hours. Subscribe again to get a new link."].Value),
+        _ => ("bi-envelope-x", L["Link not recognised"].Value, L["This confirmation link is not valid. It may have been used already."].Value)
+    };
+}
+
+<div class="container">
+    <div class="auth-card text-center">
+        <i class="bi @icon display-5 text-accent" aria-hidden="true"></i>
+        <h1 class="h3 mt-3">@heading</h1>
+        <p class="text-muted">@text</p>
+        <a href="@SeoUrls.Page("/")" class="btn btn-dark">@L["Go to the homepage"]</a>
+        @if (Model.Status is ConfirmStatus.Confirmed or ConfirmStatus.AlreadyConfirmed && unsubscribeUrl != null)
+        {
+            <p class="small mt-4 mb-0"><a href="@unsubscribeUrl" rel="nofollow">@L["Unsubscribe"]</a></p>
+        }
+    </div>
+</div>

@@ -1,6 +1,7 @@
+using BLL.Audit;
+using BLL.Caching;
 using BLL.DTOs;
 using BLL.Interfaces;
-using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
 using AutoMapper;
@@ -11,11 +12,15 @@ namespace BLL.Services
     {
         private readonly ITagRepository repo;
         private readonly IMapper mapper;
+        private readonly IAuditService audit;
+        private readonly IAppCache cache;
 
-        public TagService(IDataAccessFactory factory, IMapper mapper)
+        public TagService(IDataAccessFactory factory, IMapper mapper, IAuditService audit, IAppCache cache)
         {
             repo = factory.GetTagRepository();
             this.mapper = mapper;
+            this.audit = audit;
+            this.cache = cache;
         }
 
         public List<TagDTO> Get()
@@ -40,7 +45,9 @@ namespace BLL.Services
 
         public List<TagDTO> GetPopular(int count, string? language = null)
         {
-            return mapper.Map<List<TagDTO>>(repo.GetPopular(count, language));
+            var cached = cache.GetOrCreate(CacheRegions.Content, $"popular-tags:{language ?? "all"}:{count}", CacheTimes.Listings,
+                () => mapper.Map<List<TagDTO>>(repo.GetPopular(count, language)));
+            return cached.ToList();
         }
 
         public List<TagDTO> GetForArticle(int articleId)
@@ -72,6 +79,8 @@ namespace BLL.Services
 
             tag.TagId = entity.TagId;
             tag.Slug = entity.Slug;
+            cache.Invalidate(CacheRegions.Content);
+            audit.Record(AuditActions.TagCreated, AuditEntities.Tag, entity.TagId, entity.Name);
             return true;
         }
 
@@ -83,12 +92,21 @@ namespace BLL.Services
             entity.Name = tag.Name.Trim();
             entity.NameBn = string.IsNullOrWhiteSpace(tag.NameBn) ? null : tag.NameBn.Trim();
             entity.Slug = UniqueSlug(entity.Name, entity.TagId);
-            return repo.Update(entity);
+            if (!repo.Update(entity)) return false;
+
+            cache.Invalidate(CacheRegions.Content);
+            audit.Record(AuditActions.TagUpdated, AuditEntities.Tag, entity.TagId, entity.Name);
+            return true;
         }
 
         public bool Delete(int id)
         {
-            return repo.Delete(id);
+            var name = repo.Get(id)?.Name;
+            if (name == null || !repo.Delete(id)) return false;
+
+            cache.Invalidate(CacheRegions.Content);
+            audit.Record(AuditActions.TagDeleted, AuditEntities.Tag, id, name);
+            return true;
         }
 
         public bool SetArticleTags(int articleId, IEnumerable<int>? tagIds)

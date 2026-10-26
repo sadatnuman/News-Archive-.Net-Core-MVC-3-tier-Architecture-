@@ -1,7 +1,8 @@
+using System.Text.RegularExpressions;
+using BLL.Audit;
 using BLL.DTOs;
 using BLL.Interfaces;
 using BLL.Security;
-using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
 using AutoMapper;
@@ -13,12 +14,14 @@ namespace BLL.Services
         private readonly IUserRepository userRepo;
         private readonly ITokenRepository tokenRepo;
         private readonly IMapper mapper;
+        private readonly IAuditService audit;
 
-        public AuthService(IDataAccessFactory factory, IMapper mapper)
+        public AuthService(IDataAccessFactory factory, IMapper mapper, IAuditService audit)
         {
             userRepo = factory.GetUserRepository();
             tokenRepo = factory.GetTokenRepository();
             this.mapper = mapper;
+            this.audit = audit;
         }
 
         public AuthUserDTO? Authenticate(string? email, string? password)
@@ -29,9 +32,14 @@ namespace BLL.Services
             if (user == null)
             {
                 PasswordHasher.SimulateVerify(password);
+                audit.Record(AuditActions.SignInFailed, AuditEntities.Security, null, "Unknown account " + AuditRules.MaskEmail(email));
                 return null;
             }
-            if (!PasswordHasher.Verify(password, user.PasswordHash, out var needsUpgrade)) return null;
+            if (!PasswordHasher.Verify(password, user.PasswordHash, out var needsUpgrade))
+            {
+                audit.Record(AuditActions.SignInFailed, AuditEntities.Security, user.UserId, "Wrong password", user.UserId);
+                return null;
+            }
 
             if (needsUpgrade)
             {
@@ -39,6 +47,7 @@ namespace BLL.Services
                 userRepo.UpdatePasswordHash(user.UserId, user.PasswordHash);
             }
 
+            audit.Record(AuditActions.SignedIn, AuditEntities.Security, user.UserId, needsUpgrade ? "Password hash upgraded" : null, user.UserId);
             return mapper.Map<AuthUserDTO>(user);
         }
 
@@ -59,15 +68,35 @@ namespace BLL.Services
                 Email = email,
                 PasswordHash = PasswordHasher.Hash(dto.Password),
                 RoleId = AppRoles.Reader,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
-            return userRepo.Create(user) ? mapper.Map<AuthUserDTO>(user) : null;
+            if (!userRepo.Create(user)) return null;
+
+            audit.Record(AuditActions.AccountRegistered, AuditEntities.Security, user.UserId, user.Name, user.UserId);
+            return mapper.Map<AuthUserDTO>(user);
         }
 
         public bool ChangePassword(int userId, string newPassword)
         {
-            if (string.IsNullOrEmpty(newPassword) || !System.Text.RegularExpressions.Regex.IsMatch(newPassword, PasswordHasher.StrongPasswordPattern)) return false;
-            return userRepo.UpdatePasswordHash(userId, PasswordHasher.Hash(newPassword));
+            if (string.IsNullOrEmpty(newPassword) || !Regex.IsMatch(newPassword, PasswordHasher.StrongPasswordPattern)) return false;
+            if (!userRepo.UpdatePasswordHash(userId, PasswordHasher.Hash(newPassword))) return false;
+
+            audit.Record(AuditActions.PasswordChanged, AuditEntities.Security, userId);
+            return true;
+        }
+
+        public bool VerifyPassword(int userId, string? password)
+        {
+            var user = userRepo.Get(userId);
+            if (user == null || string.IsNullOrEmpty(password))
+            {
+                PasswordHasher.SimulateVerify(password);
+                return false;
+            }
+            if (PasswordHasher.Verify(password, user.PasswordHash, out _)) return true;
+
+            audit.Record(AuditActions.PasswordChangeRejected, AuditEntities.Security, userId, "Wrong current password", userId);
+            return false;
         }
 
         public TokenDTO? IssueToken(AuthUserDTO user, string clientType, TimeSpan lifetime)
@@ -100,9 +129,11 @@ namespace BLL.Services
             return tokenRepo.RevokeAsync(PasswordHasher.HashToken(token.Trim()));
         }
 
-        public Task<int> RevokeAllAsync(int userId)
+        public async Task<int> RevokeAllAsync(int userId)
         {
-            return tokenRepo.RevokeAllForUserAsync(userId);
+            var count = await tokenRepo.RevokeAllForUserAsync(userId);
+            audit.Record(AuditActions.AllSessionsRevoked, AuditEntities.Security, userId, $"{count} tokens revoked");
+            return count;
         }
 
         public int PurgeExpiredTokens()

@@ -1,0 +1,37 @@
+@model BLL.DTOs.SubscriberDTO?
+
+@{
+    ViewData["Title"] = L["Unsubscribe"];
+    ViewData["NoIndex"] = true;
+    var token = ViewBag.Token as string;
+    var done = ViewBag.Done as bool? == true;
+    var alreadyGone = Model?.UnsubscribedAt != null;
+}
+
+<div class="container">
+    <div class="auth-card text-center">
+        @if (Model == null)
+        {
+            <i class="bi bi-envelope-x display-5 text-accent" aria-hidden="true"></i>
+            <h1 class="h3 mt-3">@L["Link not recognised"]</h1>
+            <p class="text-muted">@L["This unsubscribe link is not valid."]</p>
+        }
+        else if (done || alreadyGone)
+        {
+            <i class="bi bi-envelope-dash display-5 text-accent" aria-hidden="true"></i>
+            <h1 class="h3 mt-3">@L["You're unsubscribed"]</h1>
+            <p class="text-muted">@L["{0} will not receive the newsletter any more.", Model.Email]</p>
+        }
+        else
+        {
+            <i class="bi bi-envelope-dash display-5 text-accent" aria-hidden="true"></i>
+            <h1 class="h3 mt-3">@L["Unsubscribe"]</h1>
+            <p class="text-muted">@L["Stop sending the newsletter to {0}?", Model.Email]</p>
+            <form method="post" action="/newsletter/unsubscribe@(UiLanguage.Current == AppLanguages.Bangla ? "?lang=bn" : "")">
+                <input type="hidden" name="token" value="@token" />
+                <button type="submit" class="btn btn-dark">@L["Unsubscribe"]</button>
+            </form>
+        }
+        <a href="@SeoUrls.Page("/")" class="btn btn-link mt-3">@L["Go to the homepage"]</a>
+    </div>
+</div>

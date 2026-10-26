@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using NewsArchive.Seo;
+using System.Globalization;
 using System.Text;
 using System.Xml.Linq;
 
@@ -52,8 +53,8 @@ namespace NewsArchive.Controllers
             sb.AppendLine("Disallow: /api/");
             sb.AppendLine("Disallow: /swagger/");
             sb.AppendLine();
-            sb.AppendLine($"Sitemap: {urls.Absolute("/sitemap.xml")}");
-            sb.AppendLine($"Sitemap: {urls.Absolute("/news-sitemap.xml")}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Sitemap: {urls.Absolute("/sitemap.xml")}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Sitemap: {urls.Absolute("/news-sitemap.xml")}");
             return Content(sb.ToString(), "text/plain", Encoding.UTF8);
         }
 
@@ -70,7 +71,7 @@ namespace NewsArchive.Controllers
                 var url = new XElement(SitemapNs + "url",
                     new XElement(SitemapNs + "loc", urls.Absolute(path)));
                 if (modified.HasValue)
-                    url.Add(new XElement(SitemapNs + "lastmod", modified.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")));
+                    url.Add(new XElement(SitemapNs + "lastmod", modified.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)));
                 url.Add(new XElement(SitemapNs + "changefreq", changeFreq));
                 url.Add(new XElement(SitemapNs + "priority", priority));
                 if (image != null) url.Add(image);
@@ -133,7 +134,7 @@ namespace NewsArchive.Controllers
                         new XElement(NewsNs + "publication",
                             new XElement(NewsNs + "name", site.Name),
                             new XElement(NewsNs + "language", a.LanguageCode)),
-                        new XElement(NewsNs + "publication_date", a.PublishDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")),
+                        new XElement(NewsNs + "publication_date", a.PublishDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
                         new XElement(NewsNs + "title", a.Title))));
             }
 

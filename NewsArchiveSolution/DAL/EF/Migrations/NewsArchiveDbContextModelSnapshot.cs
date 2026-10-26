@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using DAL.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -192,6 +192,57 @@ namespace DAL.EF.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.AuditLog", b =>
+                {
+                    b.Property<long>("AuditLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("AuditLogId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AuditLogId")
+                        .HasName("PK_AuditLogs");
+
+                    b.HasIndex(new[] { "CreatedAt" }, "IX_AuditLogs_CreatedAt")
+                        .IsDescending();
+
+                    b.HasIndex(new[] { "EntityType", "CreatedAt" }, "IX_AuditLogs_EntityType_CreatedAt")
+                        .IsDescending(false, true);
+
+                    b.HasIndex(new[] { "UserId" }, "IX_AuditLogs_UserId");
+
+                    b.ToTable("AuditLogs");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Bookmark", b =>
                 {
                     b.Property<int>("UserId")
@@ -278,6 +329,17 @@ namespace DAL.EF.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("ModeratedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int?>("ModeratedById")
+                        .HasColumnType("int");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -292,9 +354,43 @@ namespace DAL.EF.Migrations
                     b.HasIndex(new[] { "ArticleId", "CreatedDate" }, "IX_Comments_ArticleId_CreatedDate")
                         .IsDescending(false, true);
 
+                    b.HasIndex(new[] { "ArticleId", "IsHidden" }, "IX_Comments_ArticleId_IsHidden");
+
+                    b.HasIndex(new[] { "ModeratedById" }, "IX_Comments_ModeratedById");
+
                     b.HasIndex(new[] { "UserId" }, "IX_Comments_UserId");
 
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.CommentReport", b =>
+                {
+                    b.Property<int>("CommentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("ReasonId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CommentId", "UserId")
+                        .HasName("PK_CommentReports");
+
+                    b.HasIndex(new[] { "ReasonId" }, "IX_CommentReports_ReasonId");
+
+                    b.HasIndex(new[] { "UserId" }, "IX_CommentReports_UserId");
+
+                    b.ToTable("CommentReports");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.Language", b =>
@@ -330,6 +426,89 @@ namespace DAL.EF.Migrations
                             LanguageCode = "bn",
                             Name = "Bangla",
                             NativeName = "বাংলা"
+                        });
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.ReadingHistory", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FirstReadAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<DateTime>("LastReadAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<int>("ReadCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.HasKey("UserId", "ArticleId")
+                        .HasName("PK_ReadingHistory");
+
+                    b.HasIndex(new[] { "ArticleId" }, "IX_ReadingHistory_ArticleId");
+
+                    b.HasIndex(new[] { "UserId", "LastReadAt" }, "IX_ReadingHistory_UserId_LastReadAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("ReadingHistory", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ReadingHistory_ReadCount", "[ReadCount] >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.ReportReason", b =>
+                {
+                    b.Property<int>("ReasonId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("ReasonId")
+                        .HasName("PK_ReportReasons");
+
+                    b.HasIndex(new[] { "Name" }, "UX_ReportReasons_Name")
+                        .IsUnique();
+
+                    b.ToTable("ReportReasons");
+
+                    b.HasData(
+                        new
+                        {
+                            ReasonId = 1,
+                            Name = "Spam"
+                        },
+                        new
+                        {
+                            ReasonId = 2,
+                            Name = "Abuse or harassment"
+                        },
+                        new
+                        {
+                            ReasonId = 3,
+                            Name = "Off topic"
+                        },
+                        new
+                        {
+                            ReasonId = 4,
+                            Name = "Misinformation"
+                        },
+                        new
+                        {
+                            ReasonId = 5,
+                            Name = "Other"
                         });
                 });
 
@@ -370,6 +549,69 @@ namespace DAL.EF.Migrations
                             Id = 3,
                             RoleName = "Author"
                         });
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.Subscriber", b =>
+                {
+                    b.Property<int>("SubscriberId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubscriberId"));
+
+                    b.Property<string>("ConfirmTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)")
+                        .HasDefaultValue("en");
+
+                    b.Property<DateTime?>("LastSentAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("UnsubscribeToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("UnsubscribedAt")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("SubscriberId")
+                        .HasName("PK_Subscribers");
+
+                    b.HasIndex(new[] { "LanguageCode", "ConfirmedAt", "UnsubscribedAt" }, "IX_Subscribers_Language_Status");
+
+                    b.HasIndex(new[] { "ConfirmTokenHash" }, "UX_Subscribers_ConfirmTokenHash")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "Email" }, "UX_Subscribers_Email")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "UnsubscribeToken" }, "UX_Subscribers_UnsubscribeToken")
+                        .IsUnique();
+
+                    b.ToTable("Subscribers");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.Tag", b =>
@@ -563,6 +805,17 @@ namespace DAL.EF.Migrations
                     b.Navigation("Status");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.AuditLog", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_AuditLogs_Users");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Bookmark", b =>
                 {
                     b.HasOne("DAL.EF.Tables.Article", "Article")
@@ -593,6 +846,11 @@ namespace DAL.EF.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_Comments_Articles");
 
+                    b.HasOne("DAL.EF.Tables.User", "ModeratedBy")
+                        .WithMany("ModeratedComments")
+                        .HasForeignKey("ModeratedById")
+                        .HasConstraintName("FK_Comments_ModeratedBy_Users");
+
                     b.HasOne("DAL.EF.Tables.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
@@ -601,7 +859,69 @@ namespace DAL.EF.Migrations
 
                     b.Navigation("Article");
 
+                    b.Navigation("ModeratedBy");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.CommentReport", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Comment", "Comment")
+                        .WithMany("Reports")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentReports_Comments");
+
+                    b.HasOne("DAL.EF.Tables.ReportReason", "Reason")
+                        .WithMany("Reports")
+                        .HasForeignKey("ReasonId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentReports_ReportReasons");
+
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("CommentReports")
+                        .HasForeignKey("UserId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentReports_Users");
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Reason");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.ReadingHistory", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Article", "Article")
+                        .WithMany("Readers")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ReadingHistory_Articles");
+
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("ReadingHistory")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ReadingHistory_Users");
+
+                    b.Navigation("Article");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.Subscriber", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Language", "Language")
+                        .WithMany("Subscribers")
+                        .HasForeignKey("LanguageCode")
+                        .IsRequired()
+                        .HasConstraintName("FK_Subscribers_Languages");
+
+                    b.Navigation("Language");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.User", b =>
@@ -632,6 +952,8 @@ namespace DAL.EF.Migrations
                     b.Navigation("Bookmarks");
 
                     b.Navigation("Comments");
+
+                    b.Navigation("Readers");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.ArticleStatus", b =>
@@ -644,9 +966,21 @@ namespace DAL.EF.Migrations
                     b.Navigation("Articles");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.Comment", b =>
+                {
+                    b.Navigation("Reports");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Language", b =>
                 {
                     b.Navigation("Articles");
+
+                    b.Navigation("Subscribers");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.ReportReason", b =>
+                {
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.Role", b =>
@@ -658,9 +992,17 @@ namespace DAL.EF.Migrations
                 {
                     b.Navigation("Articles");
 
+                    b.Navigation("AuditLogs");
+
                     b.Navigation("Bookmarks");
 
+                    b.Navigation("CommentReports");
+
                     b.Navigation("Comments");
+
+                    b.Navigation("ModeratedComments");
+
+                    b.Navigation("ReadingHistory");
 
                     b.Navigation("ReviewedArticles");
 

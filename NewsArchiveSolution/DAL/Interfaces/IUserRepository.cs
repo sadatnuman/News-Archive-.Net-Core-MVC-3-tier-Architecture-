@@ -13,5 +13,7 @@ namespace DAL.Interfaces
         bool UpdatePasswordHash(int userId, string passwordHash);
 
         bool UpdateAvatar(int userId, string? avatarPath);
+
+        List<User> SuggestAuthors(string term, string? language, int count);
     }
 }

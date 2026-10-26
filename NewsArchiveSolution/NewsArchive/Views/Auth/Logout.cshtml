@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = L["Sign out"];
+    ViewData["NoIndex"] = true;
+}
+
+<div class="container">
+    <div class="auth-card text-center">
+        <i class="bi bi-box-arrow-right display-5 text-accent" aria-hidden="true"></i>
+        <h1 class="h3 mt-3">@L["Sign out"]</h1>
+        <p class="text-muted">@L["Do you want to sign out of this browser?"]</p>
+        <form asp-action="Logout" method="post" class="d-flex justify-content-center gap-2">
+            <button type="submit" class="btn btn-dark">@L["Sign out"]</button>
+            <a asp-controller="Article" asp-action="Index" class="btn btn-outline-secondary">@L["Cancel"]</a>
+        </form>
+    </div>
+</div>

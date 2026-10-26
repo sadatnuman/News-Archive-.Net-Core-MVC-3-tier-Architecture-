@@ -5,6 +5,8 @@ namespace NewsArchive.Auth
         public const string CorsPolicy = "ApiClients";
         public const string LoginRateLimit = "login";
         public const string CommentRateLimit = "comment";
+        public const string ReportRateLimit = "report";
+        public const string NewsletterRateLimit = "newsletter";
 
         public bool SwaggerEnabled { get; set; }
 

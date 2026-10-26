@@ -34,6 +34,9 @@ appsettings.*.local.json
 # User uploads (generated at runtime)
 NewsArchiveSolution/NewsArchive/wwwroot/uploads/
 
+# Development email outbox
+NewsArchiveSolution/NewsArchive/App_Data/
+
 # OS
 Thumbs.db
 .DS_Store

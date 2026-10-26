@@ -34,6 +34,16 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<Bookmark> Bookmarks { get; set; }
 
+    public virtual DbSet<ReadingHistory> ReadingHistory { get; set; }
+
+    public virtual DbSet<ReportReason> ReportReasons { get; set; }
+
+    public virtual DbSet<CommentReport> CommentReports { get; set; }
+
+    public virtual DbSet<AuditLog> AuditLogs { get; set; }
+
+    public virtual DbSet<Subscriber> Subscribers { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -197,6 +207,34 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasConstraintName("FK_Bookmarks_Articles");
         });
 
+        modelBuilder.Entity<ReadingHistory>(entity =>
+        {
+            entity.ToTable("ReadingHistory", t => t.HasCheckConstraint("CK_ReadingHistory_ReadCount", "[ReadCount] >= 1"));
+
+            entity.HasKey(e => new { e.UserId, e.ArticleId }).HasName("PK_ReadingHistory");
+
+            entity.HasIndex(e => e.ArticleId, "IX_ReadingHistory_ArticleId");
+            entity.HasIndex(e => new { e.UserId, e.LastReadAt }, "IX_ReadingHistory_UserId_LastReadAt").IsDescending(false, true);
+
+            entity.Property(e => e.FirstReadAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastReadAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ReadCount).HasDefaultValue(1);
+
+            entity.HasOne(d => d.User).WithMany(p => p.ReadingHistory)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ReadingHistory_Users");
+
+            entity.HasOne(d => d.Article).WithMany(p => p.Readers)
+                .HasForeignKey(d => d.ArticleId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ReadingHistory_Articles");
+        });
+
         modelBuilder.Entity<Comment>(entity =>
         {
             entity.HasKey(e => e.CommentId).HasName("PK__Comments__C3B4DFCA5955C019");
@@ -219,6 +257,110 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Comments_Users");
+
+            entity.HasIndex(e => new { e.ArticleId, e.IsHidden }, "IX_Comments_ArticleId_IsHidden");
+            entity.HasIndex(e => e.ModeratedById, "IX_Comments_ModeratedById");
+
+            entity.Property(e => e.IsHidden).HasDefaultValue(false);
+            entity.Property(e => e.ModeratedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.ModeratedBy).WithMany(p => p.ModeratedComments)
+                .HasForeignKey(d => d.ModeratedById)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Comments_ModeratedBy_Users");
+        });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.AuditLogId).HasName("PK_AuditLogs");
+
+            entity.HasIndex(e => e.CreatedAt, "IX_AuditLogs_CreatedAt").IsDescending(true);
+            entity.HasIndex(e => new { e.EntityType, e.CreatedAt }, "IX_AuditLogs_EntityType_CreatedAt").IsDescending(false, true);
+            entity.HasIndex(e => e.UserId, "IX_AuditLogs_UserId");
+
+            entity.Property(e => e.Action).HasMaxLength(50);
+            entity.Property(e => e.EntityType).HasMaxLength(30);
+            entity.Property(e => e.Details).HasMaxLength(500);
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AuditLogs)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_AuditLogs_Users");
+        });
+
+        modelBuilder.Entity<Subscriber>(entity =>
+        {
+            entity.HasKey(e => e.SubscriberId).HasName("PK_Subscribers");
+
+            entity.HasIndex(e => e.Email, "UX_Subscribers_Email").IsUnique();
+            entity.HasIndex(e => e.ConfirmTokenHash, "UX_Subscribers_ConfirmTokenHash").IsUnique();
+            entity.HasIndex(e => e.UnsubscribeToken, "UX_Subscribers_UnsubscribeToken").IsUnique();
+            entity.HasIndex(e => new { e.LanguageCode, e.ConfirmedAt, e.UnsubscribedAt }, "IX_Subscribers_Language_Status");
+
+            entity.Property(e => e.Email).HasMaxLength(150);
+            entity.Property(e => e.LanguageCode).HasMaxLength(5).HasDefaultValue(LanguageCodes.English);
+            entity.Property(e => e.ConfirmTokenHash).HasMaxLength(64).IsFixedLength();
+            entity.Property(e => e.UnsubscribeToken).HasMaxLength(64).IsFixedLength();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ConfirmedAt).HasColumnType("datetime");
+            entity.Property(e => e.UnsubscribedAt).HasColumnType("datetime");
+            entity.Property(e => e.LastSentAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Language).WithMany(p => p.Subscribers)
+                .HasForeignKey(d => d.LanguageCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Subscribers_Languages");
+        });
+
+        modelBuilder.Entity<ReportReason>(entity =>
+        {
+            entity.HasKey(e => e.ReasonId).HasName("PK_ReportReasons");
+
+            entity.Property(e => e.ReasonId).ValueGeneratedNever();
+            entity.Property(e => e.Name).HasMaxLength(40);
+
+            entity.HasIndex(e => e.Name, "UX_ReportReasons_Name").IsUnique();
+
+            entity.HasData(
+                new ReportReason { ReasonId = ReportReasonIds.Spam, Name = "Spam" },
+                new ReportReason { ReasonId = ReportReasonIds.Abuse, Name = "Abuse or harassment" },
+                new ReportReason { ReasonId = ReportReasonIds.OffTopic, Name = "Off topic" },
+                new ReportReason { ReasonId = ReportReasonIds.Misinformation, Name = "Misinformation" },
+                new ReportReason { ReasonId = ReportReasonIds.Other, Name = "Other" });
+        });
+
+        modelBuilder.Entity<CommentReport>(entity =>
+        {
+            entity.HasKey(e => new { e.CommentId, e.UserId }).HasName("PK_CommentReports");
+
+            entity.HasIndex(e => e.UserId, "IX_CommentReports_UserId");
+            entity.HasIndex(e => e.ReasonId, "IX_CommentReports_ReasonId");
+
+            entity.Property(e => e.Note).HasMaxLength(300);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Comment).WithMany(p => p.Reports)
+                .HasForeignKey(d => d.CommentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_CommentReports_Comments");
+
+            entity.HasOne(d => d.User).WithMany(p => p.CommentReports)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentReports_Users");
+
+            entity.HasOne(d => d.Reason).WithMany(p => p.Reports)
+                .HasForeignKey(d => d.ReasonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentReports_ReportReasons");
         });
 
         modelBuilder.Entity<Role>(entity =>

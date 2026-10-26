@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class TagRepo : Repository<Tag>, ITagRepository
+    internal sealed class TagRepo : Repository<Tag>, ITagRepository
     {
         public TagRepo(NewsArchiveDbContext db) : base(db)
         {
@@ -94,6 +94,16 @@ namespace DAL.Repos
         public List<Tag> GetWithoutSlug()
         {
             return db.Tags.Where(t => t.Slug == null).ToList();
+        }
+
+        public List<Tag> Suggest(string term, int count)
+        {
+            return db.Tags.AsNoTracking()
+                .Where(t => t.Name.Contains(term) || (t.NameBn != null && t.NameBn.Contains(term)))
+                .OrderByDescending(t => t.Name.StartsWith(term) || (t.NameBn != null && t.NameBn.StartsWith(term)))
+                .ThenBy(t => t.Name)
+                .Take(count)
+                .ToList();
         }
     }
 }

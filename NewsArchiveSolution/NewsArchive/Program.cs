@@ -1,4 +1,7 @@
 using BLL;
+using BLL.Audit;
+using BLL.Caching;
+using BLL.Email;
 using BLL.Interfaces;
 using BLL.Media;
 using Microsoft.AspNetCore.Authentication;
@@ -11,6 +14,8 @@ using Microsoft.Extensions.WebEncoders;
 using Microsoft.OpenApi;
 using NewsArchive;
 using NewsArchive.Auth;
+using NewsArchive.Caching;
+using NewsArchive.Email;
 using NewsArchive.Health;
 using NewsArchive.Media;
 using NewsArchive.Publishing;
@@ -45,6 +50,8 @@ builder.Services.AddSession(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddScoped<CookieSessionValidator>();
+builder.Services.AddScoped<IActorContext, HttpActorContext>();
+builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
 builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
 builder.Services.AddHostedService<ScheduledPublisher>();
 builder.Services.AddAntiforgery(options =>
@@ -87,13 +94,26 @@ builder.Services.AddRateLimiter(options =>
                 "api:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })
             : RateLimitPartition.GetNoLimiter("web"));
-    options.AddPolicy(ApiOptions.CommentRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 6, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
-    options.AddPolicy(ApiOptions.LoginRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    void PerIpPerMinute(string policy, int permits) =>
+        options.AddPolicy(policy, context => RateLimitPartition.GetFixedWindowLimiter(
+            policy + ":" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = permits, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
+    PerIpPerMinute(ApiOptions.CommentRateLimit, 6);
+    PerIpPerMinute(ApiOptions.ReportRateLimit, 10);
+    PerIpPerMinute(ApiOptions.LoginRateLimit, 20);
+    PerIpPerMinute(ApiOptions.NewsletterRateLimit, 5);
 });
+
+var emailOptions = builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>() ?? new EmailOptions();
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+if (emailOptions.UseSmtp)
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+else
+    builder.Services.AddSingleton<IEmailSender, OutboxEmailSender>();
+builder.Services.AddScoped<MailComposer>();
+builder.Services.AddSingleton<PasswordResetStore>();
+builder.Services.AddScoped<PasswordChanger>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
@@ -242,7 +262,19 @@ if (app.Environment.IsDevelopment() || apiOptions.SwaggerEnabled)
         options.DocumentTitle = "The Meridian Newsfolio API";
     });
 }
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        var headers = context.Context.Response.Headers;
+        if (context.Context.Request.Path == "/sw.js")
+            headers.CacheControl = "no-cache";
+        else if (context.Context.Request.Query.ContainsKey("v"))
+            headers.CacheControl = "public, max-age=31536000, immutable";
+        else if (context.Context.Request.Path.StartsWithSegments("/images") || context.Context.Request.Path.StartsWithSegments("/uploads"))
+            headers.CacheControl = "public, max-age=86400";
+    }
+});
 app.UseRequestLocalization();
 
 app.Use(async (context, next) =>

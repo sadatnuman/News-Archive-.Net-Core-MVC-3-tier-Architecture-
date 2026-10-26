@@ -4,7 +4,7 @@ namespace DAL.Interfaces
 {
     public interface IArticleRepository : IRepository<Article>
     {
-        List<Article> GetByCategoryId(int categoryId, string? language = null);
+        List<Article> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total);
 
         Article? GetWithDetails(int id);
 
@@ -30,7 +30,12 @@ namespace DAL.Interfaces
 
         List<Article> GetLatest(int count, string? language = null);
 
-        List<Article> GetRecommended(int articleId, int count);
+        List<Article> GetRecommendationCandidates(string language, IEnumerable<int> excludeIds, IEnumerable<int> categoryIds,
+            IEnumerable<int> tagIds, IEnumerable<int> authorIds, int relatedLimit, int popularLimit);
+
+        List<Article> GetManyWithTags(IEnumerable<int> articleIds);
+
+        List<Article> Suggest(string term, string? language, int count);
 
         List<Article> GetByAuthor(int authorId);
 

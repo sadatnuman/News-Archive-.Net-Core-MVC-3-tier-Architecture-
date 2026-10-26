@@ -18,5 +18,7 @@ jobs:
         run: dotnet restore NewsArchiveSolution/NewsArchiveSolution.slnx
       - name: Build
         run: dotnet build NewsArchiveSolution/NewsArchiveSolution.slnx --configuration Release --no-restore
+      - name: Test
+        run: dotnet test NewsArchiveSolution/NewsArchive.Tests/NewsArchive.Tests.csproj --configuration Release --no-build --verbosity normal
       - name: Vulnerable packages
         run: dotnet list NewsArchiveSolution/NewsArchiveSolution.slnx package --vulnerable --include-transitive

@@ -36,7 +36,7 @@ namespace BLL.Interfaces
 
         int CountPending();
 
-        List<ArticleDTO> GetByCategoryId(int categoryId, string? language = null);
+        List<ArticleDTO> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total);
 
         ArticleDTO? GetWithDetails(int id);
 
@@ -57,8 +57,6 @@ namespace BLL.Interfaces
         List<ArticleDTO> GetTrendingArticles(int count, string? language = null);
 
         List<ArticleDTO> GetLatest(int count, string? language = null);
-
-        List<ArticleDTO> GetRecommendedArticles(int articleId, int count = 4);
 
         List<ArticleDTO> GetPublishedForSitemap();
 

@@ -19,5 +19,7 @@ namespace DAL.Interfaces
         bool SlugExists(string slug, int excludeTagId);
 
         List<Tag> GetWithoutSlug();
+
+        List<Tag> Suggest(string term, int count);
     }
 }

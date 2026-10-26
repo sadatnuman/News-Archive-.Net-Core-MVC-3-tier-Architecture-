@@ -57,11 +57,15 @@ namespace NewsArchive.Content
             return new HtmlString(writer.ToString());
         }
 
+        private static bool IsSitePath(string url) =>
+            url.Length > 0 && url[0] == '/' && (url.Length == 1 || (url[1] != '/' && url[1] != '\\'));
+
         public static bool IsSafeLink(string? url)
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
             url = url.Trim();
-            if (url.StartsWith('#') || (url.StartsWith('/') && !url.StartsWith("//"))) return true;
+            if (url.Contains('\\')) return false;
+            if (url.StartsWith('#') || IsSitePath(url)) return true;
             return Uri.TryCreate(url, UriKind.Absolute, out var uri)
                 && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeMailto);
         }
@@ -70,7 +74,8 @@ namespace NewsArchive.Content
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
             url = url.Trim();
-            if (url.StartsWith('/') && !url.StartsWith("//")) return true;
+            if (url.Contains('\\')) return false;
+            if (IsSitePath(url)) return true;
             return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps;
         }
 

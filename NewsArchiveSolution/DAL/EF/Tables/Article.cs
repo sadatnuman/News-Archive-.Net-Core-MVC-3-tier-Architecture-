@@ -58,4 +58,6 @@ public partial class Article
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
+
+    public virtual ICollection<ReadingHistory> Readers { get; set; } = new List<ReadingHistory>();
 }

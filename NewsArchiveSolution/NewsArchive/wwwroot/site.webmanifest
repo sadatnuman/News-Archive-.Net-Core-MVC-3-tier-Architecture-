@@ -4,12 +4,31 @@
   "description": "News Preserved. Stories Rediscovered.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b1a33",
-  "theme_color": "#0b1a33",
+  "background_color": "#ffffff",
+  "theme_color": "#121212",
   "icons": [
-    { "src": "/images/brand/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/images/brand/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/images/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "/images/brand/logo-mark.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "/images/brand/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/brand/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/brand/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "/",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "news"
   ]
 }

@@ -34,8 +34,8 @@ namespace NewsArchive.Seo
         public static string CategoryPath(int id, string? slug) =>
             string.IsNullOrEmpty(slug) ? $"/category/{id}" : $"/category/{id}/{Uri.EscapeDataString(slug)}";
 
-        public static string Category(int id, string? slug, string? language = null) =>
-            UiLanguage.WithLanguage(CategoryPath(id, slug), language ?? UiLanguage.Current);
+        public static string Category(int id, string? slug, string? language = null, int page = 1) =>
+            UiLanguage.WithLanguage(CategoryPath(id, slug) + (page > 1 ? $"?page={page}" : string.Empty), language ?? UiLanguage.Current);
 
         public static string TagPath(int id, string? slug) =>
             string.IsNullOrEmpty(slug) ? $"/tag/{id}" : $"/tag/{id}/{Uri.EscapeDataString(slug)}";
@@ -65,7 +65,7 @@ namespace NewsArchive.Seo
         public static string? Image(string? path)
         {
             if (string.IsNullOrWhiteSpace(path)) return null;
-            if (path.StartsWith("http://") || path.StartsWith("https://")) return path;
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return path;
 
             var trimmed = path.TrimStart('~').TrimStart('/');
             return "/" + string.Join('/', trimmed.Split('/').Select(Uri.EscapeDataString));
@@ -74,7 +74,7 @@ namespace NewsArchive.Seo
         public string Absolute(string? path)
         {
             if (string.IsNullOrEmpty(path)) return BaseUrl + "/";
-            if (path.StartsWith("http://") || path.StartsWith("https://")) return path;
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return path;
             return BaseUrl + (path.StartsWith('/') ? path : "/" + path);
         }
 

@@ -11,6 +11,10 @@ namespace BLL.DTOs
         [Display(Name = "Email")]
         public string? Email { get; set; }
 
+        [Display(Name = "Current password")]
+        [StringLength(500)]
+        public string? CurrentPassword { get; set; }
+
         [Display(Name = "New password")]
         [Required(ErrorMessage = "Password is required")]
         [StringLength(500, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 500 characters")]

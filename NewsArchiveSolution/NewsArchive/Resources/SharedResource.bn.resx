@@ -36,14 +36,26 @@
   <data name="About {0}" xml:space="preserve">
     <value>{0} সম্পর্কে</value>
   </data>
+  <data name="Abuse or harassment" xml:space="preserve">
+    <value>গালিগালাজ বা হয়রানি</value>
+  </data>
   <data name="Access denied" xml:space="preserve">
     <value>প্রবেশাধিকার নেই</value>
   </data>
   <data name="Account" xml:space="preserve">
     <value>অ্যাকাউন্ট</value>
   </data>
+  <data name="Action" xml:space="preserve">
+    <value>কাজ</value>
+  </data>
   <data name="Actions" xml:space="preserve">
     <value>কার্যক্রম</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>সক্রিয়</value>
+  </data>
+  <data name="Active subscribers" xml:space="preserve">
+    <value>সক্রিয় গ্রাহক</value>
   </data>
   <data name="Add user" xml:space="preserve">
     <value>ব্যবহারকারী যোগ করুন</value>
@@ -56,6 +68,9 @@
   </data>
   <data name="Admins approve or return articles with a note. You can edit drafts, pending and rejected articles." xml:space="preserve">
     <value>অ্যাডমিন লেখা অনুমোদন দেন অথবা মন্তব্যসহ ফেরত পাঠান। খসড়া, অপেক্ষমাণ ও ফেরত আসা লেখা আপনি সম্পাদনা করতে পারবেন।</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>সব</value>
   </data>
   <data name="All of {0}" xml:space="preserve">
     <value>{0}-এর সব সংবাদ</value>
@@ -77,6 +92,9 @@
   </data>
   <data name="Approve &amp; publish" xml:space="preserve">
     <value>অনুমোদন ও প্রকাশ</value>
+  </data>
+  <data name="Approved an article" xml:space="preserve">
+    <value>সংবাদ অনুমোদন করেছেন</value>
   </data>
   <data name="Archive" xml:space="preserve">
     <value>আর্কাইভ</value>
@@ -120,6 +138,12 @@
   <data name="Articles you publish go live immediately." xml:space="preserve">
     <value>আপনার প্রকাশ করা সংবাদ সঙ্গে সঙ্গে সাইটে চলে যাবে।</value>
   </data>
+  <data name="Asked for a password reset code" xml:space="preserve">
+    <value>পাসওয়ার্ড বদলের কোড চেয়েছেন</value>
+  </data>
+  <data name="Audit log" xml:space="preserve">
+    <value>কার্যক্রমের লগ</value>
+  </data>
   <data name="Author" xml:space="preserve">
     <value>লেখক</value>
   </data>
@@ -138,6 +162,9 @@
   <data name="Back to sign in" xml:space="preserve">
     <value>লগ-ইনে ফিরুন</value>
   </data>
+  <data name="Based on the stories you have read." xml:space="preserve">
+    <value>আপনার পড়া সংবাদের ভিত্তিতে।</value>
+  </data>
   <data name="Bio cannot exceed 500 characters" xml:space="preserve">
     <value>পরিচিতি ৫০০ অক্ষরের বেশি হতে পারবে না</value>
   </data>
@@ -149,9 +176,6 @@
   </data>
   <data name="Breaking" xml:space="preserve">
     <value>জরুরি</value>
-  </data>
-  <data name="Breaking News" xml:space="preserve">
-    <value>জরুরি সংবাদ</value>
   </data>
   <data name="Breaking news" xml:space="preserve">
     <value>জরুরি সংবাদ</value>
@@ -189,6 +213,9 @@
   <data name="Cancel" xml:space="preserve">
     <value>বাতিল</value>
   </data>
+  <data name="Cancelled a schedule" xml:space="preserve">
+    <value>নির্ধারিত সময় বাতিল করেছেন</value>
+  </data>
   <data name="Category" xml:space="preserve">
     <value>বিভাগ</value>
   </data>
@@ -203,6 +230,12 @@
   </data>
   <data name="Change password" xml:space="preserve">
     <value>পাসওয়ার্ড বদলান</value>
+  </data>
+  <data name="Changed a role" xml:space="preserve">
+    <value>ভূমিকা বদলেছেন</value>
+  </data>
+  <data name="Changed password" xml:space="preserve">
+    <value>পাসওয়ার্ড বদলেছেন</value>
   </data>
   <data name="Changes go live as soon as you save." xml:space="preserve">
     <value>সংরক্ষণ করার সঙ্গে সঙ্গে পরিবর্তন সাইটে চলে যাবে।</value>
@@ -228,17 +261,50 @@
   <data name="Clear" xml:space="preserve">
     <value>মুছুন</value>
   </data>
+  <data name="Clear history" xml:space="preserve">
+    <value>ইতিহাস মুছুন</value>
+  </data>
+  <data name="Clear your whole reading history?" xml:space="preserve">
+    <value>পুরো পড়ার ইতিহাস মুছে ফেলবেন?</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>বন্ধ করুন</value>
+  </data>
+  <data name="Comment deleted." xml:space="preserve">
+    <value>মন্তব্য মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="Comment hidden after reports" xml:space="preserve">
+    <value>অভিযোগের পর মন্তব্য লুকানো হয়েছে</value>
+  </data>
+  <data name="Comment hidden from readers." xml:space="preserve">
+    <value>মন্তব্যটি পাঠকদের কাছ থেকে লুকানো হয়েছে।</value>
+  </data>
+  <data name="Comment kept and reports cleared." xml:space="preserve">
+    <value>মন্তব্যটি রাখা হয়েছে এবং অভিযোগগুলো মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="Comment moderation" xml:space="preserve">
+    <value>মন্তব্য পর্যালোচনা</value>
+  </data>
   <data name="Comment must be between 2 and 500 characters" xml:space="preserve">
     <value>মন্তব্য ২ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে</value>
   </data>
   <data name="Comment text is required" xml:space="preserve">
     <value>মন্তব্য লিখুন</value>
   </data>
+  <data name="Comments" xml:space="preserve">
+    <value>মন্তব্য</value>
+  </data>
   <data name="Comments ({0})" xml:space="preserve">
     <value>মন্তব্য ({0})</value>
   </data>
   <data name="Comments must be between 2 and 500 characters." xml:space="preserve">
     <value>মন্তব্য ২ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে।</value>
+  </data>
+  <data name="Comments reported {0} times are hidden automatically until you review them." xml:space="preserve">
+    <value>{0} বার অভিযোগ পাওয়া মন্তব্য আপনার পর্যালোচনা পর্যন্ত স্বয়ংক্রিয়ভাবে লুকানো থাকে।</value>
+  </data>
+  <data name="Comments you hide will appear here so you can show them again." xml:space="preserve">
+    <value>আপনার লুকানো মন্তব্য এখানে দেখা যাবে, চাইলে আবার দেখাতে পারবেন।</value>
   </data>
   <data name="Company" xml:space="preserve">
     <value>প্রতিষ্ঠান</value>
@@ -251,6 +317,9 @@
   </data>
   <data name="Confirm password is required" xml:space="preserve">
     <value>পাসওয়ার্ড আবার লিখুন</value>
+  </data>
+  <data name="Confirmation links work for 48 hours. Subscribe again to get a new link." xml:space="preserve">
+    <value>নিশ্চিতকরণ লিংক ৪৮ ঘণ্টা কাজ করে। নতুন লিংক পেতে আবার সাবস্ক্রাইব করুন।</value>
   </data>
   <data name="Contact" xml:space="preserve">
     <value>যোগাযোগ</value>
@@ -279,8 +348,23 @@
   <data name="Create tag" xml:space="preserve">
     <value>ট্যাগ তৈরি করুন</value>
   </data>
+  <data name="Created a section" xml:space="preserve">
+    <value>বিভাগ তৈরি করেছেন</value>
+  </data>
+  <data name="Created a tag" xml:space="preserve">
+    <value>বিষয় তৈরি করেছেন</value>
+  </data>
+  <data name="Created a user" xml:space="preserve">
+    <value>ব্যবহারকারী তৈরি করেছেন</value>
+  </data>
+  <data name="Created an account" xml:space="preserve">
+    <value>অ্যাকাউন্ট খুলেছেন</value>
+  </data>
   <data name="Created date is required" xml:space="preserve">
     <value>তৈরির তারিখ প্রয়োজন</value>
+  </data>
+  <data name="Current password" xml:space="preserve">
+    <value>বর্তমান পাসওয়ার্ড</value>
   </data>
   <data name="Dark" xml:space="preserve">
     <value>ডার্ক</value>
@@ -303,11 +387,26 @@
   <data name="Delete this article?" xml:space="preserve">
     <value>সংবাদটি মুছে ফেলবেন?</value>
   </data>
+  <data name="Delete this comment?" xml:space="preserve">
+    <value>মন্তব্যটি মুছে ফেলবেন?</value>
+  </data>
   <data name="Delete this user?" xml:space="preserve">
     <value>ব্যবহারকারীকে মুছে ফেলবেন?</value>
   </data>
   <data name="Delete user" xml:space="preserve">
     <value>ব্যবহারকারী মুছুন</value>
+  </data>
+  <data name="Deleted a section" xml:space="preserve">
+    <value>বিভাগ মুছেছেন</value>
+  </data>
+  <data name="Deleted a tag" xml:space="preserve">
+    <value>বিষয় মুছেছেন</value>
+  </data>
+  <data name="Deleted a user" xml:space="preserve">
+    <value>ব্যবহারকারী মুছেছেন</value>
+  </data>
+  <data name="Deleted an article" xml:space="preserve">
+    <value>সংবাদ মুছেছেন</value>
   </data>
   <data name="Demo site: the stories shown here are sample content and are not real news." xml:space="preserve">
     <value>ডেমো সাইট: এখানে দেখানো সংবাদগুলো নমুনা কনটেন্ট, বাস্তব সংবাদ নয়।</value>
@@ -320,6 +419,18 @@
   </data>
   <data name="Description cannot exceed 255 characters" xml:space="preserve">
     <value>বিবরণ ২৫৫ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>বিস্তারিত</value>
+  </data>
+  <data name="Details (optional)" xml:space="preserve">
+    <value>বিস্তারিত (ঐচ্ছিক)</value>
+  </data>
+  <data name="Digest sent to every subscriber." xml:space="preserve">
+    <value>সব গ্রাহকের কাছে ডাইজেস্ট পাঠানো হয়েছে।</value>
+  </data>
+  <data name="Do you want to sign out of this browser?" xml:space="preserve">
+    <value>এই ব্রাউজার থেকে লগ-আউট করতে চান?</value>
   </data>
   <data name="Draft" xml:space="preserve">
     <value>খসড়া</value>
@@ -345,6 +456,9 @@
   <data name="Edit user" xml:space="preserve">
     <value>ব্যবহারকারী সম্পাদনা</value>
   </data>
+  <data name="Edited an article" xml:space="preserve">
+    <value>সংবাদ সম্পাদনা করেছেন</value>
+  </data>
   <data name="Edited articles go back to the admin for approval." xml:space="preserve">
     <value>সম্পাদিত লেখা আবার অ্যাডমিনের অনুমোদনের জন্য যাবে।</value>
   </data>
@@ -360,6 +474,9 @@
   <data name="Email" xml:space="preserve">
     <value>ইমেইল</value>
   </data>
+  <data name="Email address" xml:space="preserve">
+    <value>ইমেইল ঠিকানা</value>
+  </data>
   <data name="Email already exists. Please use a different email address." xml:space="preserve">
     <value>এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে। অন্য ইমেইল ব্যবহার করুন।</value>
   </data>
@@ -374,6 +491,9 @@
   </data>
   <data name="Enter your code" xml:space="preserve">
     <value>কোড লিখুন</value>
+  </data>
+  <data name="Every editorial, moderation, account and sign-in action, newest first. Entries are kept for {0} days." xml:space="preserve">
+    <value>সম্পাদনা, মন্তব্য পর্যালোচনা, অ্যাকাউন্ট ও লগ-ইনের প্রতিটি কাজ, নতুনগুলো আগে। তথ্য {0} দিন রাখা হয়।</value>
   </data>
   <data name="Every story The Meridian Newsfolio published on {0}." xml:space="preserve">
     <value>{0} তারিখে দ্য মেরিডিয়ান নিউজফোলিওতে প্রকাশিত সব সংবাদ।</value>
@@ -393,8 +513,14 @@
   <data name="Explore" xml:space="preserve">
     <value>আরও দেখুন</value>
   </data>
+  <data name="Failed sign-in" xml:space="preserve">
+    <value>লগ-ইন ব্যর্থ</value>
+  </data>
   <data name="Failed to create user" xml:space="preserve">
     <value>ব্যবহারকারী তৈরি করা যায়নি</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>ছাঁকনি</value>
   </data>
   <data name="Follow a topic to see every related story in the archive." xml:space="preserve">
     <value>একটি বিষয় বেছে নিয়ে আর্কাইভের সংশ্লিষ্ট সব সংবাদ পড়ুন।</value>
@@ -417,6 +543,9 @@
   <data name="From the archive" xml:space="preserve">
     <value>আর্কাইভ থেকে</value>
   </data>
+  <data name="Get the weekly digest by email, or follow every story with our RSS feed." xml:space="preserve">
+    <value>ইমেইলে সাপ্তাহিক ডাইজেস্ট পান, অথবা আরএসএস ফিডে প্রতিটি সংবাদ অনুসরণ করুন।</value>
+  </data>
   <data name="Give a user the Author role so they can write articles for review." xml:space="preserve">
     <value>লেখকের ভূমিকা দিলে ব্যবহারকারী পর্যালোচনার জন্য সংবাদ লিখতে পারবেন।</value>
   </data>
@@ -435,11 +564,32 @@
   <data name="Headline" xml:space="preserve">
     <value>শিরোনাম</value>
   </data>
+  <data name="Hid a comment" xml:space="preserve">
+    <value>মন্তব্য লুকিয়েছেন</value>
+  </data>
+  <data name="Hidden" xml:space="preserve">
+    <value>লুকানো</value>
+  </data>
+  <data name="Hidden automatically" xml:space="preserve">
+    <value>স্বয়ংক্রিয়ভাবে লুকানো</value>
+  </data>
+  <data name="Hidden by {0}" xml:space="preserve">
+    <value>{0} লুকিয়েছেন</value>
+  </data>
+  <data name="Hidden from readers" xml:space="preserve">
+    <value>পাঠকদের কাছ থেকে লুকানো</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>লুকান</value>
+  </data>
   <data name="Hide password" xml:space="preserve">
     <value>পাসওয়ার্ড লুকান</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>প্রচ্ছদ</value>
+  </data>
+  <data name="IP address" xml:space="preserve">
+    <value>আইপি ঠিকানা</value>
   </data>
   <data name="If an account exists for that email, a verification code has been sent." xml:space="preserve">
     <value>এই ইমেইলে কোনো অ্যাকাউন্ট থাকলে একটি যাচাই কোড পাঠানো হয়েছে।</value>
@@ -489,6 +639,12 @@
   <data name="Joined {0}" xml:space="preserve">
     <value>যোগ দিয়েছেন {0}</value>
   </data>
+  <data name="Keep comment" xml:space="preserve">
+    <value>মন্তব্য রাখুন</value>
+  </data>
+  <data name="Kept a reported comment" xml:space="preserve">
+    <value>অভিযোগ পাওয়া মন্তব্য রেখেছেন</value>
+  </data>
   <data name="Keyword" xml:space="preserve">
     <value>কীওয়ার্ড</value>
   </data>
@@ -497,6 +653,12 @@
   </data>
   <data name="Last change" xml:space="preserve">
     <value>সর্বশেষ পরিবর্তন</value>
+  </data>
+  <data name="Last read {0}" xml:space="preserve">
+    <value>শেষ পড়া {0}</value>
+  </data>
+  <data name="Last sent" xml:space="preserve">
+    <value>শেষ পাঠানো</value>
   </data>
   <data name="Latest from {0}" xml:space="preserve">
     <value>{0}-এর সাম্প্রতিক লেখা</value>
@@ -519,6 +681,9 @@
   <data name="Link" xml:space="preserve">
     <value>লিংক</value>
   </data>
+  <data name="Link not recognised" xml:space="preserve">
+    <value>লিংকটি চেনা যায়নি</value>
+  </data>
   <data name="Logged out successfully" xml:space="preserve">
     <value>আপনি লগ-আউট করেছেন</value>
   </data>
@@ -528,11 +693,23 @@
   <data name="Meet the reporters and editors behind The Meridian Newsfolio: {0}." xml:space="preserve">
     <value>দ্য মেরিডিয়ান নিউজফোলিওর প্রতিবেদক ও সম্পাদকদের সঙ্গে পরিচিত হোন: {0}।</value>
   </data>
+  <data name="Misinformation" xml:space="preserve">
+    <value>ভুল তথ্য</value>
+  </data>
+  <data name="Moderate comments" xml:space="preserve">
+    <value>মন্তব্য পর্যালোচনা করুন</value>
+  </data>
   <data name="More" xml:space="preserve">
     <value>আরও</value>
   </data>
+  <data name="More from {0}" xml:space="preserve">
+    <value>{0}-এর আরও লেখা</value>
+  </data>
   <data name="More in {0}" xml:space="preserve">
     <value>{0}-এর আরও সংবাদ</value>
+  </data>
+  <data name="More like this" xml:space="preserve">
+    <value>একই ধরনের আরও সংবাদ</value>
   </data>
   <data name="More stories" xml:space="preserve">
     <value>আরও সংবাদ</value>
@@ -603,14 +780,35 @@
   <data name="News topics" xml:space="preserve">
     <value>সংবাদের বিষয়</value>
   </data>
+  <data name="Newsletter" xml:space="preserve">
+    <value>নিউজলেটার</value>
+  </data>
   <data name="No OTP request found for this email" xml:space="preserve">
     <value>এই ইমেইলের জন্য কোনো ওটিপি অনুরোধ পাওয়া যায়নি</value>
   </data>
   <data name="No comments yet. Be the first to share your view." xml:space="preserve">
     <value>এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন।</value>
   </data>
+  <data name="No confirmed subscribers for this edition yet." xml:space="preserve">
+    <value>এই সংস্করণে এখনো কোনো নিশ্চিত গ্রাহক নেই।</value>
+  </data>
+  <data name="No hidden comments" xml:space="preserve">
+    <value>কোনো লুকানো মন্তব্য নেই</value>
+  </data>
+  <data name="No matches. Press Enter to search the archive." xml:space="preserve">
+    <value>কিছু মেলেনি। আর্কাইভে খুঁজতে Enter চাপুন।</value>
+  </data>
+  <data name="No one has subscribed yet." xml:space="preserve">
+    <value>এখনো কেউ সাবস্ক্রাইব করেননি।</value>
+  </data>
   <data name="No published authors yet" xml:space="preserve">
     <value>এখনো কোনো প্রকাশিত লেখক নেই</value>
+  </data>
+  <data name="No reading history yet" xml:space="preserve">
+    <value>এখনো পড়ার কোনো ইতিহাস নেই</value>
+  </data>
+  <data name="No reported comments" xml:space="preserve">
+    <value>কোনো অভিযোগ পাওয়া মন্তব্য নেই</value>
   </data>
   <data name="No sections yet" xml:space="preserve">
     <value>এখনো কোনো বিভাগ নেই</value>
@@ -642,6 +840,9 @@
   <data name="Nothing here right now" xml:space="preserve">
     <value>এই মুহূর্তে এখানে কিছু নেই</value>
   </data>
+  <data name="Nothing recorded yet" xml:space="preserve">
+    <value>এখনো কিছু লেখা হয়নি</value>
+  </data>
   <data name="Nothing saved yet" xml:space="preserve">
     <value>এখনো কিছু সংরক্ষণ করা হয়নি</value>
   </data>
@@ -659,6 +860,9 @@
   </data>
   <data name="OTP sent (check console for dev)." xml:space="preserve">
     <value>ওটিপি পাঠানো হয়েছে (ডেভেলপমেন্টে কনসোলে দেখুন)।</value>
+  </data>
+  <data name="Off topic" xml:space="preserve">
+    <value>প্রসঙ্গের বাইরে</value>
   </data>
   <data name="On this day" xml:space="preserve">
     <value>এই দিনে</value>
@@ -690,6 +894,9 @@
   <data name="Or use an existing picture address" xml:space="preserve">
     <value>অথবা আগে থেকে থাকা ছবির ঠিকানা দিন</value>
   </data>
+  <data name="Other" xml:space="preserve">
+    <value>অন্যান্য</value>
+  </data>
   <data name="Our authors" xml:space="preserve">
     <value>আমাদের লেখকেরা</value>
   </data>
@@ -701,6 +908,9 @@
   </data>
   <data name="Password" xml:space="preserve">
     <value>পাসওয়ার্ড</value>
+  </data>
+  <data name="Password change refused" xml:space="preserve">
+    <value>পাসওয়ার্ড বদল প্রত্যাখ্যাত</value>
   </data>
   <data name="Password is required" xml:space="preserve">
     <value>পাসওয়ার্ড প্রয়োজন</value>
@@ -726,11 +936,20 @@
   <data name="Picture" xml:space="preserve">
     <value>ছবি</value>
   </data>
+  <data name="Please choose a reason for the report." xml:space="preserve">
+    <value>অভিযোগের একটি কারণ বেছে নিন।</value>
+  </data>
   <data name="Please choose a role" xml:space="preserve">
     <value>একটি ভূমিকা বেছে নিন</value>
   </data>
+  <data name="Please enter a valid email address." xml:space="preserve">
+    <value>সঠিক একটি ইমেইল ঠিকানা লিখুন।</value>
+  </data>
   <data name="Please select a category" xml:space="preserve">
     <value>একটি বিভাগ বেছে নিন</value>
+  </data>
+  <data name="Popular now" xml:space="preserve">
+    <value>এখন জনপ্রিয়</value>
   </data>
   <data name="Popular topics" xml:space="preserve">
     <value>জনপ্রিয় বিষয়</value>
@@ -771,6 +990,12 @@
   <data name="Published" xml:space="preserve">
     <value>প্রকাশিত</value>
   </data>
+  <data name="Published a scheduled article early" xml:space="preserve">
+    <value>নির্ধারিত সংবাদ আগেভাগে প্রকাশ করেছেন</value>
+  </data>
+  <data name="Published an article" xml:space="preserve">
+    <value>সংবাদ প্রকাশ করেছেন</value>
+  </data>
   <data name="Published articles per section" xml:space="preserve">
     <value>বিভাগভিত্তিক প্রকাশিত সংবাদ</value>
   </data>
@@ -786,17 +1011,32 @@
   <data name="Read" xml:space="preserve">
     <value>পড়ুন</value>
   </data>
+  <data name="Read next" xml:space="preserve">
+    <value>এরপর পড়ুন</value>
+  </data>
   <data name="Read the latest news" xml:space="preserve">
     <value>সর্বশেষ সংবাদ পড়ুন</value>
   </data>
   <data name="Read {0} news" xml:space="preserve">
     <value>{0} সংবাদ পড়ুন</value>
   </data>
+  <data name="Read {0} times" xml:space="preserve">
+    <value>{0} বার পড়েছেন</value>
+  </data>
   <data name="Reader" xml:space="preserve">
     <value>পাঠক</value>
   </data>
+  <data name="Readers confirm their email before they receive anything. Every email has an unsubscribe link." xml:space="preserve">
+    <value>পাঠকেরা ইমেইল নিশ্চিত করার পরই কিছু পান। প্রতিটি ইমেইলে সাবস্ক্রিপশন বাতিলের লিংক থাকে।</value>
+  </data>
+  <data name="Reading history" xml:space="preserve">
+    <value>পড়ার ইতিহাস</value>
+  </data>
   <data name="Reason for rejection" xml:space="preserve">
     <value>ফেরত পাঠানোর কারণ</value>
+  </data>
+  <data name="Recommended for you" xml:space="preserve">
+    <value>আপনার জন্য সুপারিশ</value>
   </data>
   <data name="Reject" xml:space="preserve">
     <value>ফেরত পাঠান</value>
@@ -804,8 +1044,17 @@
   <data name="Rejected" xml:space="preserve">
     <value>ফেরত পাঠানো</value>
   </data>
+  <data name="Rejected an article" xml:space="preserve">
+    <value>সংবাদ ফেরত পাঠিয়েছেন</value>
+  </data>
   <data name="Related stories" xml:space="preserve">
     <value>সম্পর্কিত সংবাদ</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>সরান</value>
+  </data>
+  <data name="Remove from history" xml:space="preserve">
+    <value>ইতিহাস থেকে সরান</value>
   </data>
   <data name="Remove from saved" xml:space="preserve">
     <value>সংরক্ষিত তালিকা থেকে সরান</value>
@@ -815,6 +1064,24 @@
   </data>
   <data name="Remove this picture" xml:space="preserve">
     <value>এই ছবিটি সরান</value>
+  </data>
+  <data name="Remove {0} from the list?" xml:space="preserve">
+    <value>{0}-কে তালিকা থেকে সরাবেন?</value>
+  </data>
+  <data name="Removed a comment" xml:space="preserve">
+    <value>মন্তব্য সরিয়েছেন</value>
+  </data>
+  <data name="Removed a subscriber" xml:space="preserve">
+    <value>একজন গ্রাহক সরিয়েছেন</value>
+  </data>
+  <data name="Report" xml:space="preserve">
+    <value>অভিযোগ করুন</value>
+  </data>
+  <data name="Reported" xml:space="preserve">
+    <value>অভিযোগ পাওয়া</value>
+  </data>
+  <data name="Reported comments" xml:space="preserve">
+    <value>অভিযোগ পাওয়া মন্তব্য</value>
   </data>
   <data name="Reset your password" xml:space="preserve">
     <value>পাসওয়ার্ড পুনরুদ্ধার</value>
@@ -843,6 +1110,9 @@
   <data name="Role name must be between 2 and 50 characters" xml:space="preserve">
     <value>ভূমিকার নাম ২ থেকে ৫০ অক্ষরের মধ্যে হতে হবে</value>
   </data>
+  <data name="Same topic: {0}" xml:space="preserve">
+    <value>একই বিষয়: {0}</value>
+  </data>
   <data name="Save changes" xml:space="preserve">
     <value>পরিবর্তন সংরক্ষণ</value>
   </data>
@@ -860,6 +1130,12 @@
   </data>
   <data name="Scheduled" xml:space="preserve">
     <value>নির্ধারিত</value>
+  </data>
+  <data name="Scheduled an article" xml:space="preserve">
+    <value>সংবাদের প্রকাশের সময় নির্ধারণ করেছেন</value>
+  </data>
+  <data name="Scheduled articles went live" xml:space="preserve">
+    <value>নির্ধারিত সংবাদ প্রকাশিত হয়েছে</value>
   </data>
   <data name="Scheduled to publish" xml:space="preserve">
     <value>প্রকাশের অপেক্ষায়</value>
@@ -903,6 +1179,12 @@
   <data name="Sections" xml:space="preserve">
     <value>বিভাগসমূহ</value>
   </data>
+  <data name="Security" xml:space="preserve">
+    <value>নিরাপত্তা</value>
+  </data>
+  <data name="See all results for “{0}”" xml:space="preserve">
+    <value>“{0}”-এর সব ফলাফল দেখুন</value>
+  </data>
   <data name="Select a role" xml:space="preserve">
     <value>ভূমিকা বেছে নিন</value>
   </data>
@@ -914,6 +1196,18 @@
   </data>
   <data name="Send code" xml:space="preserve">
     <value>কোড পাঠান</value>
+  </data>
+  <data name="Send now" xml:space="preserve">
+    <value>এখনই পাঠান</value>
+  </data>
+  <data name="Send report" xml:space="preserve">
+    <value>অভিযোগ পাঠান</value>
+  </data>
+  <data name="Send this digest to {0} subscribers now?" xml:space="preserve">
+    <value>এই ডাইজেস্ট এখনই {0} জন গ্রাহকের কাছে পাঠাবেন?</value>
+  </data>
+  <data name="Sent the newsletter" xml:space="preserve">
+    <value>নিউজলেটার পাঠিয়েছেন</value>
   </data>
   <data name="Separate paragraphs with an empty line. HTML is not rendered." xml:space="preserve">
     <value>অনুচ্ছেদের মাঝে একটি ফাঁকা লাইন রাখুন। এইচটিএমএল কাজ করবে না।</value>
@@ -927,8 +1221,17 @@
   <data name="Short bio" xml:space="preserve">
     <value>সংক্ষিপ্ত পরিচিতি</value>
   </data>
+  <data name="Show again" xml:space="preserve">
+    <value>আবার দেখান</value>
+  </data>
+  <data name="Show everyone" xml:space="preserve">
+    <value>সবার কাজ দেখুন</value>
+  </data>
   <data name="Show password" xml:space="preserve">
     <value>পাসওয়ার্ড দেখুন</value>
+  </data>
+  <data name="Showing actions by {0}." xml:space="preserve">
+    <value>{0}-এর কাজ দেখানো হচ্ছে।</value>
   </data>
   <data name="Sign in" xml:space="preserve">
     <value>লগ-ইন</value>
@@ -942,8 +1245,17 @@
   <data name="Sign out" xml:space="preserve">
     <value>লগ-আউট</value>
   </data>
+  <data name="Signed in" xml:space="preserve">
+    <value>লগ-ইন করেছেন</value>
+  </data>
   <data name="Signed in as {0}" xml:space="preserve">
     <value>{0} হিসেবে লগ-ইন</value>
+  </data>
+  <data name="Signed out everywhere" xml:space="preserve">
+    <value>সব জায়গা থেকে লগ-আউট করেছেন</value>
+  </data>
+  <data name="Similar story" xml:space="preserve">
+    <value>একই ধরনের সংবাদ</value>
   </data>
   <data name="Sitemap" xml:space="preserve">
     <value>সাইটম্যাপ</value>
@@ -951,8 +1263,14 @@
   <data name="Skip to main content" xml:space="preserve">
     <value>মূল কনটেন্টে যান</value>
   </data>
+  <data name="Some emails could not be sent. Check the email settings and the log." xml:space="preserve">
+    <value>কিছু ইমেইল পাঠানো যায়নি। ইমেইল সেটিংস ও লগ দেখুন।</value>
+  </data>
   <data name="Something went wrong" xml:space="preserve">
     <value>কিছু একটা সমস্যা হয়েছে</value>
+  </data>
+  <data name="Spam" xml:space="preserve">
+    <value>স্প্যাম</value>
   </data>
   <data name="Staff reporter" xml:space="preserve">
     <value>নিজস্ব প্রতিবেদক</value>
@@ -966,6 +1284,9 @@
   <data name="Stay informed" xml:space="preserve">
     <value>খবরে থাকুন</value>
   </data>
+  <data name="Stop sending the newsletter to {0}?" xml:space="preserve">
+    <value>{0}-এ নিউজলেটার পাঠানো বন্ধ করবেন?</value>
+  </data>
   <data name="Stories" xml:space="preserve">
     <value>সংবাদ</value>
   </data>
@@ -974,6 +1295,12 @@
   </data>
   <data name="Stories by {0}, page {1}" xml:space="preserve">
     <value>{0}-এর লেখা সংবাদ, পৃষ্ঠা {1}</value>
+  </data>
+  <data name="Stories you open while signed in will appear here." xml:space="preserve">
+    <value>লগ-ইন অবস্থায় যে সংবাদ খুলবেন, তা এখানে দেখা যাবে।</value>
+  </data>
+  <data name="Story removed from your reading history." xml:space="preserve">
+    <value>সংবাদটি আপনার পড়ার ইতিহাস থেকে সরানো হয়েছে।</value>
   </data>
   <data name="Story removed from your saved list." xml:space="preserve">
     <value>সংবাদটি আপনার সংরক্ষিত তালিকা থেকে সরানো হয়েছে।</value>
@@ -990,8 +1317,17 @@
   <data name="Submitted {0}" xml:space="preserve">
     <value>জমা দেওয়া হয়েছে {0}</value>
   </data>
+  <data name="Subscribe" xml:space="preserve">
+    <value>সাবস্ক্রাইব</value>
+  </data>
   <data name="Subscribe via RSS" xml:space="preserve">
     <value>আরএসএসে সাবস্ক্রাইব করুন</value>
+  </data>
+  <data name="Subscriber removed." xml:space="preserve">
+    <value>গ্রাহককে সরানো হয়েছে।</value>
+  </data>
+  <data name="Subscribers" xml:space="preserve">
+    <value>গ্রাহক</value>
   </data>
   <data name="Summary" xml:space="preserve">
     <value>সারাংশ</value>
@@ -1026,6 +1362,15 @@
   <data name="Terms of use" xml:space="preserve">
     <value>ব্যবহারের শর্তাবলি</value>
   </data>
+  <data name="Thank you. A moderator will review this comment." xml:space="preserve">
+    <value>ধন্যবাদ। একজন মডারেটর মন্তব্যটি পর্যালোচনা করবেন।</value>
+  </data>
+  <data name="Thank you. The comment has been hidden until a moderator reviews it." xml:space="preserve">
+    <value>ধন্যবাদ। মডারেটরের পর্যালোচনা পর্যন্ত মন্তব্যটি লুকানো থাকবে।</value>
+  </data>
+  <data name="Thanks! Check your inbox and confirm your subscription." xml:space="preserve">
+    <value>ধন্যবাদ! ইনবক্স দেখে সাবস্ক্রিপশন নিশ্চিত করুন।</value>
+  </data>
   <data name="The Meridian Newsfolio publishes reviewed news from Bangladesh and around the world, in English and Bangla, and keeps every story in a searchable archive." xml:space="preserve">
     <value>দ্য মেরিডিয়ান নিউজফোলিও বাংলাদেশ ও বিশ্বের যাচাই করা সংবাদ ইংরেজি ও বাংলায় প্রকাশ করে এবং প্রতিটি সংবাদ খোঁজার উপযোগী আর্কাইভে সংরক্ষণ করে।</value>
   </data>
@@ -1034,6 +1379,9 @@
   </data>
   <data name="The article could not be saved." xml:space="preserve">
     <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
+  </data>
+  <data name="The comment could not be deleted." xml:space="preserve">
+    <value>মন্তব্যটি মুছে ফেলা যায়নি।</value>
   </data>
   <data name="The image is too large. The limit is 2 MB." xml:space="preserve">
     <value>ছবিটি অনেক বড়। সর্বোচ্চ ২ MB।</value>
@@ -1062,6 +1410,9 @@
   <data name="The tag could not be deleted." xml:space="preserve">
     <value>ট্যাগটি মোছা যায়নি।</value>
   </data>
+  <data name="The week's most important stories, once a week. Unsubscribe any time." xml:space="preserve">
+    <value>সপ্তাহের গুরুত্বপূর্ণ সংবাদ, সপ্তাহে একবার। যেকোনো সময় বাতিল করা যায়।</value>
+  </data>
   <data name="The {0} field is required." xml:space="preserve">
     <value>{0} প্রয়োজন।</value>
   </data>
@@ -1071,17 +1422,41 @@
   <data name="Theme" xml:space="preserve">
     <value>থিম</value>
   </data>
+  <data name="There are no stories from the past week to send." xml:space="preserve">
+    <value>পাঠানোর মতো গত সপ্তাহের কোনো সংবাদ নেই।</value>
+  </data>
   <data name="This article is not public. Only the author and admins can see it." xml:space="preserve">
     <value>সংবাদটি এখনো প্রকাশিত নয়। শুধু লেখক ও অ্যাডমিন এটি দেখতে পারেন।</value>
   </data>
   <data name="This cannot be undone." xml:space="preserve">
     <value>এটি আর ফেরানো যাবে না।</value>
   </data>
+  <data name="This comment no longer exists." xml:space="preserve">
+    <value>মন্তব্যটি আর নেই।</value>
+  </data>
+  <data name="This confirmation link is not valid. It may have been used already." xml:space="preserve">
+    <value>নিশ্চিতকরণ লিংকটি সঠিক নয়। হয়তো আগেই ব্যবহার করা হয়েছে।</value>
+  </data>
+  <data name="This email address is already on the list." xml:space="preserve">
+    <value>এই ইমেইল ঠিকানা আগে থেকেই তালিকায় আছে।</value>
+  </data>
+  <data name="This link has expired" xml:space="preserve">
+    <value>লিংকটির মেয়াদ শেষ</value>
+  </data>
   <data name="This section has {0} articles. Choose where to move them before deleting." xml:space="preserve">
     <value>এই বিভাগে {0}টি সংবাদ আছে। মোছার আগে সেগুলো কোথায় সরানো হবে তা বেছে নিন।</value>
   </data>
   <data name="This story could not be saved." xml:space="preserve">
     <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
+  </data>
+  <data name="This story is not in your reading history." xml:space="preserve">
+    <value>সংবাদটি আপনার পড়ার ইতিহাসে নেই।</value>
+  </data>
+  <data name="This subscriber no longer exists." xml:space="preserve">
+    <value>এই গ্রাহক আর নেই।</value>
+  </data>
+  <data name="This unsubscribe link is not valid." xml:space="preserve">
+    <value>সাবস্ক্রিপশন বাতিলের লিংকটি সঠিক নয়।</value>
   </data>
   <data name="This user has written articles. Reassign or delete them first." xml:space="preserve">
     <value>এই ব্যবহারকারী সংবাদ লিখেছেন। আগে সেগুলো অন্য কাউকে দিন বা মুছে ফেলুন।</value>
@@ -1140,11 +1515,29 @@
   <data name="Unknown" xml:space="preserve">
     <value>অজানা</value>
   </data>
+  <data name="Unsubscribe" xml:space="preserve">
+    <value>সাবস্ক্রিপশন বাতিল</value>
+  </data>
+  <data name="Unsubscribed" xml:space="preserve">
+    <value>বাতিল করেছেন</value>
+  </data>
+  <data name="Up next" xml:space="preserve">
+    <value>এরপর</value>
+  </data>
   <data name="Update failed" xml:space="preserve">
     <value>হালনাগাদ করা যায়নি</value>
   </data>
   <data name="Updated" xml:space="preserve">
     <value>হালনাগাদ</value>
+  </data>
+  <data name="Updated a section" xml:space="preserve">
+    <value>বিভাগ হালনাগাদ করেছেন</value>
+  </data>
+  <data name="Updated a tag" xml:space="preserve">
+    <value>বিষয় হালনাগাদ করেছেন</value>
+  </data>
+  <data name="Updated a user" xml:space="preserve">
+    <value>ব্যবহারকারী হালনাগাদ করেছেন</value>
   </data>
   <data name="Upload" xml:space="preserve">
     <value>আপলোড</value>
@@ -1188,14 +1581,32 @@
   <data name="View all {0} news" xml:space="preserve">
     <value>{0}-এর সব সংবাদ দেখুন</value>
   </data>
+  <data name="Waiting for confirmation" xml:space="preserve">
+    <value>নিশ্চিতকরণের অপেক্ষায়</value>
+  </data>
   <data name="We couldn't load this page. Please try again in a moment." xml:space="preserve">
     <value>পাতাটি লোড করা যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।</value>
   </data>
   <data name="We sent a 6-digit code to {0}. It expires in one minute." xml:space="preserve">
     <value>{0} ঠিকানায় ৬ অঙ্কের একটি কোড পাঠানো হয়েছে। এক মিনিটের মধ্যে এর মেয়াদ শেষ হবে।</value>
   </data>
+  <data name="Weekly digest" xml:space="preserve">
+    <value>সাপ্তাহিক ডাইজেস্ট</value>
+  </data>
   <data name="Welcome back. Sign in to comment, write and manage your account." xml:space="preserve">
     <value>আবার স্বাগতম। মন্তব্য, লেখা ও অ্যাকাউন্ট পরিচালনার জন্য লগ-ইন করুন।</value>
+  </data>
+  <data name="When" xml:space="preserve">
+    <value>কখন</value>
+  </data>
+  <data name="When readers report a comment, it will appear here." xml:space="preserve">
+    <value>পাঠকেরা কোনো মন্তব্যের বিরুদ্ধে অভিযোগ করলে তা এখানে দেখা যাবে।</value>
+  </data>
+  <data name="Who" xml:space="preserve">
+    <value>কে</value>
+  </data>
+  <data name="Why are you reporting this comment?" xml:space="preserve">
+    <value>কেন এই মন্তব্যের বিরুদ্ধে অভিযোগ করছেন?</value>
   </data>
   <data name="Write" xml:space="preserve">
     <value>লিখুন</value>
@@ -1218,17 +1629,41 @@
   <data name="You" xml:space="preserve">
     <value>আপনি</value>
   </data>
+  <data name="You can only delete your own comments." xml:space="preserve">
+    <value>আপনি শুধু নিজের মন্তব্য মুছতে পারবেন।</value>
+  </data>
+  <data name="You cannot change your own role. Use your profile page instead." xml:space="preserve">
+    <value>নিজের ভূমিকা এখান থেকে বদলানো যায় না। প্রোফাইল পাতা ব্যবহার করুন।</value>
+  </data>
   <data name="You cannot delete your own account." xml:space="preserve">
     <value>নিজের অ্যাকাউন্ট নিজে মুছতে পারবেন না।</value>
   </data>
   <data name="You cannot edit this article." xml:space="preserve">
     <value>এই সংবাদটি আপনি সম্পাদনা করতে পারবেন না।</value>
   </data>
+  <data name="You cannot report your own comment." xml:space="preserve">
+    <value>নিজের মন্তব্যের বিরুদ্ধে অভিযোগ করা যায় না।</value>
+  </data>
+  <data name="You have already reported this comment." xml:space="preserve">
+    <value>আপনি আগেই এই মন্তব্যের বিরুদ্ধে অভিযোগ করেছেন।</value>
+  </data>
   <data name="You haven't written anything yet" xml:space="preserve">
     <value>আপনি এখনো কিছু লেখেননি</value>
   </data>
+  <data name="You reported this comment. A moderator will review it." xml:space="preserve">
+    <value>আপনি এই মন্তব্যের বিরুদ্ধে অভিযোগ করেছেন। একজন মডারেটর তা পর্যালোচনা করবেন।</value>
+  </data>
   <data name="You're all caught up." xml:space="preserve">
     <value>আপনি সব সংবাদ দেখে ফেলেছেন।</value>
+  </data>
+  <data name="You're already subscribed" xml:space="preserve">
+    <value>আপনি আগেই সাবস্ক্রাইব করেছেন</value>
+  </data>
+  <data name="You're subscribed" xml:space="preserve">
+    <value>সাবস্ক্রিপশন সম্পন্ন</value>
+  </data>
+  <data name="You're unsubscribed" xml:space="preserve">
+    <value>সাবস্ক্রিপশন বাতিল হয়েছে</value>
   </data>
   <data name="Your account does not have permission to open this page." xml:space="preserve">
     <value>এই পাতাটি খোলার অনুমতি আপনার অ্যাকাউন্টে নেই।</value>
@@ -1239,6 +1674,30 @@
   <data name="Your comment" xml:space="preserve">
     <value>আপনার মন্তব্য</value>
   </data>
+  <data name="Your current password is not correct." xml:space="preserve">
+    <value>আপনার বর্তমান পাসওয়ার্ড সঠিক নয়।</value>
+  </data>
+  <data name="Your email address" xml:space="preserve">
+    <value>আপনার ইমেইল ঠিকানা</value>
+  </data>
+  <data name="Your email code was confirmed. Choose a new password." xml:space="preserve">
+    <value>আপনার ইমেইল কোড নিশ্চিত হয়েছে। নতুন পাসওয়ার্ড দিন।</value>
+  </data>
+  <data name="Your reading history" xml:space="preserve">
+    <value>আপনার পড়ার ইতিহাস</value>
+  </data>
+  <data name="Your reading history has been cleared." xml:space="preserve">
+    <value>আপনার পড়ার ইতিহাস মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="Your subscription is confirmed. The weekly digest will arrive in your inbox." xml:space="preserve">
+    <value>আপনার সাবস্ক্রিপশন নিশ্চিত হয়েছে। সাপ্তাহিক ডাইজেস্ট আপনার ইনবক্সে পৌঁছাবে।</value>
+  </data>
+  <data name="an admin" xml:space="preserve">
+    <value>একজন অ্যাডমিন</value>
+  </data>
+  <data name="on" xml:space="preserve">
+    <value>সংবাদ:</value>
+  </data>
   <data name="to join the conversation." xml:space="preserve">
     <value>করে আলোচনায় অংশ নিন।</value>
   </data>
@@ -1247,6 +1706,12 @@
   </data>
   <data name="{0} articles use this tag. They stay published; only the tag is removed from them." xml:space="preserve">
     <value>{0}টি সংবাদে এই ট্যাগ আছে। সংবাদগুলো প্রকাশিতই থাকবে, শুধু ট্যাগটি সরে যাবে।</value>
+  </data>
+  <data name="{0} edition" xml:space="preserve">
+    <value>{0} সংস্করণ</value>
+  </data>
+  <data name="{0} entries" xml:space="preserve">
+    <value>{0}টি এন্ট্রি</value>
   </data>
   <data name="{0} home" xml:space="preserve">
     <value>{0} প্রচ্ছদ</value>
@@ -1260,20 +1725,32 @@
   <data name="{0} news, page {1}" xml:space="preserve">
     <value>{0} সংবাদ, পৃষ্ঠা {1}</value>
   </data>
+  <data name="{0} reports" xml:space="preserve">
+    <value>{0}টি অভিযোগ</value>
+  </data>
   <data name="{0} stories" xml:space="preserve">
     <value>{0}টি সংবাদ</value>
   </data>
   <data name="{0} stories found" xml:space="preserve">
     <value>{0}টি সংবাদ পাওয়া গেছে</value>
   </data>
+  <data name="{0} stories from the past {1} days, {2} subscribers." xml:space="preserve">
+    <value>গত {1} দিনের {0}টি সংবাদ, {2} জন গ্রাহক।</value>
+  </data>
   <data name="{0} stories saved to read later." xml:space="preserve">
     <value>পরে পড়ার জন্য {0}টি সংবাদ সংরক্ষিত।</value>
+  </data>
+  <data name="{0} stories you have read. We use them to recommend similar stories." xml:space="preserve">
+    <value>আপনি {0}টি সংবাদ পড়েছেন। এগুলোর ভিত্তিতে আমরা একই ধরনের সংবাদ সুপারিশ করি।</value>
   </data>
   <data name="{0} stories, organised by year, month and day." xml:space="preserve">
     <value>{0}টি সংবাদ, বছর, মাস ও দিন অনুযায়ী সাজানো।</value>
   </data>
   <data name="{0} views" xml:space="preserve">
     <value>{0} বার পঠিত</value>
+  </data>
+  <data name="{0} will not receive the newsletter any more." xml:space="preserve">
+    <value>{0} আর নিউজলেটার পাবে না।</value>
   </data>
   <data name="{0} writes for The Meridian Newsfolio. Read every story by {0}." xml:space="preserve">
     <value>{0} দ্য মেরিডিয়ান নিউজফোলিওতে লেখেন। {0}-এর সব সংবাদ পড়ুন।</value>

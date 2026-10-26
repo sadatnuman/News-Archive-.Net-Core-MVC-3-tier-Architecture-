@@ -1,0 +1,6 @@
+@model BLL.DTOs.RecommendationDTO
+
+<div class="rec-card h-100">
+    <div class="rec-card-reason" lang="@UiLanguage.Current"><partial name="_RecReason" model="Model" /></div>
+    <partial name="_StoryCard" model="Model.Article" />
+</div>

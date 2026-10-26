@@ -12,6 +12,8 @@ namespace BLL.Interfaces
 
         bool ChangePassword(int userId, string newPassword);
 
+        bool VerifyPassword(int userId, string? password);
+
         TokenDTO? IssueToken(AuthUserDTO user, string clientType, TimeSpan lifetime);
 
         Task<AuthUserDTO?> ValidateTokenAsync(string? token);

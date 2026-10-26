@@ -12,6 +12,8 @@ namespace DAL.Interfaces
 
         int CountArticles(int categoryId);
 
+        Dictionary<int, int> CountPublished(string? language);
+
         bool DeleteMovingArticles(int categoryId, int targetCategoryId);
 
         List<Category> GetWithoutSlug();

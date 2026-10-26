@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class ArticleRepo : Repository<Article>, IArticleRepository
+    internal sealed class ArticleRepo : Repository<Article>, IArticleRepository
     {
         public ArticleRepo(NewsArchiveDbContext db) : base(db)
         {
@@ -22,12 +22,14 @@ namespace DAL.Repos
             return db.Articles.AsNoTracking().OrderByDescending(a => a.PublishDate).ToList();
         }
 
-        public List<Article> GetByCategoryId(int categoryId, string? language = null)
+        public List<Article> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total)
         {
-            return Published(language)
-                .Where(a => a.CategoryId == categoryId)
-                .OrderByDescending(a => a.PublishDate)
-                .ToList();
+            var query = Published(language).Where(a => a.CategoryId == categoryId);
+            total = query.Count();
+            return query.OrderByDescending(a => a.PublishDate)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
         }
 
         public Article? GetWithDetails(int id)
@@ -120,7 +122,7 @@ namespace DAL.Repos
         public List<Article> GetTrending(int count, string? language = null)
         {
             return Published(language)
-                .OrderByDescending(a => a.ViewsCount + a.Comments.Count() * 2)
+                .OrderByDescending(a => a.ViewsCount + a.Comments.Count(c => !c.IsHidden) * 2)
                 .ThenByDescending(a => a.PublishDate)
                 .Take(count)
                 .ToList();
@@ -142,41 +144,66 @@ namespace DAL.Repos
                 .ToList();
         }
 
-        public List<Article> GetRecommended(int articleId, int count)
+        public List<Article> GetRecommendationCandidates(string language, IEnumerable<int> excludeIds, IEnumerable<int> categoryIds,
+            IEnumerable<int> tagIds, IEnumerable<int> authorIds, int relatedLimit, int popularLimit)
         {
-            var target = db.Articles.AsNoTracking()
-                .Where(a => a.ArticleId == articleId)
-                .Select(a => new { a.CategoryId, a.LanguageCode, TagIds = a.Tags.Select(t => t.TagId).ToList() })
-                .FirstOrDefault();
-            if (target == null) return new List<Article>();
+            var excluded = excludeIds.Distinct().ToList();
+            var categories = categoryIds.Distinct().ToList();
+            var tags = tagIds.Distinct().ToList();
+            var authors = authorIds.Distinct().ToList();
 
-            var result = Published(target.LanguageCode)
-                .Where(a => a.ArticleId != articleId && a.CategoryId == target.CategoryId)
+            var related = Published(language)
+                .Where(a => !excluded.Contains(a.ArticleId)
+                    && (categories.Contains(a.CategoryId) || authors.Contains(a.AuthorId) || a.Tags.Any(t => tags.Contains(t.TagId))))
                 .OrderByDescending(a => a.PublishDate)
-                .Take(count)
+                .Take(relatedLimit)
+                .Include(a => a.Tags)
                 .ToList();
 
-            if (result.Count < count && target.TagIds.Count > 0)
-            {
-                var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(Published(target.LanguageCode)
-                    .Where(a => !excluded.Contains(a.ArticleId) && a.Tags.Any(t => target.TagIds.Contains(t.TagId)))
-                    .OrderByDescending(a => a.PublishDate)
-                    .Take(count - result.Count)
-                    .ToList());
-            }
+            var known = related.Select(a => a.ArticleId).Concat(excluded).ToList();
+            related.AddRange(Published(language)
+                .Where(a => !known.Contains(a.ArticleId))
+                .OrderByDescending(a => a.ViewsCount)
+                .ThenByDescending(a => a.PublishDate)
+                .Take(popularLimit)
+                .Include(a => a.Tags)
+                .ToList());
+            return related;
+        }
 
-            if (result.Count < count)
-            {
-                var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(Published(target.LanguageCode)
-                    .Where(a => !excluded.Contains(a.ArticleId))
-                    .OrderByDescending(a => a.ViewsCount)
-                    .ThenByDescending(a => a.PublishDate)
-                    .Take(count - result.Count)
-                    .ToList());
-            }
-            return result;
+        public List<Article> Suggest(string term, string? language, int count)
+        {
+            return Published(language)
+                .Where(a => a.Title.Contains(term) || a.Summary.Contains(term))
+                .OrderByDescending(a => a.Title.StartsWith(term))
+                .ThenByDescending(a => a.Title.Contains(term))
+                .ThenByDescending(a => a.PublishDate)
+                .Take(count)
+                .Select(a => new Article
+                {
+                    ArticleId = a.ArticleId,
+                    Title = a.Title,
+                    Slug = a.Slug,
+                    Summary = string.Empty,
+                    Content = string.Empty,
+                    LanguageCode = a.LanguageCode,
+                    CategoryId = a.CategoryId,
+                    AuthorId = a.AuthorId,
+                    ImagePath = a.ImagePath,
+                    PublishDate = a.PublishDate,
+                    IsBreakingNews = a.IsBreakingNews,
+                    StatusId = a.StatusId
+                })
+                .ToList();
+        }
+
+        public List<Article> GetManyWithTags(IEnumerable<int> articleIds)
+        {
+            var ids = articleIds.Distinct().ToList();
+            return db.Articles.AsNoTracking()
+                .Where(a => ids.Contains(a.ArticleId))
+                .Include(a => a.Tags)
+                .ToList();
         }
 
         public List<Article> GetByAuthor(int authorId)
@@ -255,7 +282,7 @@ namespace DAL.Repos
 
         public int GetCommentCount(int articleId)
         {
-            return db.Comments.Count(c => c.ArticleId == articleId);
+            return db.Comments.Count(c => c.ArticleId == articleId && !c.IsHidden);
         }
 
         public Dictionary<int, int> CountPerCategory()

@@ -3,6 +3,9 @@ using BLL.DTOs;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using BLL.Email;
+using NewsArchive.Auth;
+using NewsArchive.Email;
 using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
@@ -17,10 +20,28 @@ namespace NewsArchive.Controllers
         private readonly IArticleService articleService;
         private readonly ICategoryService categoryService;
         private readonly IAuthService authService;
+        private readonly ICommentService commentService;
+        private readonly IAuditService auditService;
+        private readonly INewsletterService newsletterService;
+        private readonly IEmailSender emailSender;
+        private readonly MailComposer mail;
+        private readonly PasswordChanger passwordChanger;
 
-        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, IStringLocalizer<SharedResource> localizer)
+        private const int ModerationPageSize = 20;
+        private const int AuditPageSize = 30;
+        private const int SubscriberPageSize = 30;
+
+        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService,
+            ICategoryService categoryService, IAuthService authService, ICommentService commentService, IAuditService auditService,
+            INewsletterService newsletterService, IEmailSender emailSender, MailComposer mail, PasswordChanger passwordChanger, IStringLocalizer<SharedResource> localizer)
         {
             L = localizer;
+            this.passwordChanger = passwordChanger;
+            this.newsletterService = newsletterService;
+            this.emailSender = emailSender;
+            this.mail = mail;
+            this.commentService = commentService;
+            this.auditService = auditService;
             this.authService = authService;
             _userService = userService;
             _roleService = roleService;
@@ -34,6 +55,7 @@ namespace NewsArchive.Controllers
             ViewBag.TotalArticles = analyticsService.GetTotalArticles();
             ViewBag.TotalUsers = analyticsService.GetTotalUsers();
             ViewBag.PendingCount = articleService.CountPending();
+            ViewBag.ReportedCount = commentService.CountReported();
             ViewBag.MostViewed = analyticsService.GetMostViewedArticles(5);
             ViewBag.ArticlesPerCategory = analyticsService.GetArticlesPerCategory();
             return View();
@@ -43,7 +65,6 @@ namespace NewsArchive.Controllers
         public IActionResult PendingArticles()
         {
             var pending = articleService.GetPending();
-            ViewBag.AuthorNames = _userService.GetNames(pending.Select(a => a.AuthorId));
             var scheduled = articleService.GetScheduled();
             ViewBag.AuthorNames = _userService.GetNames(pending.Concat(scheduled).Select(a => a.AuthorId));
             ViewBag.CategoryNames = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
@@ -90,6 +111,130 @@ namespace NewsArchive.Controllers
             else
                 Flash("danger", "Only pending articles can be rejected.");
             return RedirectToAction("PendingArticles");
+        }
+
+        [HttpGet]
+        public IActionResult Comments(string? tab, int page = 1)
+        {
+            var showHidden = tab == "hidden";
+            page = Math.Max(page, 1);
+            int total;
+            var items = showHidden
+                ? commentService.GetHidden(page, ModerationPageSize, out total)
+                : commentService.GetReported(page, ModerationPageSize, out total);
+            ViewBag.Tab = showHidden ? "hidden" : "reported";
+            ViewBag.Page = page;
+            ViewBag.PageSize = ModerationPageSize;
+            ViewBag.Total = total;
+            ViewBag.ReportedCount = showHidden ? commentService.CountReported() : total;
+            return View(items);
+        }
+
+        [HttpGet]
+        public IActionResult Audit(string? type, int? user, int page = 1)
+        {
+            page = Math.Max(page, 1);
+            var entries = auditService.Get(type, user, page, AuditPageSize, out var total);
+            ViewBag.Type = BLL.Audit.AuditEntities.All.FirstOrDefault(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase));
+            ViewBag.UserFilter = user;
+            ViewBag.UserFilterName = user.HasValue ? _userService.Get(user.Value)?.Name : null;
+            ViewBag.Page = page;
+            ViewBag.PageSize = AuditPageSize;
+            ViewBag.Total = total;
+            return View(entries);
+        }
+
+        [HttpGet]
+        public IActionResult Newsletter(int page = 1)
+        {
+            page = Math.Max(page, 1);
+            var subscribers = newsletterService.Get(page, SubscriberPageSize, out var total);
+            ViewBag.Stats = newsletterService.GetStats();
+            ViewBag.DigestEnglish = newsletterService.BuildDigest(AppLanguages.English);
+            ViewBag.DigestBangla = newsletterService.BuildDigest(AppLanguages.Bangla);
+            ViewBag.Page = page;
+            ViewBag.PageSize = SubscriberPageSize;
+            ViewBag.Total = total;
+            return View(subscribers);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendDigest(string language, CancellationToken cancellationToken)
+        {
+            var digest = newsletterService.BuildDigest(language);
+            if (digest.Stories.Count == 0)
+            {
+                Flash("warning", "There are no stories from the past week to send.");
+                return RedirectToAction("Newsletter");
+            }
+            if (digest.Recipients.Count == 0)
+            {
+                Flash("warning", "No confirmed subscribers for this edition yet.");
+                return RedirectToAction("Newsletter");
+            }
+
+            var sections = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.LocalName(digest.LanguageCode));
+            var sent = new List<int>();
+            foreach (var recipient in digest.Recipients)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+                if (await emailSender.SendAsync(mail.Digest(digest, recipient, sections), cancellationToken))
+                    sent.Add(recipient.SubscriberId);
+            }
+            newsletterService.MarkSent(sent, digest.LanguageCode, digest.Stories.Count);
+
+            if (sent.Count == digest.Recipients.Count)
+                Flash("success", "Digest sent to every subscriber.");
+            else
+                Flash("warning", "Some emails could not be sent. Check the email settings and the log.");
+            return RedirectToAction("Newsletter");
+        }
+
+        [HttpPost]
+        public IActionResult RemoveSubscriber(int id)
+        {
+            if (newsletterService.Remove(id))
+                Flash("success", "Subscriber removed.");
+            else
+                Flash("danger", "This subscriber no longer exists.");
+            return RedirectToAction("Newsletter");
+        }
+
+        private IActionResult BackTo(string? returnUrl)
+        {
+            return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? LocalRedirect(returnUrl)
+                : RedirectToAction("Comments");
+        }
+
+        [HttpPost]
+        public IActionResult HideComment(int id, string? returnUrl)
+        {
+            if (commentService.Hide(id, CurrentUserId ?? 0))
+                Flash("success", "Comment hidden from readers.");
+            else
+                Flash("danger", "This comment no longer exists.");
+            return BackTo(returnUrl);
+        }
+
+        [HttpPost]
+        public IActionResult KeepComment(int id, string? returnUrl)
+        {
+            if (commentService.Keep(id, CurrentUserId ?? 0))
+                Flash("success", "Comment kept and reports cleared.");
+            else
+                Flash("danger", "This comment no longer exists.");
+            return BackTo(returnUrl);
+        }
+
+        [HttpPost]
+        public IActionResult DeleteComment(int id, string? returnUrl)
+        {
+            if (commentService.Delete(id))
+                Flash("success", "Comment deleted.");
+            else
+                Flash("danger", "This comment no longer exists.");
+            return BackTo(returnUrl);
         }
 
         [HttpGet]
@@ -143,6 +288,7 @@ namespace NewsArchive.Controllers
         {
             var user = _userService.GetByEmail(CurrentEmail);
             if (user == null) return NotFound();
+            ViewBag.ResetVerified = PasswordChanger.IsResetVerified(HttpContext.Session);
             return View(new ChangePasswordDTO { UserId = user.UserId, Email = user.Email });
         }
 
@@ -152,19 +298,26 @@ namespace NewsArchive.Controllers
             var userId = CurrentUserId ?? 0;
             obj.UserId = userId;
             obj.Email = CurrentEmail;
+            ViewBag.ResetVerified = PasswordChanger.IsResetVerified(HttpContext.Session);
             if (!ModelState.IsValid) return View(obj);
 
-            if (authService.ChangePassword(userId, obj.PasswordHash))
+            switch (await passwordChanger.ChangeAsync(HttpContext.Session, userId, CurrentEmail, obj))
             {
-                await authService.RevokeAllAsync(userId);
-                var refreshed = authService.GetUser(userId);
-                if (refreshed != null) await SignInUserAsync(refreshed);
-                Flash("success", "Password updated");
-                return RedirectToAction("Profile", "Admin");
+                case PasswordChanger.Outcome.Changed:
+                    var refreshed = authService.GetUser(userId);
+                    if (refreshed != null) await SignInUserAsync(refreshed);
+                    Flash("success", "Password updated");
+                    return RedirectToAction("Profile", "Admin");
+                case PasswordChanger.Outcome.WrongCurrentPassword:
+                    ModelState.AddModelError(nameof(obj.CurrentPassword), L["Your current password is not correct."]);
+                    return View(obj);
+                case PasswordChanger.Outcome.Locked:
+                    Flash("danger", "Too many failed attempts. Try again in 15 minutes.");
+                    return View(obj);
+                default:
+                    Flash("danger", "Update failed");
+                    return View(obj);
             }
-
-            Flash("danger", "Update failed");
-            return View(obj);
         }
 
         [HttpGet]
@@ -214,10 +367,20 @@ namespace NewsArchive.Controllers
 
             var existing = _userService.Get(obj.UserId);
             if (existing == null) return NotFound();
-            if (existing.UserId == CurrentUserId || _roleService.Get(obj.RoleId) == null)
+            if (existing.UserId == CurrentUserId)
             {
-                Flash("danger", "Update failed");
+                Flash("danger", "You cannot change your own role. Use your profile page instead.");
                 return RedirectToAction("AllUser");
+            }
+            if (_roleService.Get(obj.RoleId) == null)
+            {
+                ModelState.AddModelError(nameof(obj.RoleId), L["Please choose a role"]);
+                return View(existing);
+            }
+            if (string.IsNullOrWhiteSpace(obj.Name) || obj.Name.Trim().Length is < 2 or > 100)
+            {
+                ModelState.AddModelError(nameof(obj.Name), L["Name must be between 2 and 100 characters"]);
+                return View(existing);
             }
 
             existing.Name = obj.Name;

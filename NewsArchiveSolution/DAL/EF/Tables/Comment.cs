@@ -15,7 +15,17 @@ public partial class Comment
 
     public DateTime CreatedDate { get; set; }
 
+    public bool IsHidden { get; set; }
+
+    public int? ModeratedById { get; set; }
+
+    public DateTime? ModeratedAt { get; set; }
+
     public virtual Article Article { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
+
+    public virtual User? ModeratedBy { get; set; }
+
+    public virtual ICollection<CommentReport> Reports { get; set; } = new List<CommentReport>();
 }

@@ -1,0 +1,21 @@
+@model BLL.DTOs.RecommendationDTO
+
+@{
+    var lang = UiLanguage.Current;
+    var categories = ViewBag.CategoryNames as Dictionary<int, string>;
+    var authors = ViewBag.AuthorNames as Dictionary<int, string>;
+    var category = categories != null && categories.TryGetValue(Model.Article.CategoryId, out var c) ? c : null;
+    var author = authors != null && authors.TryGetValue(Model.Article.AuthorId, out var a) ? a : null;
+    var tag = Model.ReasonTag;
+
+    var (icon, text) = Model.Reason switch
+    {
+        RecommendationReason.SharedTopic when tag != null => ("bi-hash", L["Same topic: {0}", tag.LocalName(lang)].Value),
+        RecommendationReason.SameSection when category != null => ("bi-grid-3x3-gap", L["More in {0}", category].Value),
+        RecommendationReason.SameAuthor when author != null => ("bi-person", L["More from {0}", author].Value),
+        RecommendationReason.SimilarStory => ("bi-stars", L["Similar story"].Value),
+        _ => ("bi-graph-up-arrow", L["Popular now"].Value)
+    };
+}
+
+<span class="rec-reason" data-reason="@Model.Reason"><i class="bi @icon" aria-hidden="true"></i><span>@text</span></span>

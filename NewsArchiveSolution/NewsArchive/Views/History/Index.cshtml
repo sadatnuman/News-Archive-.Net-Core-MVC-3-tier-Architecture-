@@ -1,0 +1,93 @@
+@model List<BLL.DTOs.ReadingHistoryEntryDTO>
+
+@{
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var total = (int)ViewBag.Total;
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    var forYou = ViewBag.ForYou as List<BLL.DTOs.RecommendationDTO> ?? new List<BLL.DTOs.RecommendationDTO>();
+    ViewData["Title"] = L["Reading history"];
+    ViewData["NoIndex"] = true;
+}
+
+<div class="container py-4 py-lg-5">
+    <header class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="page-title"><i class="bi bi-clock-history text-accent" aria-hidden="true"></i> @L["Reading history"]</h1>
+            <p class="page-intro mb-0">@L["{0} stories you have read. We use them to recommend similar stories.", total]</p>
+        </div>
+        @if (total > 0)
+        {
+            <form asp-controller="History" asp-action="Clear" method="post" data-confirm="@L["Clear your whole reading history?"]">
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash" aria-hidden="true"></i> @L["Clear history"]</button>
+            </form>
+        }
+    </header>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-clock-history"></i>
+            <h2 class="h5 mt-3">@L["No reading history yet"]</h2>
+            <p class="mb-0">@L["Stories you open while signed in will appear here."]</p>
+        </div>
+    }
+    else
+    {
+        <ol class="history-list list-unstyled">
+            @foreach (var entry in Model)
+            {
+                var a = entry.Article;
+                <li class="history-item">
+                    <partial name="_StoryMedia" model="a" />
+                    <div class="history-body" lang="@a.LanguageCode">
+                        <div lang="@UiLanguage.Current"><partial name="_StoryKicker" model="a" /></div>
+                        <h2 class="story-title"><a href="@SeoUrls.Article(a)">@a.Title</a></h2>
+                        <div class="meta" lang="@UiLanguage.Current">
+                            <span><i class="bi bi-eye" aria-hidden="true"></i> @L["Last read {0}", entry.LastReadAt.ToString("d MMM yyyy, h:mm tt")]</span>
+                            @if (entry.ReadCount > 1)
+                            {
+                                <span class="sep">&bull;</span><span>@L["Read {0} times", entry.ReadCount]</span>
+                            }
+                        </div>
+                    </div>
+                    <form asp-controller="History" asp-action="Remove" method="post" class="history-remove">
+                        <input type="hidden" name="articleId" value="@a.ArticleId" />
+                        <button type="submit" class="btn btn-link btn-sm text-danger" aria-label="@L["Remove from history"]" title="@L["Remove from history"]"><i class="bi bi-x-circle" aria-hidden="true"></i></button>
+                    </form>
+                </li>
+            }
+        </ol>
+    }
+
+    @if (totalPages > 1)
+    {
+        <nav class="mt-4" aria-label="@L["Pages"]">
+            <ul class="pagination justify-content-center flex-wrap">
+                @for (var i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link" href="@SeoUrls.Page($"/history?page={i}")" aria-current="@(i == page ? "page" : null)">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+
+    @if (forYou.Count > 0)
+    {
+        <section class="mt-5" aria-labelledby="for-you-heading">
+            <div class="section-head">
+                <h2 id="for-you-heading">@L["Recommended for you"]</h2>
+            </div>
+            <div class="row g-4">
+                @foreach (var rec in forYou)
+                {
+                    <div class="col-sm-6 col-lg-3">
+                        <partial name="_RecCard" model="rec" />
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</div>

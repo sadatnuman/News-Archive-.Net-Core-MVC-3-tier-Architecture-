@@ -77,7 +77,7 @@ namespace NewsArchive.Controllers
             if (refreshed != null) await SignInUserAsync(refreshed);
         }
 
-        private IActionResult BackToProfile()
+        private RedirectToActionResult BackToProfile()
         {
             return CurrentRoleId == AppRoles.Admin
                 ? RedirectToAction("Profile", "Admin")

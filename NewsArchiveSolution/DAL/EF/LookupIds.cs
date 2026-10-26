@@ -21,4 +21,13 @@ namespace DAL.EF
         public const int Rejected = 4;
         public const int Scheduled = 5;
     }
+
+    public static class ReportReasonIds
+    {
+        public const int Spam = 1;
+        public const int Abuse = 2;
+        public const int OffTopic = 3;
+        public const int Misinformation = 4;
+        public const int Other = 5;
+    }
 }

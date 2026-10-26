@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repos
 {
-    internal class UserRepo : Repository<User>, IUserRepository
+    internal sealed class UserRepo : Repository<User>, IUserRepository
     {
         public UserRepo(NewsArchiveDbContext db) : base(db)
         {
@@ -22,6 +22,8 @@ namespace DAL.Repos
             if (existing == null) return false;
             if (db.Articles.Any(a => a.AuthorId == id || a.ReviewedById == id)) return false;
 
+            db.CommentReports.Where(r => r.UserId == id).ExecuteDelete();
+            db.Comments.Where(c => c.ModeratedById == id).ExecuteUpdate(s => s.SetProperty(c => c.ModeratedById, (int?)null));
             db.Comments.Where(c => c.UserId == id).ExecuteDelete();
             db.Users.Remove(existing);
             return db.SaveChanges() > 0;
@@ -53,6 +55,27 @@ namespace DAL.Repos
         {
             if (string.IsNullOrEmpty(email)) return null;
             return db.Users.AsNoTracking().FirstOrDefault(u => u.Email == email);
+        }
+
+        public List<User> SuggestAuthors(string term, string? language, int count)
+        {
+            return db.Users.AsNoTracking()
+                .Where(u => u.Name.Contains(term)
+                    && u.Articles.Any(a => a.StatusId == ArticleStatusIds.Published && (language == null || a.LanguageCode == language)))
+                .OrderByDescending(u => u.Name.StartsWith(term))
+                .ThenBy(u => u.Name)
+                .Take(count)
+                .Select(u => new User
+                {
+                    UserId = u.UserId,
+                    Name = u.Name,
+                    Email = string.Empty,
+                    PasswordHash = string.Empty,
+                    AvatarPath = u.AvatarPath,
+                    RoleId = u.RoleId,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToList();
         }
 
         public Dictionary<int, string> GetNames(IEnumerable<int> ids)

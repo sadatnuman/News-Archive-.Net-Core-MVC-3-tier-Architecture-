@@ -1,0 +1,10 @@
+@model BLL.DTOs.RecommendationDTO
+
+<article class="story story-compact rec-compact" lang="@Model.Article.LanguageCode">
+    <div>
+        <div lang="@UiLanguage.Current"><partial name="_RecReason" model="Model" /></div>
+        <h3 class="story-title"><a href="@SeoUrls.Article(Model.Article)">@Model.Article.Title</a></h3>
+        <partial name="_StoryMeta" model="Model.Article" />
+    </div>
+    <partial name="_StoryMedia" model="Model.Article" />
+</article>
