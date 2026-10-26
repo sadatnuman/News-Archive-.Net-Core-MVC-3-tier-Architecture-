@@ -55,6 +55,27 @@ namespace DAL.Repos
             return db.Users.AsNoTracking().FirstOrDefault(u => u.Email == email);
         }
 
+        public List<User> SuggestAuthors(string term, string? language, int count)
+        {
+            return db.Users.AsNoTracking()
+                .Where(u => u.Name.Contains(term)
+                    && u.Articles.Any(a => a.StatusId == ArticleStatusIds.Published && (language == null || a.LanguageCode == language)))
+                .OrderByDescending(u => u.Name.StartsWith(term))
+                .ThenBy(u => u.Name)
+                .Take(count)
+                .Select(u => new User
+                {
+                    UserId = u.UserId,
+                    Name = u.Name,
+                    Email = string.Empty,
+                    PasswordHash = string.Empty,
+                    AvatarPath = u.AvatarPath,
+                    RoleId = u.RoleId,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToList();
+        }
+
         public Dictionary<int, string> GetNames(IEnumerable<int> ids)
         {
             var idList = ids.Distinct().ToList();

@@ -37,7 +37,7 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-5">
                 <label for="keyword" class="form-label fw-semibold">@L["Keyword"]</label>
-                <input id="keyword" type="search" name="keyword" value="@keyword" class="form-control" placeholder="@L["Title, summary or text"]" />
+                <input id="keyword" type="search" name="keyword" value="@keyword" class="form-control" placeholder="@L["Title, summary or text"]" maxlength="60" autocomplete="off" data-suggest="/api/search/suggest" data-lang="@lang" />
             </div>
             <div class="col-6 col-md-2">
                 <label for="from" class="form-label fw-semibold">@L["From"]</label>

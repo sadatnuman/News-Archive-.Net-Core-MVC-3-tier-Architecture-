@@ -27,6 +27,7 @@ namespace BLL
             services.AddScoped<IBookmarkService, BookmarkService>();
             services.AddScoped<IArticleLookupService, ArticleLookupService>();
             services.AddScoped<IRecommendationService, RecommendationService>();
+            services.AddScoped<ISearchService, SearchService>();
 
             return services;
         }

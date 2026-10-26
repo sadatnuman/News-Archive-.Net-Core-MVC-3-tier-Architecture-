@@ -57,7 +57,7 @@
 </div>
 
 <header class="masthead">
-    @await Html.PartialAsync("_Globe", "globe-masthead")
+    <div class="masthead-art" aria-hidden="true">@await Html.PartialAsync("_Globe", "globe-masthead")</div>
     <div class="container masthead-inner d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-3">
         <a class="brand" href="@SeoUrls.Page("/")" aria-label="@L["{0} home", site.Name]">
             <img class="brand-logo brand-logo-light" src="~/images/brand/logo-mark-ink.svg" width="60" height="51" alt="" />
@@ -76,7 +76,10 @@
             }
             <label for="site-search" class="visually-hidden">@L["Search news"]</label>
             <i class="bi bi-search" aria-hidden="true"></i>
-            <input id="site-search" type="search" name="keyword" class="form-control" placeholder="@L["Search news, topics, people"]" />
+            <input id="site-search" type="search" name="keyword" class="form-control" placeholder="@L["Search news, topics, people"]" maxlength="60" autocomplete="off"
+                   data-suggest="/api/search/suggest" data-lang="@lang"
+                   data-label-story="@L["Stories"]" data-label-topic="@L["Topics"]" data-label-section="@L["Sections"]" data-label-author="@L["Authors"]"
+                   data-label-all="@L["See all results for “{0}”", "{0}"]" data-label-none="@L["No matches. Press Enter to search the archive."]" />
         </form>
     </div>
 </header>

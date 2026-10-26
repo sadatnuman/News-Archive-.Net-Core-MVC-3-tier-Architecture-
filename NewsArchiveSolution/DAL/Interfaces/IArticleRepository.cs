@@ -35,6 +35,8 @@ namespace DAL.Interfaces
 
         List<Article> GetManyWithTags(IEnumerable<int> articleIds);
 
+        List<Article> Suggest(string term, string? language, int count);
+
         List<Article> GetByAuthor(int authorId);
 
         List<Article> GetPublishedByAuthor(int authorId, string? language, int page, int pageSize, out int total);

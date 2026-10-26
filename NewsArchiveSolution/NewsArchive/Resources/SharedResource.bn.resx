@@ -627,6 +627,9 @@
   <data name="No comments yet. Be the first to share your view." xml:space="preserve">
     <value>এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন।</value>
   </data>
+  <data name="No matches. Press Enter to search the archive." xml:space="preserve">
+    <value>কিছু মেলেনি। আর্কাইভে খুঁজতে Enter চাপুন।</value>
+  </data>
   <data name="No published authors yet" xml:space="preserve">
     <value>এখনো কোনো প্রকাশিত লেখক নেই</value>
   </data>
@@ -944,6 +947,9 @@
   </data>
   <data name="Sections" xml:space="preserve">
     <value>বিভাগসমূহ</value>
+  </data>
+  <data name="See all results for “{0}”" xml:space="preserve">
+    <value>“{0}”-এর সব ফলাফল দেখুন</value>
   </data>
   <data name="Select a role" xml:space="preserve">
     <value>ভূমিকা বেছে নিন</value>

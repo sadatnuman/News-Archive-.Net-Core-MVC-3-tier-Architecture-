@@ -169,6 +169,32 @@ namespace DAL.Repos
             return related;
         }
 
+        public List<Article> Suggest(string term, string? language, int count)
+        {
+            return Published(language)
+                .Where(a => a.Title.Contains(term) || a.Summary.Contains(term))
+                .OrderByDescending(a => a.Title.StartsWith(term))
+                .ThenByDescending(a => a.Title.Contains(term))
+                .ThenByDescending(a => a.PublishDate)
+                .Take(count)
+                .Select(a => new Article
+                {
+                    ArticleId = a.ArticleId,
+                    Title = a.Title,
+                    Slug = a.Slug,
+                    Summary = string.Empty,
+                    Content = string.Empty,
+                    LanguageCode = a.LanguageCode,
+                    CategoryId = a.CategoryId,
+                    AuthorId = a.AuthorId,
+                    ImagePath = a.ImagePath,
+                    PublishDate = a.PublishDate,
+                    IsBreakingNews = a.IsBreakingNews,
+                    StatusId = a.StatusId
+                })
+                .ToList();
+        }
+
         public List<Article> GetManyWithTags(IEnumerable<int> articleIds)
         {
             var ids = articleIds.Distinct().ToList();
