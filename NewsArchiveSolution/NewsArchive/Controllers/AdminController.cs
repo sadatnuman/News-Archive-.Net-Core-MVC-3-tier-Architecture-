@@ -18,13 +18,16 @@ namespace NewsArchive.Controllers
         private readonly ICategoryService categoryService;
         private readonly IAuthService authService;
         private readonly ICommentService commentService;
+        private readonly IAuditService auditService;
 
         private const int ModerationPageSize = 20;
+        private const int AuditPageSize = 30;
 
-        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, ICommentService commentService, IStringLocalizer<SharedResource> localizer)
+        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, ICommentService commentService, IAuditService auditService, IStringLocalizer<SharedResource> localizer)
         {
             L = localizer;
             this.commentService = commentService;
+            this.auditService = auditService;
             this.authService = authService;
             _userService = userService;
             _roleService = roleService;
@@ -111,6 +114,20 @@ namespace NewsArchive.Controllers
             ViewBag.Total = total;
             ViewBag.ReportedCount = showHidden ? commentService.CountReported() : total;
             return View(items);
+        }
+
+        [HttpGet]
+        public IActionResult Audit(string? type, int? user, int page = 1)
+        {
+            page = Math.Max(page, 1);
+            var entries = auditService.Get(type, user, page, AuditPageSize, out var total);
+            ViewBag.Type = BLL.Audit.AuditEntities.All.FirstOrDefault(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase));
+            ViewBag.UserFilter = user;
+            ViewBag.UserFilterName = user.HasValue ? _userService.Get(user.Value)?.Name : null;
+            ViewBag.Page = page;
+            ViewBag.PageSize = AuditPageSize;
+            ViewBag.Total = total;
+            return View(entries);
         }
 
         private IActionResult BackTo(string? returnUrl)

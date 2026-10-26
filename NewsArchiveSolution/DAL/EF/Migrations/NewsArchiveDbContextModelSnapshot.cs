@@ -192,6 +192,57 @@ namespace DAL.EF.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.AuditLog", b =>
+                {
+                    b.Property<long>("AuditLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("AuditLogId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AuditLogId")
+                        .HasName("PK_AuditLogs");
+
+                    b.HasIndex(new[] { "CreatedAt" }, "IX_AuditLogs_CreatedAt")
+                        .IsDescending();
+
+                    b.HasIndex(new[] { "EntityType", "CreatedAt" }, "IX_AuditLogs_EntityType_CreatedAt")
+                        .IsDescending(false, true);
+
+                    b.HasIndex(new[] { "UserId" }, "IX_AuditLogs_UserId");
+
+                    b.ToTable("AuditLogs");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Bookmark", b =>
                 {
                     b.Property<int>("UserId")
@@ -691,6 +742,17 @@ namespace DAL.EF.Migrations
                     b.Navigation("Status");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.AuditLog", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_AuditLogs_Users");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Bookmark", b =>
                 {
                     b.HasOne("DAL.EF.Tables.Article", "Article")
@@ -853,6 +915,8 @@ namespace DAL.EF.Migrations
             modelBuilder.Entity("DAL.EF.Tables.User", b =>
                 {
                     b.Navigation("Articles");
+
+                    b.Navigation("AuditLogs");
 
                     b.Navigation("Bookmarks");
 

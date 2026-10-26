@@ -6,7 +6,7 @@ namespace BLL.Interfaces
     {
         List<CategoryDTO> Get();
 
-        CategoryDTO Get(int id);
+        CategoryDTO? Get(int id);
 
         bool NameExists(string name, int categoryId);
 

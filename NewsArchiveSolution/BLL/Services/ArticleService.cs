@@ -1,6 +1,6 @@
+using BLL.Audit;
 using BLL.DTOs;
 using BLL.Interfaces;
-using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
 using AutoMapper;
@@ -12,13 +12,22 @@ namespace BLL.Services
         private readonly IArticleRepository repo;
         private readonly ITagRepository tagRepo;
         private readonly IMapper mapper;
+        private readonly IAuditService audit;
 
-        public ArticleService(IDataAccessFactory factory, IMapper mapper)
+        public ArticleService(IDataAccessFactory factory, IMapper mapper, IAuditService audit)
         {
             repo = factory.GetArticleRepository();
             tagRepo = factory.GetTagRepository();
             this.mapper = mapper;
+            this.audit = audit;
         }
+
+        private void Log(string action, Article article, string? details = null, int? actorId = null)
+        {
+            audit.Record(action, AuditEntities.Article, article.ArticleId, details == null ? article.Title : $"{article.Title}; {details}", actorId);
+        }
+
+        private static string When(DateTime value) => value.ToString("yyyy-MM-dd HH:mm");
 
         private void SaveTags(int articleId, IEnumerable<int>? tagIds)
         {
@@ -73,6 +82,13 @@ namespace BLL.Services
 
             if (!repo.Create(article)) return 0;
             SaveTags(article.ArticleId, form.TagIds);
+            if (isAdmin)
+            {
+                if (article.StatusId == ArticleStatus.Scheduled)
+                    Log(AuditActions.ArticleScheduled, article, "goes live " + When(article.PublishDate), authorId);
+                else
+                    Log(AuditActions.ArticlePublished, article, null, authorId);
+            }
             return article.ArticleId;
         }
 
@@ -82,6 +98,7 @@ namespace BLL.Services
             if (article == null || !ArticleRules.CanEdit(article.AuthorId, article.StatusId, editorId, roleId)) return false;
 
             var isAdmin = roleId == AppRoles.Admin;
+            var wasPublished = article.StatusId == ArticleStatus.Published;
             article.Title = form.Title.Trim();
             article.Slug = SlugHelper.Generate(form.Title);
             article.Summary = form.Summary.Trim();
@@ -106,6 +123,8 @@ namespace BLL.Services
 
             if (!repo.Update(article)) return false;
             SaveTags(articleId, form.TagIds);
+            if (isAdmin && (wasPublished || article.AuthorId != editorId))
+                Log(AuditActions.ArticleEdited, article, ArticleStatus.Name(article.StatusId), editorId);
             return true;
         }
 
@@ -146,7 +165,13 @@ namespace BLL.Services
             article.ReviewedById = adminId;
             article.ReviewedAt = now;
             article.ReviewNote = null;
-            return repo.Update(article);
+            if (!repo.Update(article)) return false;
+
+            if (article.StatusId == ArticleStatus.Scheduled)
+                Log(AuditActions.ArticleScheduled, article, "goes live " + When(article.PublishDate), adminId);
+            else
+                Log(AuditActions.ArticleApproved, article, null, adminId);
+            return true;
         }
 
         public bool PublishNow(int articleId)
@@ -154,7 +179,10 @@ namespace BLL.Services
             var article = repo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
             PublishOrSchedule(article, null, DateTime.Now);
-            return repo.Update(article);
+            if (!repo.Update(article)) return false;
+
+            Log(AuditActions.ArticlePublishedEarly, article);
+            return true;
         }
 
         public bool Unschedule(int articleId)
@@ -163,12 +191,18 @@ namespace BLL.Services
             if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
             article.StatusId = ArticleStatus.Pending;
             article.ScheduledAt = null;
-            return repo.Update(article);
+            if (!repo.Update(article)) return false;
+
+            Log(AuditActions.ArticleUnscheduled, article);
+            return true;
         }
 
         public int PublishDue()
         {
-            return repo.PublishDue(DateTime.Now);
+            var count = repo.PublishDue(DateTime.Now);
+            if (count > 0)
+                audit.Record(AuditActions.ArticlePublishedOnSchedule, AuditEntities.Article, null, $"{count} scheduled articles went live");
+            return count;
         }
 
         public List<ArticleDTO> GetScheduled()
@@ -184,15 +218,26 @@ namespace BLL.Services
             article.StatusId = ArticleStatus.Rejected;
             article.ReviewedById = adminId;
             article.ReviewedAt = DateTime.Now;
-            article.ReviewNote = string.IsNullOrWhiteSpace(note) ? "No reason given." : note.Trim();
-            return repo.Update(article);
+            var cleanNote = string.IsNullOrWhiteSpace(note) ? "No reason given." : note.Trim();
+            article.ReviewNote = cleanNote.Length > 500 ? cleanNote[..500] : cleanNote;
+            if (!repo.Update(article)) return false;
+
+            Log(AuditActions.ArticleRejected, article, article.ReviewNote, adminId);
+            return true;
         }
 
         public bool Delete(int articleId, int userId, int roleId)
         {
             var article = repo.Get(articleId);
             if (article == null || !ArticleRules.CanEdit(article.AuthorId, article.StatusId, userId, roleId)) return false;
-            return repo.Delete(articleId);
+            var title = article.Title;
+            var status = ArticleStatus.Name(article.StatusId);
+            var byAdmin = roleId == AppRoles.Admin;
+            if (!repo.Delete(articleId)) return false;
+
+            if (byAdmin)
+                audit.Record(AuditActions.ArticleDeleted, AuditEntities.Article, articleId, $"{title}; {status}", userId);
+            return true;
         }
 
         public ArticleFormDTO? GetForm(int id)

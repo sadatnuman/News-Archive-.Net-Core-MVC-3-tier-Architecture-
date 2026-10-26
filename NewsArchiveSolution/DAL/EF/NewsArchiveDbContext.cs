@@ -40,6 +40,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<CommentReport> CommentReports { get; set; }
 
+    public virtual DbSet<AuditLog> AuditLogs { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -264,6 +266,28 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.ModeratedById)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Comments_ModeratedBy_Users");
+        });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.AuditLogId).HasName("PK_AuditLogs");
+
+            entity.HasIndex(e => e.CreatedAt, "IX_AuditLogs_CreatedAt").IsDescending(true);
+            entity.HasIndex(e => new { e.EntityType, e.CreatedAt }, "IX_AuditLogs_EntityType_CreatedAt").IsDescending(false, true);
+            entity.HasIndex(e => e.UserId, "IX_AuditLogs_UserId");
+
+            entity.Property(e => e.Action).HasMaxLength(50);
+            entity.Property(e => e.EntityType).HasMaxLength(30);
+            entity.Property(e => e.Details).HasMaxLength(500);
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AuditLogs)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_AuditLogs_Users");
         });
 
         modelBuilder.Entity<ReportReason>(entity =>

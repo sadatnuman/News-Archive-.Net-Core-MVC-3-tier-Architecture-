@@ -2647,3 +2647,26 @@ img {
 .moderation-reports li + li {
   margin-top: .35rem;
 }
+
+.audit-filters .tag-chip.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.audit-table td {
+  vertical-align: top;
+}
+
+.audit-details {
+  max-width: 420px;
+  overflow-wrap: anywhere;
+}
+
+.audit-action {
+  font-weight: 600;
+}
+
+.audit-action.is-warning {
+  color: var(--accent);
+}

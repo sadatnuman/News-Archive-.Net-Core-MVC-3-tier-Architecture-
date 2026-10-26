@@ -1,6 +1,6 @@
+using BLL.Audit;
 using BLL.DTOs;
 using BLL.Interfaces;
-using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
 using AutoMapper;
@@ -9,16 +9,25 @@ namespace BLL.Services
 {
     public class CommentService : ICommentService
     {
+        public const int MinLength = 2;
+        public const int MaxLength = 500;
+
         private readonly ICommentRepository repo;
         private readonly IArticleRepository articleRepo;
         private readonly IMapper mapper;
+        private readonly IAuditService audit;
+        private readonly IActorContext actor;
 
-        public CommentService(IDataAccessFactory factory, IMapper mapper)
+        public CommentService(IDataAccessFactory factory, IMapper mapper, IAuditService audit, IActorContext actor)
         {
             repo = factory.GetCommentRepository();
             articleRepo = factory.GetArticleRepository();
             this.mapper = mapper;
+            this.audit = audit;
+            this.actor = actor;
         }
+
+        private static string Excerpt(string text) => text.Length > 120 ? text[..120] + "…" : text;
 
         public List<CommentDTO> Get()
         {
@@ -34,7 +43,7 @@ namespace BLL.Services
         public bool Create(CommentDTO c)
         {
             c.Text = c.Text?.Trim() ?? string.Empty;
-            if (c.Text.Length < 2 || c.Text.Length > 500) return false;
+            if (c.Text.Length < MinLength || c.Text.Length > MaxLength) return false;
             c.IsHidden = false;
             c.ModeratedById = null;
             c.ModeratedAt = null;
@@ -51,7 +60,12 @@ namespace BLL.Services
 
         public bool Delete(int id)
         {
-            return repo.Delete(id);
+            var comment = repo.Get(id);
+            if (comment == null || !repo.Delete(id)) return false;
+
+            if (actor.UserId != comment.UserId)
+                audit.Record(AuditActions.CommentRemoved, AuditEntities.Comment, id, Excerpt(comment.Text));
+            return true;
         }
 
         public List<CommentDTO> GetByArticleId(int articleId, bool includeHidden = false)
@@ -78,9 +92,11 @@ namespace BLL.Services
             if (!repo.AddReport(commentId, userId, reasonId, ModerationRules.CleanNote(note), DateTime.Now))
                 return ReportResult.AlreadyReported;
 
-            if (ModerationRules.ShouldAutoHide(repo.CountReports(commentId)))
+            var reports = repo.CountReports(commentId);
+            if (ModerationRules.ShouldAutoHide(reports))
             {
                 repo.SetHidden(commentId, true, null, DateTime.Now);
+                audit.Record(AuditActions.CommentAutoHidden, AuditEntities.Comment, commentId, $"{reports} reports; {Excerpt(comment.Text)}");
                 return ReportResult.AutoHidden;
             }
             return ReportResult.Reported;
@@ -93,15 +109,21 @@ namespace BLL.Services
 
         public bool Hide(int commentId, int moderatorId)
         {
-            if (!repo.SetHidden(commentId, true, moderatorId, DateTime.Now)) return false;
-            repo.ClearReports(commentId);
-            return true;
+            return Moderate(commentId, true, moderatorId, AuditActions.CommentHidden);
         }
 
         public bool Keep(int commentId, int moderatorId)
         {
-            if (!repo.SetHidden(commentId, false, moderatorId, DateTime.Now)) return false;
-            repo.ClearReports(commentId);
+            return Moderate(commentId, false, moderatorId, AuditActions.CommentKept);
+        }
+
+        private bool Moderate(int commentId, bool hidden, int moderatorId, string action)
+        {
+            var comment = repo.Get(commentId);
+            if (comment == null || !repo.SetHidden(commentId, hidden, moderatorId, DateTime.Now)) return false;
+
+            var cleared = repo.ClearReports(commentId);
+            audit.Record(action, AuditEntities.Comment, commentId, $"{cleared} reports cleared; {Excerpt(comment.Text)}", moderatorId);
             return true;
         }
 

@@ -1,4 +1,5 @@
 using BLL;
+using BLL.Audit;
 using BLL.Interfaces;
 using BLL.Media;
 using Microsoft.AspNetCore.Authentication;
@@ -45,6 +46,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddScoped<CookieSessionValidator>();
+builder.Services.AddScoped<IActorContext, HttpActorContext>();
 builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
 builder.Services.AddHostedService<ScheduledPublisher>();
 builder.Services.AddAntiforgery(options =>

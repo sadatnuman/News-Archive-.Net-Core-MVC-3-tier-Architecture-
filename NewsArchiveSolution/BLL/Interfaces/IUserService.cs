@@ -6,7 +6,7 @@ namespace BLL.Interfaces
     {
         List<UserDTO> Get();
 
-        UserDTO Get(int id);
+        UserDTO? Get(int id);
 
         bool Create(UserDTO c);
 

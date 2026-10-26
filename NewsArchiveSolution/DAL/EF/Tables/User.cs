@@ -37,5 +37,7 @@ public partial class User
 
     public virtual ICollection<Comment> ModeratedComments { get; set; } = new List<Comment>();
 
+    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+
     public virtual Role Role { get; set; } = null!;
 }

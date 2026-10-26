@@ -1,6 +1,6 @@
+using BLL.Audit;
 using BLL.DTOs;
 using BLL.Interfaces;
-using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
 using AutoMapper;
@@ -11,11 +11,13 @@ namespace BLL.Services
     {
         private readonly ITagRepository repo;
         private readonly IMapper mapper;
+        private readonly IAuditService audit;
 
-        public TagService(IDataAccessFactory factory, IMapper mapper)
+        public TagService(IDataAccessFactory factory, IMapper mapper, IAuditService audit)
         {
             repo = factory.GetTagRepository();
             this.mapper = mapper;
+            this.audit = audit;
         }
 
         public List<TagDTO> Get()
@@ -72,6 +74,7 @@ namespace BLL.Services
 
             tag.TagId = entity.TagId;
             tag.Slug = entity.Slug;
+            audit.Record(AuditActions.TagCreated, AuditEntities.Tag, entity.TagId, entity.Name);
             return true;
         }
 
@@ -83,12 +86,19 @@ namespace BLL.Services
             entity.Name = tag.Name.Trim();
             entity.NameBn = string.IsNullOrWhiteSpace(tag.NameBn) ? null : tag.NameBn.Trim();
             entity.Slug = UniqueSlug(entity.Name, entity.TagId);
-            return repo.Update(entity);
+            if (!repo.Update(entity)) return false;
+
+            audit.Record(AuditActions.TagUpdated, AuditEntities.Tag, entity.TagId, entity.Name);
+            return true;
         }
 
         public bool Delete(int id)
         {
-            return repo.Delete(id);
+            var name = repo.Get(id)?.Name;
+            if (name == null || !repo.Delete(id)) return false;
+
+            audit.Record(AuditActions.TagDeleted, AuditEntities.Tag, id, name);
+            return true;
         }
 
         public bool SetArticleTags(int articleId, IEnumerable<int>? tagIds)

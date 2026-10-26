@@ -4,6 +4,7 @@ SET ANSI_NULLS ON;
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
+DELETE FROM [AuditLogs];
 DELETE FROM [ReadingHistory];
 DELETE FROM [Bookmarks];
 DELETE FROM [UserTokens];
@@ -20,6 +21,7 @@ DBCC CHECKIDENT ('[Categories]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT ('[Tags]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT ('[Articles]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT ('[Comments]', RESEED, 0) WITH NO_INFOMSGS;
+DBCC CHECKIDENT ('[AuditLogs]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT ('[UserTokens]', RESEED, 0) WITH NO_INFOMSGS;
 
 SET IDENTITY_INSERT [Users] ON;
@@ -431,6 +433,20 @@ UPDATE [Comments] SET [IsHidden] = 1, [ModeratedAt] = DATEADD(MINUTE, 25, [Creat
 INSERT INTO [CommentReports] ([CommentId], [UserId], [ReasonId], [Note], [CreatedAt]) VALUES (2, 6, 3, N'Not about the evening rail hours.', DATEADD(HOUR, -5, GETDATE()));
 INSERT INTO [CommentReports] ([CommentId], [UserId], [ReasonId], [Note], [CreatedAt]) VALUES (5, 4, 4, N'Please check this claim.', DATEADD(HOUR, -3, GETDATE()));
 INSERT INTO [CommentReports] ([CommentId], [UserId], [ReasonId], [Note], [CreatedAt]) VALUES (5, 6, 5, N'Feels like an advert for one tool.', DATEADD(HOUR, -2, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'SectionCreated', 'Section', 10, N'Environment', '127.0.0.1', DATEADD(MINUTE, -7200, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'TagCreated', 'Tag', 20, N'Agriculture', '192.168.0.12', DATEADD(MINUTE, -7100, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'UserRoleChanged', 'User', 3, N'Tanvir Ahmed: Reader to Author', '192.168.0.15', DATEADD(MINUTE, -6900, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'ArticleApproved', 'Article', 1, N'Dhaka commuters welcome longer evening hours on city rail services', '10.0.0.7', DATEADD(MINUTE, -2900, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'ArticleApproved', 'Article', 15, N'ঢাকায় সন্ধ্যার রেলসেবা বাড়ানোয় স্বস্তিতে যাত্রীরা', '127.0.0.1', DATEADD(MINUTE, -2800, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'ArticleRejected', 'Article', 12, N'Walking every day linked to better sleep, readers say; Please add a source for the survey.', '192.168.0.12', DATEADD(MINUTE, -2000, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'ArticleScheduled', 'Article', 27, N'Coastal districts plan a mangrove belt to soften storm surges; goes live in three days', '192.168.0.15', DATEADD(MINUTE, -300, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'ArticleScheduled', 'Article', 28, N'শিক্ষার্থীদের তৈরি আবহাওয়া বেলুন পাঠাবে উচ্চ বায়ুমণ্ডলের তথ্য; goes live in three days', '10.0.0.7', DATEADD(MINUTE, -290, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (1, 'CommentHidden', 'Comment', 12, N'0 reports cleared; Cheap phones and free recharge offers here, message me to get yours today!', '127.0.0.1', DATEADD(MINUTE, -1500, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (4, 'SignedIn', 'Security', 4, N'Signed in from the website', '192.168.0.12', DATEADD(MINUTE, -240, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (5, 'SignInFailed', 'Security', 5, N'Wrong password', '192.168.0.15', DATEADD(MINUTE, -200, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (5, 'SignedIn', 'Security', 5, N'Signed in from the website', '10.0.0.7', DATEADD(MINUTE, -195, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (2, 'PasswordChanged', 'Security', 2, N'Password changed from the profile page', '127.0.0.1', DATEADD(MINUTE, -1200, GETDATE()));
+INSERT INTO [AuditLogs] ([UserId], [Action], [EntityType], [EntityId], [Details], [IpAddress], [CreatedAt]) VALUES (6, 'AccountRegistered', 'Security', 6, N'Sadia Islam', '192.168.0.12', DATEADD(MINUTE, -8000, GETDATE()));
 INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (1, 'C25353171A843C3F580E6D16C78572AB8B98480E39B2AB290B994AFB305CC352', 'web', DATEADD(HOUR, -30, GETDATE()), DATEADD(HOUR, -18, GETDATE()), DATEADD(HOUR, -20, GETDATE()));
 INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (2, 'CFAA2EFB72B4A7AAD3489652569FD20C5A2747AC3DA0CB6312D61DF5F1C28E2C', 'api', DATEADD(HOUR, -31, GETDATE()), DATEADD(HOUR, -19, GETDATE()), DATEADD(HOUR, -21, GETDATE()));
 INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (3, '4DDE73A5E0E4F79DEE7A66E4B955A6AC5B58AD038B530B1304C9B51CD14D80E7', 'web', DATEADD(HOUR, -32, GETDATE()), DATEADD(HOUR, -20, GETDATE()), DATEADD(HOUR, -22, GETDATE()));
