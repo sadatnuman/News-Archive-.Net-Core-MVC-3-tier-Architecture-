@@ -40,12 +40,14 @@ Article status (`ArticleStatuses` lookup table):
 
 ```
 Draft (1) ──submit──► Pending (2) ──approve──► Published (3)
-   ▲                      │
+   ▲                      │   │                      ▲
+   │                      │   └─approve with time──► Scheduled (5) ──time reached / publish now
    └──── edit/resubmit ── Rejected (4) ◄──reject (with note)
 ```
 
 - Nothing written by an Author is public until an Admin approves it.
-- Articles created by an Admin are published immediately.
+- Articles created by an Admin are published immediately, or at the **Publish at** time when one is given.
+- Admins can approve with a future **Publish at** time (up to a year ahead). `Publishing/ScheduledPublisher` (a hosted `BackgroundService`) calls `ArticleService.PublishDue()` every 30 seconds, which publishes due articles in one `ExecuteUpdate`. Scheduled articles can be published early or sent back to review from **Pending articles**.
 - Public queries (`ArticleRepo.Published()`) only return Published articles. Non-published articles return 404 to everyone except the author and admins.
 - Business rules live in `BLL/Services/ArticleService.cs` (`Create`, `Update`, `Submit`, `Approve`, `Reject`, `Delete`, `CanEdit`, `CanView`). Controllers only call them.
 - Role and status ids are defined once in `DAL/EF/LookupIds.cs` and exposed to the UI through `BLL/AppRoles.cs` (`AppRoles`, `ArticleStatus`).
@@ -64,6 +66,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `AddUserAvatars` | `Users.AvatarPath` for profile pictures |
 | `AddUserBio` | `Users.Bio` (up to 500 characters) for author pages |
 | `AddBookmarks` | `Bookmarks` join table for "read later" |
+| `AddScheduledPublishing` | `Articles.ScheduledAt`, `Scheduled` status row, `IX_Articles_StatusId_ScheduledAt` |
 
 ### Tables (3NF)
 
@@ -244,7 +247,8 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `PUT /api/articles/{id}?submit=` | Owner (unpublished) or Admin | 204 / 403 / 404 |
 | `DELETE /api/articles/{id}` | Owner (unpublished) or Admin | 204 / 403 / 404 |
 | `POST /api/articles/{id}/submit` | Author (owner) | 204 / 409 |
-| `POST /api/articles/{id}/approve`, `/reject` | Admin | 204 / 409 |
+| `POST /api/articles/{id}/approve` (optional body `{ "publishAt": "..." }`), `/reject` | Admin | 204 / 409 |
+| `GET /api/articles/scheduled`, `POST /api/articles/{id}/publish-now` | Admin | 200 / 204 / 409 |
 | `GET /api/articles/{id}/comments` | Public | 200 |
 | `POST /api/articles/{id}/comments` | Any token, rate limited | 201 |
 | `DELETE /api/comments/{id}` | Comment owner or Admin | 204 / 403 |
@@ -374,6 +378,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 4d | Author pages with bios | Done |
 | 4e | Bookmarks ("read later") | Done |
 | 4f | Safe Markdown formatting with toolbar and live preview | Done |
-| 4g | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
+| 4g | Scheduled publishing | Done |
+| 4h | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

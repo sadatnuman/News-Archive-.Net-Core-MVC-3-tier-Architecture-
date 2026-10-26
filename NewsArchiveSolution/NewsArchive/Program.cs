@@ -10,6 +10,7 @@ using NewsArchive;
 using NewsArchive.Auth;
 using NewsArchive.Media;
 using NewsArchive.Health;
+using NewsArchive.Publishing;
 using BLL.Media;
 using NewsArchive.Seo;
 using System.Globalization;
@@ -39,6 +40,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
+builder.Services.AddHostedService<ScheduledPublisher>();
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "Meridian.Antiforgery";

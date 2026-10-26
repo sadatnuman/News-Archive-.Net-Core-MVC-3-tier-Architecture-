@@ -205,6 +205,16 @@ namespace DAL.Repos
                 .ToDictionary(x => x.Key, x => x.Count);
         }
 
+        public int PublishDue(DateTime now)
+        {
+            return db.Articles
+                .Where(a => a.StatusId == ArticleStatusIds.Scheduled && a.ScheduledAt != null && a.ScheduledAt <= now)
+                .ExecuteUpdate(s => s
+                    .SetProperty(a => a.StatusId, ArticleStatusIds.Published)
+                    .SetProperty(a => a.PublishDate, a => a.ScheduledAt!.Value)
+                    .SetProperty(a => a.ScheduledAt, (DateTime?)null));
+        }
+
         public List<Article> GetByStatus(int statusId)
         {
             return db.Articles.AsNoTracking()

@@ -35,6 +35,7 @@ namespace BLL
         public const int Pending = ArticleStatusIds.Pending;
         public const int Published = ArticleStatusIds.Published;
         public const int Rejected = ArticleStatusIds.Rejected;
+        public const int Scheduled = ArticleStatusIds.Scheduled;
 
         public static string Name(int statusId) => statusId switch
         {
@@ -42,6 +43,7 @@ namespace BLL
             Pending => "Pending review",
             Published => "Published",
             Rejected => "Rejected",
+            Scheduled => "Scheduled",
             _ => "Unknown"
         };
     }

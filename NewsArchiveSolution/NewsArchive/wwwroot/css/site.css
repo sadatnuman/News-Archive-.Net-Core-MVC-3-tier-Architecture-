@@ -69,6 +69,7 @@
 [data-bs-theme="dark"] .status-pill.s-2 { background: #422006; color: #fde68a; }
 [data-bs-theme="dark"] .status-pill.s-3 { background: #052e16; color: #86efac; }
 [data-bs-theme="dark"] .status-pill.s-4 { background: #4c0519; color: #fda4af; }
+[data-bs-theme="dark"] .status-pill.s-5 { background: #172554; color: #93c5fd; }
 
 [data-bs-theme="dark"] .story-media img {
   filter: brightness(.92);
@@ -792,6 +793,7 @@ img {
 .status-pill.s-2 { background: #fef3c7; color: #92400e; }
 .status-pill.s-3 { background: #dcfce7; color: #166534; }
 .status-pill.s-4 { background: var(--breaking-soft); color: var(--breaking); }
+.status-pill.s-5 { background: #dbeafe; color: #1e40af; }
 
 .comments {
   border-top: 3px solid var(--ink);

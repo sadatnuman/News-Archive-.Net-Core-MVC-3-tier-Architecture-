@@ -89,6 +89,9 @@ namespace DAL.EF.Migrations
                     b.Property<int?>("ReviewedById")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ScheduledAt")
+                        .HasColumnType("datetime");
+
                     b.Property<string>("Slug")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -132,6 +135,8 @@ namespace DAL.EF.Migrations
 
                     b.HasIndex(new[] { "StatusId", "PublishDate" }, "IX_Articles_StatusId_PublishDate")
                         .IsDescending(false, true);
+
+                    b.HasIndex(new[] { "StatusId", "ScheduledAt" }, "IX_Articles_StatusId_ScheduledAt");
 
                     b.HasIndex(new[] { "ViewsCount" }, "IX_Articles_ViewsCount");
 
@@ -179,6 +184,11 @@ namespace DAL.EF.Migrations
                         {
                             StatusId = 4,
                             Name = "Rejected"
+                        },
+                        new
+                        {
+                            StatusId = 5,
+                            Name = "Scheduled"
                         });
                 });
 

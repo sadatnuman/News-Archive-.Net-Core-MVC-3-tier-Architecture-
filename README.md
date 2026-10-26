@@ -25,6 +25,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 
 **Admins**
 - Approve or reject submitted articles; nothing written by an author is published without approval
+- Schedule approved articles for a future date and time; they go live automatically
 - Add, rename and delete any number of sections, with English and Bangla names; articles are moved when a section is deleted
 - Manage topic tags in English and Bangla; every tag gets its own page at `/tag/{id}/{slug}`
 - Manage users and roles, and moderate comments

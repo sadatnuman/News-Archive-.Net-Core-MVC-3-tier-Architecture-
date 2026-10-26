@@ -41,17 +41,41 @@ namespace NewsArchive.Controllers
         {
             var pending = articleService.GetPending();
             ViewBag.AuthorNames = _userService.GetNames(pending.Select(a => a.AuthorId));
+            var scheduled = articleService.GetScheduled();
+            ViewBag.AuthorNames = _userService.GetNames(pending.Concat(scheduled).Select(a => a.AuthorId));
             ViewBag.CategoryNames = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
+            ViewBag.Scheduled = scheduled;
             return View(pending);
         }
 
         [HttpPost]
-        public IActionResult Approve(int id)
+        public IActionResult Approve(int id, DateTime? publishAt)
         {
-            if (articleService.Approve(id, CurrentUserId ?? 0))
-                Flash("success", "Article approved and published.");
+            var scheduled = ArticleService.IsFutureSchedule(publishAt, DateTime.Now);
+            if (articleService.Approve(id, CurrentUserId ?? 0, publishAt))
+                Flash("success", scheduled ? "Article approved and scheduled." : "Article approved and published.");
             else
                 Flash("danger", "Only pending articles can be approved.");
+            return RedirectToAction("PendingArticles");
+        }
+
+        [HttpPost]
+        public IActionResult PublishNow(int id)
+        {
+            if (articleService.PublishNow(id))
+                Flash("success", "Article published.");
+            else
+                Flash("danger", "Only scheduled articles can be published early.");
+            return RedirectToAction("PendingArticles");
+        }
+
+        [HttpPost]
+        public IActionResult Unschedule(int id)
+        {
+            if (articleService.Unschedule(id))
+                Flash("warning", "Schedule cancelled. The article is back in the review queue.");
+            else
+                Flash("danger", "Only scheduled articles can be changed.");
             return RedirectToAction("PendingArticles");
         }
 

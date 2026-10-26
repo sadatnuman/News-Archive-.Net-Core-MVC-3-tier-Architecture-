@@ -62,7 +62,13 @@
                             </td>
                             <td>@(categories.TryGetValue(a.CategoryId, out var c) ? c : "")</td>
                             <td>@AppLanguages.NativeName(a.LanguageCode)</td>
-                            <td><span class="status-pill s-@a.StatusId">@L[a.StatusName]</span></td>
+                            <td>
+                                <span class="status-pill s-@a.StatusId">@L[a.StatusName]</span>
+                                @if (a.StatusId == ArticleStatus.Scheduled && a.ScheduledAt.HasValue)
+                                {
+                                    <div class="meta small mt-1">@a.ScheduledAt.Value.ToString("d MMM, h:mm tt")</div>
+                                }
+                            </td>
                             <td class="text-nowrap">@((a.UpdatedAt ?? a.CreatedAt).ToString("d MMM yyyy"))</td>
                             <td class="text-end text-nowrap">
                                 @if (a.StatusId != ArticleStatus.Published)

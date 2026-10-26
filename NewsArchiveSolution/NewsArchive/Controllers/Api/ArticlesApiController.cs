@@ -175,14 +175,34 @@ namespace NewsArchive.Controllers.Api
         [ApiAuthorize(AppRoles.Admin)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Approve(int id)
+        public async Task<IActionResult> Approve(int id, [FromBody] ApproveDTO? approve)
         {
             if (articleService.Get(id) == null) return NotFound();
             var user = await RequireApiUserAsync();
 
-            return articleService.Approve(id, user.UserId)
+            return articleService.Approve(id, user.UserId, approve?.PublishAt)
                 ? NoContent()
                 : Problem(statusCode: StatusCodes.Status409Conflict, title: "Only pending articles can be approved.");
+        }
+
+        [HttpGet("scheduled")]
+        [ApiAuthorize(AppRoles.Admin)]
+        [ProducesResponseType(typeof(List<ArticleDTO>), StatusCodes.Status200OK)]
+        public IActionResult Scheduled()
+        {
+            return Ok(articleService.GetScheduled());
+        }
+
+        [HttpPost("{id:int}/publish-now")]
+        [ApiAuthorize(AppRoles.Admin)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        public IActionResult PublishNow(int id)
+        {
+            if (articleService.Get(id) == null) return NotFound();
+            return articleService.PublishNow(id)
+                ? NoContent()
+                : Problem(statusCode: StatusCodes.Status409Conflict, title: "Only scheduled articles can be published early.");
         }
 
         [HttpPost("{id:int}/reject")]

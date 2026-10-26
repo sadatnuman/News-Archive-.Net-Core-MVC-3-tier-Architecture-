@@ -61,7 +61,7 @@ namespace BLL.Services
 
             if (isAdmin)
             {
-                article.StatusId = ArticleStatus.Published;
+                PublishOrSchedule(article, form.PublishAt, now);
                 article.ReviewedById = authorId;
                 article.ReviewedAt = now;
             }
@@ -93,6 +93,10 @@ namespace BLL.Services
             if (isAdmin)
             {
                 article.IsBreakingNews = form.IsBreakingNews;
+                if (article.StatusId != ArticleStatus.Published && IsFutureSchedule(form.PublishAt, DateTime.Now))
+                    PublishOrSchedule(article, form.PublishAt, DateTime.Now);
+                else if (article.StatusId == ArticleStatus.Scheduled && form.PublishAt == null)
+                    PublishOrSchedule(article, null, DateTime.Now);
             }
             else
             {
@@ -115,18 +119,67 @@ namespace BLL.Services
             return repo.Update(article);
         }
 
-        public bool Approve(int articleId, int adminId)
+        public static readonly TimeSpan MaxScheduleAhead = TimeSpan.FromDays(366);
+
+        public static bool IsFutureSchedule(DateTime? publishAt, DateTime now)
+        {
+            return publishAt.HasValue && publishAt.Value > now.AddMinutes(1) && publishAt.Value <= now.Add(MaxScheduleAhead);
+        }
+
+        private static void PublishOrSchedule(Article article, DateTime? publishAt, DateTime now)
+        {
+            if (IsFutureSchedule(publishAt, now))
+            {
+                article.StatusId = ArticleStatus.Scheduled;
+                article.ScheduledAt = publishAt;
+                article.PublishDate = publishAt!.Value;
+            }
+            else
+            {
+                article.StatusId = ArticleStatus.Published;
+                article.ScheduledAt = null;
+                article.PublishDate = now;
+            }
+        }
+
+        public bool Approve(int articleId, int adminId, DateTime? publishAt = null)
         {
             var article = repo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Pending) return false;
 
             var now = DateTime.Now;
-            article.StatusId = ArticleStatus.Published;
-            article.PublishDate = now;
+            PublishOrSchedule(article, publishAt, now);
             article.ReviewedById = adminId;
             article.ReviewedAt = now;
             article.ReviewNote = null;
             return repo.Update(article);
+        }
+
+        public bool PublishNow(int articleId)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
+            PublishOrSchedule(article, null, DateTime.Now);
+            return repo.Update(article);
+        }
+
+        public bool Unschedule(int articleId)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
+            article.StatusId = ArticleStatus.Pending;
+            article.ScheduledAt = null;
+            return repo.Update(article);
+        }
+
+        public int PublishDue()
+        {
+            return repo.PublishDue(DateTime.Now);
+        }
+
+        public List<ArticleDTO> GetScheduled()
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetByStatus(ArticleStatus.Scheduled).OrderBy(a => a.ScheduledAt));
         }
 
         public bool Reject(int articleId, int adminId, string? note)
@@ -175,6 +228,7 @@ namespace BLL.Services
                 IsBreakingNews = a.IsBreakingNews,
                 LanguageCode = a.LanguageCode,
                 StatusId = a.StatusId,
+                PublishAt = a.ScheduledAt,
                 ReviewNote = a.ReviewNote,
                 TagIds = tagRepo.GetForArticle(a.ArticleId).Select(t => t.TagId).ToList()
             };

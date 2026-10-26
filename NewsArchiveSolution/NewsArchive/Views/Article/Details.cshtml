@@ -84,6 +84,10 @@
                 <div>
                     <span class="status-pill s-@Model.StatusId">@statusLabel</span>
                     <span class="ms-2">@L["This article is not public. Only the author and admins can see it."]</span>
+                    @if (Model.StatusId == ArticleStatus.Scheduled && Model.ScheduledAt.HasValue)
+                    {
+                        <div class="mt-2"><i class="bi bi-clock" aria-hidden="true"></i> @L["Goes live {0}", Model.ScheduledAt.Value.ToString("d MMM yyyy, h:mm tt")]</div>
+                    }
                     @if (!string.IsNullOrEmpty(Model.ReviewNote))
                     {
                         <div class="mt-2"><strong>@L["Editor's note:"]</strong> @Model.ReviewNote</div>
@@ -92,8 +96,10 @@
                 @if (isAdmin && Model.StatusId == ArticleStatus.Pending)
                 {
                     <div class="d-flex flex-wrap gap-2">
-                        <form asp-controller="Admin" asp-action="Approve" asp-route-id="@Model.ArticleId" method="post">
-                            <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> @L["Approve & publish"]</button>
+                        <form asp-controller="Admin" asp-action="Approve" asp-route-id="@Model.ArticleId" method="post" class="d-flex gap-2">
+                            <label class="visually-hidden" for="publishAt">@L["Publish at (leave empty to publish now)"]</label>
+                            <input id="publishAt" type="datetime-local" name="publishAt" class="form-control" title="@L["Publish at (leave empty to publish now)"]" min="@DateTime.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm")" />
+                            <button type="submit" class="btn btn-success flex-shrink-0"><i class="bi bi-check2-circle"></i> @L["Approve & publish"]</button>
                         </form>
                         <form asp-controller="Admin" asp-action="Reject" asp-route-id="@Model.ArticleId" method="post" class="d-flex gap-2">
                             <input type="text" name="note" class="form-control" placeholder="@L["Reason for rejection"]" maxlength="500" required aria-label="@L["Reason for rejection"]" />
