@@ -22,6 +22,8 @@ namespace DAL.Repos
             if (existing == null) return false;
             if (db.Articles.Any(a => a.AuthorId == id || a.ReviewedById == id)) return false;
 
+            db.CommentReports.Where(r => r.UserId == id).ExecuteDelete();
+            db.Comments.Where(c => c.ModeratedById == id).ExecuteUpdate(s => s.SetProperty(c => c.ModeratedById, (int?)null));
             db.Comments.Where(c => c.UserId == id).ExecuteDelete();
             db.Users.Remove(existing);
             return db.SaveChanges() > 0;

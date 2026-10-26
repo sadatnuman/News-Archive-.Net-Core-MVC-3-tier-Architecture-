@@ -17,10 +17,14 @@ namespace NewsArchive.Controllers
         private readonly IArticleService articleService;
         private readonly ICategoryService categoryService;
         private readonly IAuthService authService;
+        private readonly ICommentService commentService;
 
-        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, IStringLocalizer<SharedResource> localizer)
+        private const int ModerationPageSize = 20;
+
+        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, ICommentService commentService, IStringLocalizer<SharedResource> localizer)
         {
             L = localizer;
+            this.commentService = commentService;
             this.authService = authService;
             _userService = userService;
             _roleService = roleService;
@@ -34,6 +38,7 @@ namespace NewsArchive.Controllers
             ViewBag.TotalArticles = analyticsService.GetTotalArticles();
             ViewBag.TotalUsers = analyticsService.GetTotalUsers();
             ViewBag.PendingCount = articleService.CountPending();
+            ViewBag.ReportedCount = commentService.CountReported();
             ViewBag.MostViewed = analyticsService.GetMostViewedArticles(5);
             ViewBag.ArticlesPerCategory = analyticsService.GetArticlesPerCategory();
             return View();
@@ -43,7 +48,6 @@ namespace NewsArchive.Controllers
         public IActionResult PendingArticles()
         {
             var pending = articleService.GetPending();
-            ViewBag.AuthorNames = _userService.GetNames(pending.Select(a => a.AuthorId));
             var scheduled = articleService.GetScheduled();
             ViewBag.AuthorNames = _userService.GetNames(pending.Concat(scheduled).Select(a => a.AuthorId));
             ViewBag.CategoryNames = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
@@ -90,6 +94,60 @@ namespace NewsArchive.Controllers
             else
                 Flash("danger", "Only pending articles can be rejected.");
             return RedirectToAction("PendingArticles");
+        }
+
+        [HttpGet]
+        public IActionResult Comments(string? tab, int page = 1)
+        {
+            var showHidden = tab == "hidden";
+            page = Math.Max(page, 1);
+            int total;
+            var items = showHidden
+                ? commentService.GetHidden(page, ModerationPageSize, out total)
+                : commentService.GetReported(page, ModerationPageSize, out total);
+            ViewBag.Tab = showHidden ? "hidden" : "reported";
+            ViewBag.Page = page;
+            ViewBag.PageSize = ModerationPageSize;
+            ViewBag.Total = total;
+            ViewBag.ReportedCount = showHidden ? commentService.CountReported() : total;
+            return View(items);
+        }
+
+        private IActionResult BackTo(string? returnUrl)
+        {
+            return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? LocalRedirect(returnUrl)
+                : RedirectToAction("Comments");
+        }
+
+        [HttpPost]
+        public IActionResult HideComment(int id, string? returnUrl)
+        {
+            if (commentService.Hide(id, CurrentUserId ?? 0))
+                Flash("success", "Comment hidden from readers.");
+            else
+                Flash("danger", "This comment no longer exists.");
+            return BackTo(returnUrl);
+        }
+
+        [HttpPost]
+        public IActionResult KeepComment(int id, string? returnUrl)
+        {
+            if (commentService.Keep(id, CurrentUserId ?? 0))
+                Flash("success", "Comment kept and reports cleared.");
+            else
+                Flash("danger", "This comment no longer exists.");
+            return BackTo(returnUrl);
+        }
+
+        [HttpPost]
+        public IActionResult DeleteComment(int id, string? returnUrl)
+        {
+            if (commentService.Delete(id))
+                Flash("success", "Comment deleted.");
+            else
+                Flash("danger", "This comment no longer exists.");
+            return BackTo(returnUrl);
         }
 
         [HttpGet]

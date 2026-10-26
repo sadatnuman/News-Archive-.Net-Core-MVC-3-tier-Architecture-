@@ -33,5 +33,9 @@ public partial class User
 
     public virtual ICollection<ReadingHistory> ReadingHistory { get; set; } = new List<ReadingHistory>();
 
+    public virtual ICollection<CommentReport> CommentReports { get; set; } = new List<CommentReport>();
+
+    public virtual ICollection<Comment> ModeratedComments { get; set; } = new List<Comment>();
+
     public virtual Role Role { get; set; } = null!;
 }

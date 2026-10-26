@@ -21,5 +21,11 @@ namespace BLL.DTOs
 
         [Required(ErrorMessage = "Created date is required")]
         public DateTime CreatedDate { get; set; }
+
+        public bool IsHidden { get; set; }
+
+        public int? ModeratedById { get; set; }
+
+        public DateTime? ModeratedAt { get; set; }
     }
 }

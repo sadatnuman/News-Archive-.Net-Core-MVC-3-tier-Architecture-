@@ -120,7 +120,7 @@ namespace DAL.Repos
         public List<Article> GetTrending(int count, string? language = null)
         {
             return Published(language)
-                .OrderByDescending(a => a.ViewsCount + a.Comments.Count() * 2)
+                .OrderByDescending(a => a.ViewsCount + a.Comments.Count(c => !c.IsHidden) * 2)
                 .ThenByDescending(a => a.PublishDate)
                 .Take(count)
                 .ToList();
@@ -280,7 +280,7 @@ namespace DAL.Repos
 
         public int GetCommentCount(int articleId)
         {
-            return db.Comments.Count(c => c.ArticleId == articleId);
+            return db.Comments.Count(c => c.ArticleId == articleId && !c.IsHidden);
         }
 
         public Dictionary<int, int> CountPerCategory()

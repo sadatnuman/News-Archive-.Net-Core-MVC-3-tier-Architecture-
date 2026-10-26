@@ -2576,3 +2576,74 @@ img {
 .suggest-all.is-active {
   color: var(--accent);
 }
+
+.comment-hidden {
+  opacity: .7;
+  border-left: 3px solid var(--line-strong);
+  padding-left: .85rem;
+}
+
+.comment-report summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 32px;
+  cursor: pointer;
+  font-size: .82rem;
+  color: var(--muted);
+  list-style: none;
+}
+
+.comment-report summary::-webkit-details-marker {
+  display: none;
+}
+
+.comment-report summary:hover,
+.comment-report[open] summary {
+  color: var(--accent);
+}
+
+.comment-report-form {
+  margin-top: .5rem;
+  padding: .75rem .9rem;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-width: 560px;
+}
+
+.comment-report-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.comment-reported {
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+.moderation-item {
+  padding: 1rem 1.1rem;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.moderation-item.is-hidden {
+  border-left-color: var(--line-strong);
+}
+
+.moderation-text {
+  margin: 0 0 .75rem;
+  padding: .6rem .85rem;
+  background: var(--paper);
+  border-radius: 6px;
+  font-size: .95rem;
+  overflow-wrap: anywhere;
+}
+
+.moderation-reports li + li {
+  margin-top: .35rem;
+}

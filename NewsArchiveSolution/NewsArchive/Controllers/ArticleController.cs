@@ -152,7 +152,9 @@ namespace NewsArchive.Controllers
                     sessionReads = SessionReadingList.Add(HttpContext.Session, id);
             }
 
-            var comments = article.IsPublished ? commentService.GetByArticleId(id) : new List<CommentDTO>();
+            var comments = article.IsPublished ? commentService.GetByArticleId(id, includeHidden: roleId == AppRoles.Admin) : new List<CommentDTO>();
+            ViewBag.ReportedIds = userId.HasValue ? commentService.GetReportedIds(userId.Value, comments.Select(c => c.CommentId)) : new HashSet<int>();
+            ViewBag.ReportReasons = userId.HasValue ? commentService.GetReasons() : new List<ReportReasonDTO>();
             var users = userService.GetNames(comments.Select(c => c.UserId).Append(article.AuthorId));
             ViewBag.Avatars = userService.GetAvatars(comments.Select(c => c.UserId).Append(article.AuthorId));
             ViewBag.AuthorId = article.AuthorId;

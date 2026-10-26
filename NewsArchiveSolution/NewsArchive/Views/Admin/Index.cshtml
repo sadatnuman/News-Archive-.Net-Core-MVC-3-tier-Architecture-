@@ -4,6 +4,7 @@
     var mostViewed = ViewBag.MostViewed as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
     var perCategory = ViewBag.ArticlesPerCategory as List<(string Category, int Count)> ?? new List<(string Category, int Count)>();
     var pending = (int)(ViewBag.PendingCount ?? 0);
+    var reported = (int)(ViewBag.ReportedCount ?? 0);
     var maxCategory = perCategory.Count > 0 ? perCategory.Max(c => c.Count) : 1;
 }
 
@@ -30,13 +31,18 @@
                 <div class="value">@ViewBag.TotalUsers</div>
             </div>
         </div>
-        <div class="col-12 col-lg-6">
-            <a asp-action="PendingArticles" class="data-card d-flex justify-content-between align-items-center @(pending > 0 ? "border-warning" : "")">
-                <div>
-                    <div class="label">@L["Awaiting approval"]</div>
-                    <div class="value">@pending</div>
-                </div>
-                <span class="btn btn-sm @(pending > 0 ? "btn-warning" : "btn-outline-secondary")">@L["Review queue"] <i class="bi bi-arrow-right"></i></span>
+        <div class="col-6 col-lg-3">
+            <a asp-action="PendingArticles" class="data-card d-block h-100 @(pending > 0 ? "border-warning" : "")">
+                <div class="label">@L["Awaiting approval"]</div>
+                <div class="value">@pending</div>
+                <span class="small fw-semibold">@L["Review queue"] <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+            </a>
+        </div>
+        <div class="col-6 col-lg-3">
+            <a asp-action="Comments" class="data-card d-block h-100 @(reported > 0 ? "border-danger" : "")">
+                <div class="label">@L["Reported comments"]</div>
+                <div class="value">@reported</div>
+                <span class="small fw-semibold">@L["Moderate comments"] <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
             </a>
         </div>
     </div>

@@ -36,6 +36,10 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<ReadingHistory> ReadingHistory { get; set; }
 
+    public virtual DbSet<ReportReason> ReportReasons { get; set; }
+
+    public virtual DbSet<CommentReport> CommentReports { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -249,6 +253,62 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Comments_Users");
+
+            entity.HasIndex(e => new { e.ArticleId, e.IsHidden }, "IX_Comments_ArticleId_IsHidden");
+            entity.HasIndex(e => e.ModeratedById, "IX_Comments_ModeratedById");
+
+            entity.Property(e => e.IsHidden).HasDefaultValue(false);
+            entity.Property(e => e.ModeratedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.ModeratedBy).WithMany(p => p.ModeratedComments)
+                .HasForeignKey(d => d.ModeratedById)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Comments_ModeratedBy_Users");
+        });
+
+        modelBuilder.Entity<ReportReason>(entity =>
+        {
+            entity.HasKey(e => e.ReasonId).HasName("PK_ReportReasons");
+
+            entity.Property(e => e.ReasonId).ValueGeneratedNever();
+            entity.Property(e => e.Name).HasMaxLength(40);
+
+            entity.HasIndex(e => e.Name, "UX_ReportReasons_Name").IsUnique();
+
+            entity.HasData(
+                new ReportReason { ReasonId = ReportReasonIds.Spam, Name = "Spam" },
+                new ReportReason { ReasonId = ReportReasonIds.Abuse, Name = "Abuse or harassment" },
+                new ReportReason { ReasonId = ReportReasonIds.OffTopic, Name = "Off topic" },
+                new ReportReason { ReasonId = ReportReasonIds.Misinformation, Name = "Misinformation" },
+                new ReportReason { ReasonId = ReportReasonIds.Other, Name = "Other" });
+        });
+
+        modelBuilder.Entity<CommentReport>(entity =>
+        {
+            entity.HasKey(e => new { e.CommentId, e.UserId }).HasName("PK_CommentReports");
+
+            entity.HasIndex(e => e.UserId, "IX_CommentReports_UserId");
+            entity.HasIndex(e => e.ReasonId, "IX_CommentReports_ReasonId");
+
+            entity.Property(e => e.Note).HasMaxLength(300);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Comment).WithMany(p => p.Reports)
+                .HasForeignKey(d => d.CommentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_CommentReports_Comments");
+
+            entity.HasOne(d => d.User).WithMany(p => p.CommentReports)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentReports_Users");
+
+            entity.HasOne(d => d.Reason).WithMany(p => p.Reports)
+                .HasForeignKey(d => d.ReasonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentReports_ReportReasons");
         });
 
         modelBuilder.Entity<Role>(entity =>

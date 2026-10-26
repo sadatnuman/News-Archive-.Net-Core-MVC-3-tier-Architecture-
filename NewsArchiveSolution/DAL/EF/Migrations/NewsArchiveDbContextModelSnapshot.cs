@@ -278,6 +278,17 @@ namespace DAL.EF.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("ModeratedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int?>("ModeratedById")
+                        .HasColumnType("int");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -292,9 +303,43 @@ namespace DAL.EF.Migrations
                     b.HasIndex(new[] { "ArticleId", "CreatedDate" }, "IX_Comments_ArticleId_CreatedDate")
                         .IsDescending(false, true);
 
+                    b.HasIndex(new[] { "ArticleId", "IsHidden" }, "IX_Comments_ArticleId_IsHidden");
+
+                    b.HasIndex(new[] { "ModeratedById" }, "IX_Comments_ModeratedById");
+
                     b.HasIndex(new[] { "UserId" }, "IX_Comments_UserId");
 
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.CommentReport", b =>
+                {
+                    b.Property<int>("CommentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("ReasonId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CommentId", "UserId")
+                        .HasName("PK_CommentReports");
+
+                    b.HasIndex(new[] { "ReasonId" }, "IX_CommentReports_ReasonId");
+
+                    b.HasIndex(new[] { "UserId" }, "IX_CommentReports_UserId");
+
+                    b.ToTable("CommentReports");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.Language", b =>
@@ -367,6 +412,52 @@ namespace DAL.EF.Migrations
                     b.ToTable("ReadingHistory", null, t =>
                         {
                             t.HasCheckConstraint("CK_ReadingHistory_ReadCount", "[ReadCount] >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.ReportReason", b =>
+                {
+                    b.Property<int>("ReasonId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("ReasonId")
+                        .HasName("PK_ReportReasons");
+
+                    b.HasIndex(new[] { "Name" }, "UX_ReportReasons_Name")
+                        .IsUnique();
+
+                    b.ToTable("ReportReasons");
+
+                    b.HasData(
+                        new
+                        {
+                            ReasonId = 1,
+                            Name = "Spam"
+                        },
+                        new
+                        {
+                            ReasonId = 2,
+                            Name = "Abuse or harassment"
+                        },
+                        new
+                        {
+                            ReasonId = 3,
+                            Name = "Off topic"
+                        },
+                        new
+                        {
+                            ReasonId = 4,
+                            Name = "Misinformation"
+                        },
+                        new
+                        {
+                            ReasonId = 5,
+                            Name = "Other"
                         });
                 });
 
@@ -630,6 +721,11 @@ namespace DAL.EF.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_Comments_Articles");
 
+                    b.HasOne("DAL.EF.Tables.User", "ModeratedBy")
+                        .WithMany("ModeratedComments")
+                        .HasForeignKey("ModeratedById")
+                        .HasConstraintName("FK_Comments_ModeratedBy_Users");
+
                     b.HasOne("DAL.EF.Tables.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
@@ -637,6 +733,36 @@ namespace DAL.EF.Migrations
                         .HasConstraintName("FK_Comments_Users");
 
                     b.Navigation("Article");
+
+                    b.Navigation("ModeratedBy");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.CommentReport", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Comment", "Comment")
+                        .WithMany("Reports")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentReports_Comments");
+
+                    b.HasOne("DAL.EF.Tables.ReportReason", "Reason")
+                        .WithMany("Reports")
+                        .HasForeignKey("ReasonId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentReports_ReportReasons");
+
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("CommentReports")
+                        .HasForeignKey("UserId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentReports_Users");
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Reason");
 
                     b.Navigation("User");
                 });
@@ -704,9 +830,19 @@ namespace DAL.EF.Migrations
                     b.Navigation("Articles");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.Comment", b =>
+                {
+                    b.Navigation("Reports");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Language", b =>
                 {
                     b.Navigation("Articles");
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.ReportReason", b =>
+                {
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.Role", b =>
@@ -720,7 +856,11 @@ namespace DAL.EF.Migrations
 
                     b.Navigation("Bookmarks");
 
+                    b.Navigation("CommentReports");
+
                     b.Navigation("Comments");
+
+                    b.Navigation("ModeratedComments");
 
                     b.Navigation("ReadingHistory");
 

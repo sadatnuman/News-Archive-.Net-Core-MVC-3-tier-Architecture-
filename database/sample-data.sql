@@ -8,6 +8,7 @@ DELETE FROM [ReadingHistory];
 DELETE FROM [Bookmarks];
 DELETE FROM [UserTokens];
 DELETE FROM [ContentLabels];
+DELETE FROM [CommentReports];
 DELETE FROM [Comments];
 DELETE FROM [Articles];
 DELETE FROM [Tags];
@@ -280,6 +281,7 @@ INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (15
 INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (20, 5, N'নতুনদের সুযোগ দেওয়া ভালো সিদ্ধান্ত। শুভকামনা রইল।', '2026-10-25T07:00:00');
 INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (22, 4, N'মোবাইলে বানানো ছবির জন্য পুরস্কারের ধারণাটা দারুণ।', '2026-10-24T10:24:00');
 INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (17, 6, N'আমাদের এলাকাতেও এ বছর বৃষ্টি খুব অনিয়মিত। কৃষকদের জন্য ভালো খবর।', '2026-10-23T04:12:00');
+INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (3, 5, N'Cheap phones and free recharge offers here, message me to get yours today!', '2026-10-24T11:30:00');
 
 UPDATE [Users] SET [AvatarPath] = CASE [UserId] WHEN 1 THEN N'/images/avatars/editorial-desk.png' WHEN 2 THEN N'/images/avatars/farhana-rahman.png' WHEN 3 THEN N'/images/avatars/tanvir-ahmed.png' WHEN 4 THEN N'/images/avatars/nusrat-jahan.png' WHEN 5 THEN N'/images/avatars/imran-hossain.png' WHEN 6 THEN N'/images/avatars/sadia-islam.png' END;
 UPDATE [Users] SET [Bio] = N'The Meridian Newsfolio editorial desk reviews every story before it is published and keeps the archive accurate.' WHERE [UserId] = 1;
@@ -424,6 +426,11 @@ INSERT INTO [ReadingHistory] ([UserId], [ArticleId], [FirstReadAt], [LastReadAt]
 INSERT INTO [ReadingHistory] ([UserId], [ArticleId], [FirstReadAt], [LastReadAt], [ReadCount]) VALUES (3, 17, DATEADD(MINUTE, -4589, GETDATE()), DATEADD(MINUTE, -269, GETDATE()), 1);
 INSERT INTO [ReadingHistory] ([UserId], [ArticleId], [FirstReadAt], [LastReadAt], [ReadCount]) VALUES (1, 8, DATEADD(MINUTE, -5813, GETDATE()), DATEADD(MINUTE, -53, GETDATE()), 2);
 INSERT INTO [ReadingHistory] ([UserId], [ArticleId], [FirstReadAt], [LastReadAt], [ReadCount]) VALUES (1, 11, DATEADD(MINUTE, -3028, GETDATE()), DATEADD(MINUTE, -148, GETDATE()), 1);
+UPDATE [Comments] SET [IsHidden] = 0, [ModeratedById] = 1, [ModeratedAt] = DATEADD(MINUTE, 90, [CreatedDate]);
+UPDATE [Comments] SET [IsHidden] = 1, [ModeratedAt] = DATEADD(MINUTE, 25, [CreatedDate]) WHERE [CommentId] = 12;
+INSERT INTO [CommentReports] ([CommentId], [UserId], [ReasonId], [Note], [CreatedAt]) VALUES (2, 6, 3, N'Not about the evening rail hours.', DATEADD(HOUR, -5, GETDATE()));
+INSERT INTO [CommentReports] ([CommentId], [UserId], [ReasonId], [Note], [CreatedAt]) VALUES (5, 4, 4, N'Please check this claim.', DATEADD(HOUR, -3, GETDATE()));
+INSERT INTO [CommentReports] ([CommentId], [UserId], [ReasonId], [Note], [CreatedAt]) VALUES (5, 6, 5, N'Feels like an advert for one tool.', DATEADD(HOUR, -2, GETDATE()));
 INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (1, 'C25353171A843C3F580E6D16C78572AB8B98480E39B2AB290B994AFB305CC352', 'web', DATEADD(HOUR, -30, GETDATE()), DATEADD(HOUR, -18, GETDATE()), DATEADD(HOUR, -20, GETDATE()));
 INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (2, 'CFAA2EFB72B4A7AAD3489652569FD20C5A2747AC3DA0CB6312D61DF5F1C28E2C', 'api', DATEADD(HOUR, -31, GETDATE()), DATEADD(HOUR, -19, GETDATE()), DATEADD(HOUR, -21, GETDATE()));
 INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (3, '4DDE73A5E0E4F79DEE7A66E4B955A6AC5B58AD038B530B1304C9B51CD14D80E7', 'web', DATEADD(HOUR, -32, GETDATE()), DATEADD(HOUR, -20, GETDATE()), DATEADD(HOUR, -22, GETDATE()));

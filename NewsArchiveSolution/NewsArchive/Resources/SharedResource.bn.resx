@@ -36,6 +36,9 @@
   <data name="About {0}" xml:space="preserve">
     <value>{0} সম্পর্কে</value>
   </data>
+  <data name="Abuse or harassment" xml:space="preserve">
+    <value>গালিগালাজ বা হয়রানি</value>
+  </data>
   <data name="Access denied" xml:space="preserve">
     <value>প্রবেশাধিকার নেই</value>
   </data>
@@ -237,6 +240,18 @@
   <data name="Close" xml:space="preserve">
     <value>বন্ধ করুন</value>
   </data>
+  <data name="Comment deleted." xml:space="preserve">
+    <value>মন্তব্য মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="Comment hidden from readers." xml:space="preserve">
+    <value>মন্তব্যটি পাঠকদের কাছ থেকে লুকানো হয়েছে।</value>
+  </data>
+  <data name="Comment kept and reports cleared." xml:space="preserve">
+    <value>মন্তব্যটি রাখা হয়েছে এবং অভিযোগগুলো মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="Comment moderation" xml:space="preserve">
+    <value>মন্তব্য পর্যালোচনা</value>
+  </data>
   <data name="Comment must be between 2 and 500 characters" xml:space="preserve">
     <value>মন্তব্য ২ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে</value>
   </data>
@@ -248,6 +263,12 @@
   </data>
   <data name="Comments must be between 2 and 500 characters." xml:space="preserve">
     <value>মন্তব্য ২ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে।</value>
+  </data>
+  <data name="Comments reported {0} times are hidden automatically until you review them." xml:space="preserve">
+    <value>{0} বার অভিযোগ পাওয়া মন্তব্য আপনার পর্যালোচনা পর্যন্ত স্বয়ংক্রিয়ভাবে লুকানো থাকে।</value>
+  </data>
+  <data name="Comments you hide will appear here so you can show them again." xml:space="preserve">
+    <value>আপনার লুকানো মন্তব্য এখানে দেখা যাবে, চাইলে আবার দেখাতে পারবেন।</value>
   </data>
   <data name="Company" xml:space="preserve">
     <value>প্রতিষ্ঠান</value>
@@ -312,6 +333,9 @@
   <data name="Delete this article?" xml:space="preserve">
     <value>সংবাদটি মুছে ফেলবেন?</value>
   </data>
+  <data name="Delete this comment?" xml:space="preserve">
+    <value>মন্তব্যটি মুছে ফেলবেন?</value>
+  </data>
   <data name="Delete this user?" xml:space="preserve">
     <value>ব্যবহারকারীকে মুছে ফেলবেন?</value>
   </data>
@@ -329,6 +353,9 @@
   </data>
   <data name="Description cannot exceed 255 characters" xml:space="preserve">
     <value>বিবরণ ২৫৫ অক্ষরের বেশি হতে পারবে না</value>
+  </data>
+  <data name="Details (optional)" xml:space="preserve">
+    <value>বিস্তারিত (ঐচ্ছিক)</value>
   </data>
   <data name="Draft" xml:space="preserve">
     <value>খসড়া</value>
@@ -444,6 +471,21 @@
   <data name="Headline" xml:space="preserve">
     <value>শিরোনাম</value>
   </data>
+  <data name="Hidden" xml:space="preserve">
+    <value>লুকানো</value>
+  </data>
+  <data name="Hidden automatically" xml:space="preserve">
+    <value>স্বয়ংক্রিয়ভাবে লুকানো</value>
+  </data>
+  <data name="Hidden by {0}" xml:space="preserve">
+    <value>{0} লুকিয়েছেন</value>
+  </data>
+  <data name="Hidden from readers" xml:space="preserve">
+    <value>পাঠকদের কাছ থেকে লুকানো</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>লুকান</value>
+  </data>
   <data name="Hide password" xml:space="preserve">
     <value>পাসওয়ার্ড লুকান</value>
   </data>
@@ -498,6 +540,9 @@
   <data name="Joined {0}" xml:space="preserve">
     <value>যোগ দিয়েছেন {0}</value>
   </data>
+  <data name="Keep comment" xml:space="preserve">
+    <value>মন্তব্য রাখুন</value>
+  </data>
   <data name="Keyword" xml:space="preserve">
     <value>কীওয়ার্ড</value>
   </data>
@@ -539,6 +584,12 @@
   </data>
   <data name="Meet the reporters and editors behind The Meridian Newsfolio: {0}." xml:space="preserve">
     <value>দ্য মেরিডিয়ান নিউজফোলিওর প্রতিবেদক ও সম্পাদকদের সঙ্গে পরিচিত হোন: {0}।</value>
+  </data>
+  <data name="Misinformation" xml:space="preserve">
+    <value>ভুল তথ্য</value>
+  </data>
+  <data name="Moderate comments" xml:space="preserve">
+    <value>মন্তব্য পর্যালোচনা করুন</value>
   </data>
   <data name="More" xml:space="preserve">
     <value>আরও</value>
@@ -627,6 +678,9 @@
   <data name="No comments yet. Be the first to share your view." xml:space="preserve">
     <value>এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন।</value>
   </data>
+  <data name="No hidden comments" xml:space="preserve">
+    <value>কোনো লুকানো মন্তব্য নেই</value>
+  </data>
   <data name="No matches. Press Enter to search the archive." xml:space="preserve">
     <value>কিছু মেলেনি। আর্কাইভে খুঁজতে Enter চাপুন।</value>
   </data>
@@ -635,6 +689,9 @@
   </data>
   <data name="No reading history yet" xml:space="preserve">
     <value>এখনো পড়ার কোনো ইতিহাস নেই</value>
+  </data>
+  <data name="No reported comments" xml:space="preserve">
+    <value>কোনো অভিযোগ পাওয়া মন্তব্য নেই</value>
   </data>
   <data name="No sections yet" xml:space="preserve">
     <value>এখনো কোনো বিভাগ নেই</value>
@@ -684,6 +741,9 @@
   <data name="OTP sent (check console for dev)." xml:space="preserve">
     <value>ওটিপি পাঠানো হয়েছে (ডেভেলপমেন্টে কনসোলে দেখুন)।</value>
   </data>
+  <data name="Off topic" xml:space="preserve">
+    <value>প্রসঙ্গের বাইরে</value>
+  </data>
   <data name="On this day" xml:space="preserve">
     <value>এই দিনে</value>
   </data>
@@ -713,6 +773,9 @@
   </data>
   <data name="Or use an existing picture address" xml:space="preserve">
     <value>অথবা আগে থেকে থাকা ছবির ঠিকানা দিন</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>অন্যান্য</value>
   </data>
   <data name="Our authors" xml:space="preserve">
     <value>আমাদের লেখকেরা</value>
@@ -749,6 +812,9 @@
   </data>
   <data name="Picture" xml:space="preserve">
     <value>ছবি</value>
+  </data>
+  <data name="Please choose a reason for the report." xml:space="preserve">
+    <value>অভিযোগের একটি কারণ বেছে নিন।</value>
   </data>
   <data name="Please choose a role" xml:space="preserve">
     <value>একটি ভূমিকা বেছে নিন</value>
@@ -858,6 +924,15 @@
   <data name="Remove this picture" xml:space="preserve">
     <value>এই ছবিটি সরান</value>
   </data>
+  <data name="Report" xml:space="preserve">
+    <value>অভিযোগ করুন</value>
+  </data>
+  <data name="Reported" xml:space="preserve">
+    <value>অভিযোগ পাওয়া</value>
+  </data>
+  <data name="Reported comments" xml:space="preserve">
+    <value>অভিযোগ পাওয়া মন্তব্য</value>
+  </data>
   <data name="Reset your password" xml:space="preserve">
     <value>পাসওয়ার্ড পুনরুদ্ধার</value>
   </data>
@@ -963,6 +1038,9 @@
   <data name="Send code" xml:space="preserve">
     <value>কোড পাঠান</value>
   </data>
+  <data name="Send report" xml:space="preserve">
+    <value>অভিযোগ পাঠান</value>
+  </data>
   <data name="Separate paragraphs with an empty line. HTML is not rendered." xml:space="preserve">
     <value>অনুচ্ছেদের মাঝে একটি ফাঁকা লাইন রাখুন। এইচটিএমএল কাজ করবে না।</value>
   </data>
@@ -974,6 +1052,9 @@
   </data>
   <data name="Short bio" xml:space="preserve">
     <value>সংক্ষিপ্ত পরিচিতি</value>
+  </data>
+  <data name="Show again" xml:space="preserve">
+    <value>আবার দেখান</value>
   </data>
   <data name="Show password" xml:space="preserve">
     <value>পাসওয়ার্ড দেখুন</value>
@@ -1004,6 +1085,9 @@
   </data>
   <data name="Something went wrong" xml:space="preserve">
     <value>কিছু একটা সমস্যা হয়েছে</value>
+  </data>
+  <data name="Spam" xml:space="preserve">
+    <value>স্প্যাম</value>
   </data>
   <data name="Staff reporter" xml:space="preserve">
     <value>নিজস্ব প্রতিবেদক</value>
@@ -1083,6 +1167,12 @@
   <data name="Terms of use" xml:space="preserve">
     <value>ব্যবহারের শর্তাবলি</value>
   </data>
+  <data name="Thank you. A moderator will review this comment." xml:space="preserve">
+    <value>ধন্যবাদ। একজন মডারেটর মন্তব্যটি পর্যালোচনা করবেন।</value>
+  </data>
+  <data name="Thank you. The comment has been hidden until a moderator reviews it." xml:space="preserve">
+    <value>ধন্যবাদ। মডারেটরের পর্যালোচনা পর্যন্ত মন্তব্যটি লুকানো থাকবে।</value>
+  </data>
   <data name="The Meridian Newsfolio publishes reviewed news from Bangladesh and around the world, in English and Bangla, and keeps every story in a searchable archive." xml:space="preserve">
     <value>দ্য মেরিডিয়ান নিউজফোলিও বাংলাদেশ ও বিশ্বের যাচাই করা সংবাদ ইংরেজি ও বাংলায় প্রকাশ করে এবং প্রতিটি সংবাদ খোঁজার উপযোগী আর্কাইভে সংরক্ষণ করে।</value>
   </data>
@@ -1091,6 +1181,9 @@
   </data>
   <data name="The article could not be saved." xml:space="preserve">
     <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
+  </data>
+  <data name="The comment could not be deleted." xml:space="preserve">
+    <value>মন্তব্যটি মুছে ফেলা যায়নি।</value>
   </data>
   <data name="The image is too large. The limit is 2 MB." xml:space="preserve">
     <value>ছবিটি অনেক বড়। সর্বোচ্চ ২ MB।</value>
@@ -1133,6 +1226,9 @@
   </data>
   <data name="This cannot be undone." xml:space="preserve">
     <value>এটি আর ফেরানো যাবে না।</value>
+  </data>
+  <data name="This comment no longer exists." xml:space="preserve">
+    <value>মন্তব্যটি আর নেই।</value>
   </data>
   <data name="This section has {0} articles. Choose where to move them before deleting." xml:space="preserve">
     <value>এই বিভাগে {0}টি সংবাদ আছে। মোছার আগে সেগুলো কোথায় সরানো হবে তা বেছে নিন।</value>
@@ -1260,6 +1356,12 @@
   <data name="Welcome back. Sign in to comment, write and manage your account." xml:space="preserve">
     <value>আবার স্বাগতম। মন্তব্য, লেখা ও অ্যাকাউন্ট পরিচালনার জন্য লগ-ইন করুন।</value>
   </data>
+  <data name="When readers report a comment, it will appear here." xml:space="preserve">
+    <value>পাঠকেরা কোনো মন্তব্যের বিরুদ্ধে অভিযোগ করলে তা এখানে দেখা যাবে।</value>
+  </data>
+  <data name="Why are you reporting this comment?" xml:space="preserve">
+    <value>কেন এই মন্তব্যের বিরুদ্ধে অভিযোগ করছেন?</value>
+  </data>
   <data name="Write" xml:space="preserve">
     <value>লিখুন</value>
   </data>
@@ -1281,14 +1383,26 @@
   <data name="You" xml:space="preserve">
     <value>আপনি</value>
   </data>
+  <data name="You can only delete your own comments." xml:space="preserve">
+    <value>আপনি শুধু নিজের মন্তব্য মুছতে পারবেন।</value>
+  </data>
   <data name="You cannot delete your own account." xml:space="preserve">
     <value>নিজের অ্যাকাউন্ট নিজে মুছতে পারবেন না।</value>
   </data>
   <data name="You cannot edit this article." xml:space="preserve">
     <value>এই সংবাদটি আপনি সম্পাদনা করতে পারবেন না।</value>
   </data>
+  <data name="You cannot report your own comment." xml:space="preserve">
+    <value>নিজের মন্তব্যের বিরুদ্ধে অভিযোগ করা যায় না।</value>
+  </data>
+  <data name="You have already reported this comment." xml:space="preserve">
+    <value>আপনি আগেই এই মন্তব্যের বিরুদ্ধে অভিযোগ করেছেন।</value>
+  </data>
   <data name="You haven't written anything yet" xml:space="preserve">
     <value>আপনি এখনো কিছু লেখেননি</value>
+  </data>
+  <data name="You reported this comment. A moderator will review it." xml:space="preserve">
+    <value>আপনি এই মন্তব্যের বিরুদ্ধে অভিযোগ করেছেন। একজন মডারেটর তা পর্যালোচনা করবেন।</value>
   </data>
   <data name="You're all caught up." xml:space="preserve">
     <value>আপনি সব সংবাদ দেখে ফেলেছেন।</value>
@@ -1307,6 +1421,12 @@
   </data>
   <data name="Your reading history has been cleared." xml:space="preserve">
     <value>আপনার পড়ার ইতিহাস মুছে ফেলা হয়েছে।</value>
+  </data>
+  <data name="an admin" xml:space="preserve">
+    <value>একজন অ্যাডমিন</value>
+  </data>
+  <data name="on" xml:space="preserve">
+    <value>সংবাদ:</value>
   </data>
   <data name="to join the conversation." xml:space="preserve">
     <value>করে আলোচনায় অংশ নিন।</value>
@@ -1328,6 +1448,9 @@
   </data>
   <data name="{0} news, page {1}" xml:space="preserve">
     <value>{0} সংবাদ, পৃষ্ঠা {1}</value>
+  </data>
+  <data name="{0} reports" xml:space="preserve">
+    <value>{0}টি অভিযোগ</value>
   </data>
   <data name="{0} stories" xml:space="preserve">
     <value>{0}টি সংবাদ</value>
