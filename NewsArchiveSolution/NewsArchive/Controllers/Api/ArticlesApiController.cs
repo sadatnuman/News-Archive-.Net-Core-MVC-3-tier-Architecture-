@@ -1,6 +1,6 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using NewsArchive.Auth;
@@ -11,13 +11,15 @@ namespace NewsArchive.Controllers.Api
     [Route("api/articles")]
     public class ArticlesApiController : ApiControllerBase
     {
-        private readonly ArticleService articleService;
-        private readonly CategoryService categoryService;
-        private readonly CommentService commentService;
-        private readonly MediaService mediaService;
+        private readonly IAuthService authService;
+        private readonly IArticleService articleService;
+        private readonly ICategoryService categoryService;
+        private readonly ICommentService commentService;
+        private readonly IMediaService mediaService;
 
-        public ArticlesApiController(ArticleService articleService, CategoryService categoryService, CommentService commentService, MediaService mediaService)
+        public ArticlesApiController(IArticleService articleService, ICategoryService categoryService, ICommentService commentService, IMediaService mediaService, IAuthService authService)
         {
+            this.authService = authService;
             this.mediaService = mediaService;
             this.articleService = articleService;
             this.categoryService = categoryService;
@@ -45,8 +47,8 @@ namespace NewsArchive.Controllers.Api
 
             if (!article.IsPublished)
             {
-                var user = await GetApiUserAsync();
-                if (!ArticleService.CanView(article, user?.UserId, user?.RoleId)) return NotFound();
+                var user = await TokenAuthorizationFilter.ResolveUserAsync(HttpContext, authService);
+                if (!ArticleRules.CanView(article, user?.UserId, user?.RoleId)) return NotFound();
             }
             return Ok(article);
         }
@@ -121,7 +123,7 @@ namespace NewsArchive.Controllers.Api
             if (article == null) return NotFound();
 
             var user = await RequireApiUserAsync();
-            if (!ArticleService.CanEdit(article.AuthorId, article.StatusId, user.UserId, user.RoleId))
+            if (!ArticleRules.CanEdit(article.AuthorId, article.StatusId, user.UserId, user.RoleId))
                 return Forbidden("You cannot edit this article.");
 
             if (categoryService.Get(form.CategoryId) == null)
@@ -146,7 +148,7 @@ namespace NewsArchive.Controllers.Api
             if (article == null) return NotFound();
 
             var user = await RequireApiUserAsync();
-            if (!ArticleService.CanEdit(article.AuthorId, article.StatusId, user.UserId, user.RoleId))
+            if (!ArticleRules.CanEdit(article.AuthorId, article.StatusId, user.UserId, user.RoleId))
                 return Forbidden("You cannot delete this article.");
 
             if (!articleService.Delete(id, user.UserId, user.RoleId))
@@ -175,14 +177,34 @@ namespace NewsArchive.Controllers.Api
         [ApiAuthorize(AppRoles.Admin)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Approve(int id)
+        public async Task<IActionResult> Approve(int id, [FromBody] ApproveDTO? approve)
         {
             if (articleService.Get(id) == null) return NotFound();
             var user = await RequireApiUserAsync();
 
-            return articleService.Approve(id, user.UserId)
+            return articleService.Approve(id, user.UserId, approve?.PublishAt)
                 ? NoContent()
                 : Problem(statusCode: StatusCodes.Status409Conflict, title: "Only pending articles can be approved.");
+        }
+
+        [HttpGet("scheduled")]
+        [ApiAuthorize(AppRoles.Admin)]
+        [ProducesResponseType(typeof(List<ArticleDTO>), StatusCodes.Status200OK)]
+        public IActionResult Scheduled()
+        {
+            return Ok(articleService.GetScheduled());
+        }
+
+        [HttpPost("{id:int}/publish-now")]
+        [ApiAuthorize(AppRoles.Admin)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        public IActionResult PublishNow(int id)
+        {
+            if (articleService.Get(id) == null) return NotFound();
+            return articleService.PublishNow(id)
+                ? NoContent()
+                : Problem(statusCode: StatusCodes.Status409Conflict, title: "Only scheduled articles can be published early.");
         }
 
         [HttpPost("{id:int}/reject")]

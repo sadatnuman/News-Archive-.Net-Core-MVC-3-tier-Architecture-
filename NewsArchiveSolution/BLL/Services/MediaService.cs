@@ -1,16 +1,11 @@
 using BLL.DTOs;
+using BLL.Interfaces;
 using BLL.Media;
 
 namespace BLL.Services
 {
-    public class MediaService
+    public class MediaService : IMediaService
     {
-        public const long MaxArticleImageBytes = 5 * 1024 * 1024;
-        public const long MaxAvatarBytes = 2 * 1024 * 1024;
-        public const long MaxRequestBytes = 12 * 1024 * 1024;
-        public const string UploadPrefix = "/uploads/";
-        public const string AcceptedTypes = "image/jpeg,image/png,image/webp,image/gif";
-
         private const int MinImageBytes = 64;
 
         private readonly IFileStorage storage;
@@ -23,18 +18,18 @@ namespace BLL.Services
         public MediaUploadResultDTO SaveArticleImage(Stream content, long length)
         {
             var now = DateTime.UtcNow;
-            return Save(content, length, MaxArticleImageBytes, $"uploads/articles/{now:yyyy}/{now:MM}");
+            return Save(content, length, MediaLimits.MaxArticleImageBytes, $"uploads/articles/{now:yyyy}/{now:MM}");
         }
 
         public MediaUploadResultDTO SaveAvatar(Stream content, long length)
         {
-            return Save(content, length, MaxAvatarBytes, "uploads/avatars");
+            return Save(content, length, MediaLimits.MaxAvatarBytes, "uploads/avatars");
         }
 
         public bool IsUploaded(string? path)
         {
             return !string.IsNullOrWhiteSpace(path)
-                && path.StartsWith(UploadPrefix, StringComparison.OrdinalIgnoreCase)
+                && path.StartsWith(MediaLimits.UploadPrefix, StringComparison.OrdinalIgnoreCase)
                 && !path.Contains("..", StringComparison.Ordinal);
         }
 
@@ -47,7 +42,7 @@ namespace BLL.Services
         private MediaUploadResultDTO Save(Stream content, long length, long maxBytes, string folder)
         {
             if (length <= 0) return MediaUploadResultDTO.Fail("Choose an image to upload.");
-            if (length > maxBytes) return MediaUploadResultDTO.Fail(maxBytes == MaxAvatarBytes
+            if (length > maxBytes) return MediaUploadResultDTO.Fail(maxBytes == MediaLimits.MaxAvatarBytes
                 ? "The image is too large. The limit is 2 MB."
                 : "The image is too large. The limit is 5 MB.");
 
@@ -58,7 +53,7 @@ namespace BLL.Services
             {
                 buffer.Write(chunk, 0, read);
                 if (buffer.Length > maxBytes)
-                    return MediaUploadResultDTO.Fail(maxBytes == MaxAvatarBytes
+                    return MediaUploadResultDTO.Fail(maxBytes == MediaLimits.MaxAvatarBytes
                         ? "The image is too large. The limit is 2 MB."
                         : "The image is too large. The limit is 5 MB.");
             }

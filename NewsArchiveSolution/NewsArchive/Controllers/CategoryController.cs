@@ -1,7 +1,8 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using NewsArchive.Filters;
 using NewsArchive.Seo;
 
@@ -9,11 +10,15 @@ namespace NewsArchive.Controllers
 {
     public class CategoryController : AppController
     {
-        CategoryService categoryService;
-        ArticleService articleService;
+        private readonly IStringLocalizer<SharedResource> L;
+        private readonly IArticleLookupService lookupService;
+        private readonly ICategoryService categoryService;
+        private readonly IArticleService articleService;
 
-        public CategoryController(CategoryService categoryService, ArticleService articleService)
+        public CategoryController(ICategoryService categoryService, IArticleService articleService, IArticleLookupService lookupService, IStringLocalizer<SharedResource> localizer)
         {
+            L = localizer;
+            this.lookupService = lookupService;
             this.categoryService = categoryService;
             this.articleService = articleService;
         }
@@ -37,7 +42,7 @@ namespace NewsArchive.Controllers
                 return RedirectPermanent(SeoUrls.Category(category.CategoryId, category.Slug));
 
             var articles = articleService.GetByCategoryId(id, CurrentLanguage);
-            SetArticleLookups(articles);
+            SetArticleLookups(lookupService.Build(articles, CurrentUserId, CurrentLanguage));
 
             ViewBag.Category = category;
             return View(articles);

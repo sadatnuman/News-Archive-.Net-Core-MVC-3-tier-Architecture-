@@ -1,5 +1,5 @@
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -10,10 +10,10 @@ namespace NewsArchive.Filters
         public const string CookieName = "AuthToken";
         private const string UserItemKey = "ApiUser";
 
-        private readonly AuthService authService;
+        private readonly IAuthService authService;
         private readonly int[] roles;
 
-        public TokenAuthorizationFilter(AuthService authService, int[] roles)
+        public TokenAuthorizationFilter(IAuthService authService, int[] roles)
         {
             this.authService = authService;
             this.roles = roles;
@@ -44,13 +44,18 @@ namespace NewsArchive.Filters
             return request.Cookies.TryGetValue(CookieName, out var cookie) ? cookie : null;
         }
 
-        public static async Task<AuthUserDTO?> ResolveUserAsync(HttpContext http, AuthService authService)
+        public static async Task<AuthUserDTO?> ResolveUserAsync(HttpContext http, IAuthService authService)
         {
             if (http.Items.TryGetValue(UserItemKey, out var cached)) return cached as AuthUserDTO;
 
             var user = await authService.ValidateTokenAsync(ReadToken(http.Request));
             http.Items[UserItemKey] = user;
             return user;
+        }
+
+        public static AuthUserDTO? CurrentUser(HttpContext http)
+        {
+            return http.Items.TryGetValue(UserItemKey, out var user) ? user as AuthUserDTO : null;
         }
 
         private static ObjectResult Problem(int status, string title, string detail)

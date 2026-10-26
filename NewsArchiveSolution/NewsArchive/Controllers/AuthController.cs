@@ -1,6 +1,6 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +14,13 @@ namespace NewsArchive.Controllers
     {
         private const int MaxOtpAttempts = 5;
 
-        private readonly AuthService authService;
-        private readonly UserService userService;
+        private readonly IAuthService authService;
+        private readonly IUserService userService;
         private readonly LoginThrottle throttle;
         private readonly ILogger<AuthController> logger;
         private readonly IWebHostEnvironment environment;
 
-        public AuthController(AuthService authService, UserService userService, LoginThrottle throttle, ILogger<AuthController> logger, IWebHostEnvironment environment)
+        public AuthController(IAuthService authService, IUserService userService, LoginThrottle throttle, ILogger<AuthController> logger, IWebHostEnvironment environment)
         {
             this.authService = authService;
             this.userService = userService;

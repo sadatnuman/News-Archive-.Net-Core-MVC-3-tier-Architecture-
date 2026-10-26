@@ -46,6 +46,8 @@ namespace DAL.Interfaces
 
         int CountByStatus(int statusId);
 
+        int PublishDue(DateTime now);
+
         int GetCommentCount(int articleId);
 
         Dictionary<int, int> CountPerCategory();

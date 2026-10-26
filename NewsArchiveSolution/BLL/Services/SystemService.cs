@@ -1,12 +1,14 @@
+using BLL.Interfaces;
 using DAL;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
-    public class SystemService
+    public class SystemService : ISystemService
     {
-        private readonly DataAccessFactory factory;
+        private readonly IDataAccessFactory factory;
 
-        public SystemService(DataAccessFactory factory)
+        public SystemService(IDataAccessFactory factory)
         {
             this.factory = factory;
         }

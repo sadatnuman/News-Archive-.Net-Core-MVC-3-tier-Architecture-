@@ -5,6 +5,8 @@
     ViewData["NoIndex"] = true;
     var authors = ViewBag.AuthorNames as Dictionary<int, string> ?? new Dictionary<int, string>();
     var categories = ViewBag.CategoryNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var scheduled = ViewBag.Scheduled as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
+    var minLocal = DateTime.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm");
 }
 
 <div class="container py-4 py-lg-5">
@@ -41,10 +43,14 @@
                     <div class="d-flex flex-column gap-2" style="min-width: 260px;">
                         <div class="d-flex gap-2">
                             <a href="@SeoUrls.Article(a)" class="btn btn-outline-secondary flex-grow-1"><i class="bi bi-eye"></i> @L["Read"]</a>
-                            <form asp-action="Approve" asp-route-id="@a.ArticleId" method="post" class="flex-grow-1">
-                                <button type="submit" class="btn btn-success w-100"><i class="bi bi-check2-circle"></i> @L["Approve"]</button>
-                            </form>
                         </div>
+                        <form asp-action="Approve" asp-route-id="@a.ArticleId" method="post" class="d-flex flex-column gap-2">
+                            <label class="small text-muted" for="publishAt-@a.ArticleId">@L["Publish at (leave empty to publish now)"]</label>
+                            <div class="d-flex gap-2">
+                                <input id="publishAt-@a.ArticleId" type="datetime-local" name="publishAt" class="form-control form-control-sm" min="@minLocal" />
+                                <button type="submit" class="btn btn-success flex-shrink-0"><i class="bi bi-check2-circle"></i> @L["Approve"]</button>
+                            </div>
+                        </form>
                         <form asp-action="Reject" asp-route-id="@a.ArticleId" method="post" class="d-flex gap-2">
                             <input type="text" name="note" class="form-control form-control-sm" placeholder="@L["Reason for rejection"]" maxlength="500" required aria-label="@L["Reason for rejection"]" />
                             <button type="submit" class="btn btn-sm btn-outline-danger">@L["Reject"]</button>
@@ -53,5 +59,40 @@
                 </div>
             </div>
         }
+    }
+
+    @if (scheduled.Count > 0)
+    {
+        <section class="mt-5" aria-labelledby="scheduled-heading">
+            <div class="section-head">
+                <h2 id="scheduled-heading">@L["Scheduled to publish"]</h2>
+                <span class="meta">@scheduled.Count</span>
+            </div>
+            @foreach (var a in scheduled)
+            {
+                <div class="data-card mb-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div class="flex-grow-1" style="min-width: 260px;">
+                            <span class="status-pill s-@a.StatusId">@L[a.StatusName]</span>
+                            <h3 class="h6 mt-2 mb-1" lang="@a.LanguageCode"><a href="@SeoUrls.Article(a)">@a.Title</a></h3>
+                            <div class="meta">
+                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                @L["Goes live {0}", a.ScheduledAt?.ToString("d MMM yyyy, h:mm tt") ?? ""]
+                                <span class="sep">&bull;</span>
+                                @L["By {0}", authors.TryGetValue(a.AuthorId, out var sn) ? sn : L["Unknown"]]
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <form asp-action="PublishNow" asp-route-id="@a.ArticleId" method="post">
+                                <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-lightning-charge"></i> @L["Publish now"]</button>
+                            </form>
+                            <form asp-action="Unschedule" asp-route-id="@a.ArticleId" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">@L["Back to review"]</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </section>
     }
 </div>

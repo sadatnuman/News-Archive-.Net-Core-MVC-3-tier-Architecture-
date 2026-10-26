@@ -55,7 +55,8 @@ public partial class NewsArchiveDbContext : DbContext
                 new ArticleStatus { StatusId = ArticleStatusIds.Draft, Name = "Draft" },
                 new ArticleStatus { StatusId = ArticleStatusIds.Pending, Name = "Pending" },
                 new ArticleStatus { StatusId = ArticleStatusIds.Published, Name = "Published" },
-                new ArticleStatus { StatusId = ArticleStatusIds.Rejected, Name = "Rejected" });
+                new ArticleStatus { StatusId = ArticleStatusIds.Rejected, Name = "Rejected" },
+                new ArticleStatus { StatusId = ArticleStatusIds.Scheduled, Name = "Scheduled" });
         });
 
         modelBuilder.Entity<Language>(entity =>
@@ -80,6 +81,10 @@ public partial class NewsArchiveDbContext : DbContext
 
             entity.HasIndex(e => new { e.StatusId, e.PublishDate }, "IX_Articles_StatusId_PublishDate")
                 .IsDescending(false, true);
+
+            entity.HasIndex(e => new { e.StatusId, e.ScheduledAt }, "IX_Articles_StatusId_ScheduledAt");
+
+            entity.Property(e => e.ScheduledAt).HasColumnType("datetime");
 
             entity.HasIndex(e => new { e.CategoryId, e.StatusId, e.PublishDate }, "IX_Articles_CategoryId_StatusId_PublishDate")
                 .IsDescending(false, false, true);

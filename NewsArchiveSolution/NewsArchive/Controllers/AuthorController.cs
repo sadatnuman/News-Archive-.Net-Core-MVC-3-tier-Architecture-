@@ -1,4 +1,4 @@
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Seo;
 
@@ -8,10 +8,12 @@ namespace NewsArchive.Controllers
     {
         private const int PageSize = 12;
 
-        private readonly AuthorService authorService;
+        private readonly IArticleLookupService lookupService;
+        private readonly IAuthorService authorService;
 
-        public AuthorController(AuthorService authorService)
+        public AuthorController(IAuthorService authorService, IArticleLookupService lookupService)
         {
+            this.lookupService = lookupService;
             this.authorService = authorService;
         }
 
@@ -34,7 +36,7 @@ namespace NewsArchive.Controllers
             var articles = authorService.GetArticles(id, CurrentLanguage, page, PageSize, out var total);
             if (page > 1 && articles.Count == 0) return NotFound();
 
-            SetArticleLookups(articles);
+            SetArticleLookups(lookupService.Build(articles, CurrentUserId, CurrentLanguage));
             ViewBag.Author = author;
             ViewBag.Page = page;
             ViewBag.PageSize = PageSize;

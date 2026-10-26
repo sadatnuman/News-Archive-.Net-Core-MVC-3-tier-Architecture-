@@ -1,6 +1,6 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -9,10 +9,10 @@ namespace NewsArchive.Controllers.Api
     [Route("api/categories")]
     public class CategoriesApiController : ApiControllerBase
     {
-        private readonly CategoryService categoryService;
-        private readonly ArticleService articleService;
+        private readonly ICategoryService categoryService;
+        private readonly IArticleService articleService;
 
-        public CategoriesApiController(CategoryService categoryService, ArticleService articleService)
+        public CategoriesApiController(ICategoryService categoryService, IArticleService articleService)
         {
             this.categoryService = categoryService;
             this.articleService = articleService;

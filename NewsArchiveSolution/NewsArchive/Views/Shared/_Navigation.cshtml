@@ -1,7 +1,6 @@
-@using BLL.Services
 @using Microsoft.Extensions.Options
-@inject CategoryService categoryService
-@inject ArticleService articleService
+@inject ICategoryService categoryService
+@inject IArticleService articleService
 @inject IOptions<SiteOptions> SiteConfig
 
 @{

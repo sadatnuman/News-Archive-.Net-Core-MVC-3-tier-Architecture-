@@ -1,7 +1,8 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using NewsArchive.Filters;
 using NewsArchive.Seo;
 
@@ -11,10 +12,14 @@ namespace NewsArchive.Controllers
     {
         private const int PageSize = 12;
 
-        private readonly TagService tagService;
+        private readonly IStringLocalizer<SharedResource> L;
+        private readonly IArticleLookupService lookupService;
+        private readonly ITagService tagService;
 
-        public TagController(TagService tagService)
+        public TagController(ITagService tagService, IArticleLookupService lookupService, IStringLocalizer<SharedResource> localizer)
         {
+            L = localizer;
+            this.lookupService = lookupService;
             this.tagService = tagService;
         }
 
@@ -42,7 +47,7 @@ namespace NewsArchive.Controllers
             var articles = tagService.GetArticles(id, CurrentLanguage, page, PageSize, out var total);
             if (page > 1 && articles.Count == 0) return NotFound();
 
-            SetArticleLookups(articles);
+            SetArticleLookups(lookupService.Build(articles, CurrentUserId, CurrentLanguage));
             ViewBag.Tag = tag;
             ViewBag.Page = page;
             ViewBag.PageSize = PageSize;

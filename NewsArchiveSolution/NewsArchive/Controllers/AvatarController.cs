@@ -1,5 +1,5 @@
 using BLL;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -8,11 +8,11 @@ namespace NewsArchive.Controllers
     [CustomAuthorize]
     public class AvatarController : AppController
     {
-        private readonly UserService userService;
-        private readonly AuthService authService;
-        private readonly MediaService mediaService;
+        private readonly IUserService userService;
+        private readonly IAuthService authService;
+        private readonly IMediaService mediaService;
 
-        public AvatarController(UserService userService, AuthService authService, MediaService mediaService)
+        public AvatarController(IUserService userService, IAuthService authService, IMediaService mediaService)
         {
             this.userService = userService;
             this.authService = authService;
@@ -20,8 +20,8 @@ namespace NewsArchive.Controllers
         }
 
         [HttpPost]
-        [RequestSizeLimit(MediaService.MaxRequestBytes)]
-        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        [RequestSizeLimit(MediaLimits.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaLimits.MaxRequestBytes)]
         public async Task<IActionResult> Upload(IFormFile? photo)
         {
             var userId = CurrentUserId ?? 0;

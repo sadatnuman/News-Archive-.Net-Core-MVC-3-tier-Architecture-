@@ -1,17 +1,18 @@
-using AutoMapper;
 using BLL.DTOs;
-using DAL.EF.Tables;
+using BLL.Interfaces;
 using DAL;
+using DAL.EF.Tables;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class CommentService
+    public class CommentService : ICommentService
     {
         private readonly ICommentRepository repo;
         private readonly IMapper mapper;
 
-        public CommentService(DataAccessFactory factory, IMapper mapper)
+        public CommentService(IDataAccessFactory factory, IMapper mapper)
         {
             repo = factory.GetCommentRepository();
             this.mapper = mapper;

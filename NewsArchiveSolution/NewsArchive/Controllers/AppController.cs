@@ -1,9 +1,7 @@
 using BLL.DTOs;
-using BLL.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
 using NewsArchive.Auth;
 using NewsArchive.Seo;
 
@@ -19,8 +17,6 @@ namespace NewsArchive.Controllers
 
         protected string CurrentLanguage => UiLanguage.Current;
 
-        protected IStringLocalizer L => HttpContext.RequestServices.GetRequiredService<IStringLocalizer<SharedResource>>();
-
         protected async Task SignInUserAsync(AuthUserDTO user)
         {
             await HttpContext.SignInAsync(
@@ -34,21 +30,19 @@ namespace NewsArchive.Controllers
             HttpContext.Session.SetString("Name", user.Name);
         }
 
-        protected void SetArticleLookups(IEnumerable<ArticleDTO> articles)
+        protected void SetArticleLookups(ArticleLookupsDTO lookups)
         {
-            var services = HttpContext.RequestServices;
-            var categories = services.GetRequiredService<CategoryService>().Get();
-            ViewBag.AuthorNames = services.GetRequiredService<UserService>().GetNames(articles.Select(a => a.AuthorId));
-            ViewBag.CategoryNames = categories.ToDictionary(c => c.CategoryId, c => c.LocalName(CurrentLanguage));
-            ViewBag.CategorySlugs = categories.ToDictionary(c => c.CategoryId, c => c.Slug);
-            if (CurrentUserId.HasValue)
-                ViewBag.SavedIds = services.GetRequiredService<BookmarkService>().GetSavedIds(CurrentUserId.Value, articles.Select(a => a.ArticleId));
+            ViewBag.AuthorNames = lookups.AuthorNames;
+            ViewBag.CategoryNames = lookups.CategoryNames;
+            ViewBag.CategorySlugs = lookups.CategorySlugs;
+            if (lookups.SavedIds != null)
+                ViewBag.SavedIds = lookups.SavedIds;
         }
 
         protected void Flash(string cssClass, string message)
         {
             TempData["Class"] = cssClass;
-            TempData["Msg"] = L[message].Value;
+            TempData["Msg"] = message;
         }
     }
 }

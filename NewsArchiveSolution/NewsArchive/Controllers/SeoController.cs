@@ -1,6 +1,7 @@
 using BLL;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using NewsArchive.Seo;
 using System.Text;
@@ -14,15 +15,17 @@ namespace NewsArchive.Controllers
         private static readonly XNamespace NewsNs = "http://www.google.com/schemas/sitemap-news/0.9";
         private static readonly XNamespace ImageNs = "http://www.google.com/schemas/sitemap-image/1.1";
 
-        private readonly ArticleService articleService;
-        private readonly CategoryService categoryService;
-        private readonly TagService tagService;
-        private readonly AuthorService authorService;
+        private readonly IStringLocalizer<SharedResource> L;
+        private readonly IArticleService articleService;
+        private readonly ICategoryService categoryService;
+        private readonly ITagService tagService;
+        private readonly IAuthorService authorService;
         private readonly SeoUrls urls;
         private readonly SiteOptions site;
 
-        public SeoController(ArticleService articleService, CategoryService categoryService, TagService tagService, AuthorService authorService, SeoUrls urls, IOptions<SiteOptions> site)
+        public SeoController(IArticleService articleService, ICategoryService categoryService, ITagService tagService, IAuthorService authorService, SeoUrls urls, IOptions<SiteOptions> site, IStringLocalizer<SharedResource> localizer)
         {
+            L = localizer;
             this.authorService = authorService;
             this.tagService = tagService;
             this.articleService = articleService;

@@ -1,7 +1,8 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
@@ -9,15 +10,17 @@ namespace NewsArchive.Controllers
     [CustomAuthorize(AppRoles.Admin)]
     public class AdminController : AppController
     {
-        private readonly UserService _userService;
-        private readonly RoleService _roleService;
-        private readonly AnalyticsService analyticsService;
-        private readonly ArticleService articleService;
-        private readonly CategoryService categoryService;
-        private readonly AuthService authService;
+        private readonly IStringLocalizer<SharedResource> L;
+        private readonly IUserService _userService;
+        private readonly IRoleService _roleService;
+        private readonly IAnalyticsService analyticsService;
+        private readonly IArticleService articleService;
+        private readonly ICategoryService categoryService;
+        private readonly IAuthService authService;
 
-        public AdminController(UserService userService, RoleService roleService, AnalyticsService analyticsService, ArticleService articleService, CategoryService categoryService, AuthService authService)
+        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, IStringLocalizer<SharedResource> localizer)
         {
+            L = localizer;
             this.authService = authService;
             _userService = userService;
             _roleService = roleService;
@@ -41,17 +44,41 @@ namespace NewsArchive.Controllers
         {
             var pending = articleService.GetPending();
             ViewBag.AuthorNames = _userService.GetNames(pending.Select(a => a.AuthorId));
+            var scheduled = articleService.GetScheduled();
+            ViewBag.AuthorNames = _userService.GetNames(pending.Concat(scheduled).Select(a => a.AuthorId));
             ViewBag.CategoryNames = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.Name);
+            ViewBag.Scheduled = scheduled;
             return View(pending);
         }
 
         [HttpPost]
-        public IActionResult Approve(int id)
+        public IActionResult Approve(int id, DateTime? publishAt)
         {
-            if (articleService.Approve(id, CurrentUserId ?? 0))
-                Flash("success", "Article approved and published.");
+            var scheduled = ArticleRules.IsFutureSchedule(publishAt, DateTime.Now);
+            if (articleService.Approve(id, CurrentUserId ?? 0, publishAt))
+                Flash("success", scheduled ? "Article approved and scheduled." : "Article approved and published.");
             else
                 Flash("danger", "Only pending articles can be approved.");
+            return RedirectToAction("PendingArticles");
+        }
+
+        [HttpPost]
+        public IActionResult PublishNow(int id)
+        {
+            if (articleService.PublishNow(id))
+                Flash("success", "Article published.");
+            else
+                Flash("danger", "Only scheduled articles can be published early.");
+            return RedirectToAction("PendingArticles");
+        }
+
+        [HttpPost]
+        public IActionResult Unschedule(int id)
+        {
+            if (articleService.Unschedule(id))
+                Flash("warning", "Schedule cancelled. The article is back in the review queue.");
+            else
+                Flash("danger", "Only scheduled articles can be changed.");
             return RedirectToAction("PendingArticles");
         }
 

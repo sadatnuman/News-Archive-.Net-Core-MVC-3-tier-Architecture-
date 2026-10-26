@@ -1,18 +1,19 @@
-using AutoMapper;
 using BLL.DTOs;
-using DAL.EF.Tables;
+using BLL.Interfaces;
 using DAL;
+using DAL.EF.Tables;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class ArticleService
+    public class ArticleService : IArticleService
     {
         private readonly IArticleRepository repo;
         private readonly ITagRepository tagRepo;
         private readonly IMapper mapper;
 
-        public ArticleService(DataAccessFactory factory, IMapper mapper)
+        public ArticleService(IDataAccessFactory factory, IMapper mapper)
         {
             repo = factory.GetArticleRepository();
             tagRepo = factory.GetTagRepository();
@@ -21,7 +22,7 @@ namespace BLL.Services
 
         private void SaveTags(int articleId, IEnumerable<int>? tagIds)
         {
-            tagRepo.SetArticleTags(articleId, (tagIds ?? Enumerable.Empty<int>()).Distinct().Take(TagService.MaxTagsPerArticle));
+            tagRepo.SetArticleTags(articleId, (tagIds ?? Enumerable.Empty<int>()).Distinct().Take(ArticleRules.MaxTagsPerArticle));
         }
 
         public List<ArticleDTO> Get()
@@ -61,7 +62,7 @@ namespace BLL.Services
 
             if (isAdmin)
             {
-                article.StatusId = ArticleStatus.Published;
+                PublishOrSchedule(article, form.PublishAt, now);
                 article.ReviewedById = authorId;
                 article.ReviewedAt = now;
             }
@@ -78,7 +79,7 @@ namespace BLL.Services
         public bool Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview)
         {
             var article = repo.Get(articleId);
-            if (article == null || !CanEdit(article.AuthorId, article.StatusId, editorId, roleId)) return false;
+            if (article == null || !ArticleRules.CanEdit(article.AuthorId, article.StatusId, editorId, roleId)) return false;
 
             var isAdmin = roleId == AppRoles.Admin;
             article.Title = form.Title.Trim();
@@ -93,6 +94,10 @@ namespace BLL.Services
             if (isAdmin)
             {
                 article.IsBreakingNews = form.IsBreakingNews;
+                if (article.StatusId != ArticleStatus.Published && ArticleRules.IsFutureSchedule(form.PublishAt, DateTime.Now))
+                    PublishOrSchedule(article, form.PublishAt, DateTime.Now);
+                else if (article.StatusId == ArticleStatus.Scheduled && form.PublishAt == null)
+                    PublishOrSchedule(article, null, DateTime.Now);
             }
             else
             {
@@ -115,18 +120,60 @@ namespace BLL.Services
             return repo.Update(article);
         }
 
-        public bool Approve(int articleId, int adminId)
+        private static void PublishOrSchedule(Article article, DateTime? publishAt, DateTime now)
+        {
+            if (ArticleRules.IsFutureSchedule(publishAt, now))
+            {
+                article.StatusId = ArticleStatus.Scheduled;
+                article.ScheduledAt = publishAt;
+                article.PublishDate = publishAt!.Value;
+            }
+            else
+            {
+                article.StatusId = ArticleStatus.Published;
+                article.ScheduledAt = null;
+                article.PublishDate = now;
+            }
+        }
+
+        public bool Approve(int articleId, int adminId, DateTime? publishAt = null)
         {
             var article = repo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Pending) return false;
 
             var now = DateTime.Now;
-            article.StatusId = ArticleStatus.Published;
-            article.PublishDate = now;
+            PublishOrSchedule(article, publishAt, now);
             article.ReviewedById = adminId;
             article.ReviewedAt = now;
             article.ReviewNote = null;
             return repo.Update(article);
+        }
+
+        public bool PublishNow(int articleId)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
+            PublishOrSchedule(article, null, DateTime.Now);
+            return repo.Update(article);
+        }
+
+        public bool Unschedule(int articleId)
+        {
+            var article = repo.Get(articleId);
+            if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
+            article.StatusId = ArticleStatus.Pending;
+            article.ScheduledAt = null;
+            return repo.Update(article);
+        }
+
+        public int PublishDue()
+        {
+            return repo.PublishDue(DateTime.Now);
+        }
+
+        public List<ArticleDTO> GetScheduled()
+        {
+            return mapper.Map<List<ArticleDTO>>(repo.GetByStatus(ArticleStatus.Scheduled).OrderBy(a => a.ScheduledAt));
         }
 
         public bool Reject(int articleId, int adminId, string? note)
@@ -144,20 +191,8 @@ namespace BLL.Services
         public bool Delete(int articleId, int userId, int roleId)
         {
             var article = repo.Get(articleId);
-            if (article == null || !CanEdit(article.AuthorId, article.StatusId, userId, roleId)) return false;
+            if (article == null || !ArticleRules.CanEdit(article.AuthorId, article.StatusId, userId, roleId)) return false;
             return repo.Delete(articleId);
-        }
-
-        public static bool CanEdit(int authorId, int statusId, int userId, int? roleId)
-        {
-            if (roleId == AppRoles.Admin) return true;
-            return roleId == AppRoles.Author && authorId == userId && statusId != ArticleStatus.Published;
-        }
-
-        public static bool CanView(ArticleDTO article, int? userId, int? roleId)
-        {
-            if (article.IsPublished || roleId == AppRoles.Admin) return true;
-            return roleId == AppRoles.Author && userId == article.AuthorId;
         }
 
         public ArticleFormDTO? GetForm(int id)
@@ -175,6 +210,7 @@ namespace BLL.Services
                 IsBreakingNews = a.IsBreakingNews,
                 LanguageCode = a.LanguageCode,
                 StatusId = a.StatusId,
+                PublishAt = a.ScheduledAt,
                 ReviewNote = a.ReviewNote,
                 TagIds = tagRepo.GetForArticle(a.ArticleId).Select(t => t.TagId).ToList()
             };
@@ -221,20 +257,10 @@ namespace BLL.Services
             return mapper.Map<List<ArticleDTO>>(data);
         }
 
-        public const int ArchiveMinYear = 1990;
-
-        public static bool IsValidArchiveDate(int year, int? month = null, int? day = null)
-        {
-            if (year < ArchiveMinYear || year > DateTime.Now.Year + 1) return false;
-            if (month == null) return day == null;
-            if (month < 1 || month > 12) return false;
-            return day == null || (day >= 1 && day <= DateTime.DaysInMonth(year, month.Value));
-        }
-
         public List<ArticleDTO> GetArchive(int year, int? month, int? day, string? language, int page, int pageSize, out int total)
         {
             total = 0;
-            if (!IsValidArchiveDate(year, month, day)) return new List<ArticleDTO>();
+            if (!ArticleRules.IsValidArchiveDate(year, month, day)) return new List<ArticleDTO>();
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 50) pageSize = 12;
 
@@ -252,7 +278,7 @@ namespace BLL.Services
 
         public Dictionary<int, int> GetArchiveDayCounts(int year, int month, string? language = null)
         {
-            return IsValidArchiveDate(year, month) ? repo.CountByDay(year, month, language) : new Dictionary<int, int>();
+            return ArticleRules.IsValidArchiveDate(year, month) ? repo.CountByDay(year, month, language) : new Dictionary<int, int>();
         }
 
         public List<ArticleDTO> GetOnThisDay(DateTime today, int count, string? language = null)

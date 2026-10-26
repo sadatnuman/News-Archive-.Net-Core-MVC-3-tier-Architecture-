@@ -28,6 +28,22 @@ The boundaries are enforced by the build:
 - BLL has no ASP.NET MVC or HTTP dependencies. Authorization filters live in `NewsArchive/Filters`.
 - Only DAL touches the `DbContext`. Filtering, sorting, paging and counting happen in SQL.
 
+## Dependency injection
+
+Everything is wired through the built-in container with constructor injection; nothing outside the composition root resolves services by hand.
+
+| Layer | Registered in | Registrations |
+|---|---|---|
+| DAL | `DataLayerServices.AddDataLayer` | `NewsArchiveDbContext` (scoped), `IDataAccessFactory` → `DataAccessFactory` (scoped); repositories stay `internal` and are handed out by the factory |
+| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile; `IArticleService`, `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService` → their implementations (scoped) |
+| UI | `Program.cs` | `IFileStorage` → `WebRootFileStorage` (singleton), `LoginThrottle` (singleton), `CookieSessionValidator` (scoped, used as the cookie `EventsType`), `ScheduledPublisher` (hosted), `SeoUrls`, health checks |
+
+- Interfaces live in `BLL/Interfaces` and `DAL/Interfaces`; controllers, filters, view `@inject`s, the health check and the cookie validator depend only on interfaces.
+- Pure business rules with no dependencies are static classes: `ArticleRules` (who can edit or view, archive dates, scheduling window, tag limit), `MediaLimits`, `TokenClients`.
+- Controllers that show story lists inject `IArticleLookupService` (author names, section names and slugs, saved ids in one call); controllers that build localized messages inject `IStringLocalizer<SharedResource>`. Flash messages store the English key and the layout translates it.
+- `ScheduledPublisher` is a singleton, so it creates a scope through `IServiceScopeFactory` for each run, which is the supported way to use scoped services from a background service.
+- `ValidateOnBuild` and `ValidateScopes` are on, so a missing registration or a captive dependency stops the app at startup.
+
 ## Roles and editorial workflow
 
 | RoleId | Role | Can do |
@@ -40,12 +56,14 @@ Article status (`ArticleStatuses` lookup table):
 
 ```
 Draft (1) ──submit──► Pending (2) ──approve──► Published (3)
-   ▲                      │
+   ▲                      │   │                      ▲
+   │                      │   └─approve with time──► Scheduled (5) ──time reached / publish now
    └──── edit/resubmit ── Rejected (4) ◄──reject (with note)
 ```
 
 - Nothing written by an Author is public until an Admin approves it.
-- Articles created by an Admin are published immediately.
+- Articles created by an Admin are published immediately, or at the **Publish at** time when one is given.
+- Admins can approve with a future **Publish at** time (up to a year ahead). `Publishing/ScheduledPublisher` (a hosted `BackgroundService`) calls `ArticleService.PublishDue()` every 30 seconds, which publishes due articles in one `ExecuteUpdate`. Scheduled articles can be published early or sent back to review from **Pending articles**.
 - Public queries (`ArticleRepo.Published()`) only return Published articles. Non-published articles return 404 to everyone except the author and admins.
 - Business rules live in `BLL/Services/ArticleService.cs` (`Create`, `Update`, `Submit`, `Approve`, `Reject`, `Delete`, `CanEdit`, `CanView`). Controllers only call them.
 - Role and status ids are defined once in `DAL/EF/LookupIds.cs` and exposed to the UI through `BLL/AppRoles.cs` (`AppRoles`, `ArticleStatus`).
@@ -64,6 +82,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `AddUserAvatars` | `Users.AvatarPath` for profile pictures |
 | `AddUserBio` | `Users.Bio` (up to 500 characters) for author pages |
 | `AddBookmarks` | `Bookmarks` join table for "read later" |
+| `AddScheduledPublishing` | `Articles.ScheduledAt`, `Scheduled` status row, `IX_Articles_StatusId_ScheduledAt` |
 
 ### Tables (3NF)
 
@@ -244,7 +263,8 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `PUT /api/articles/{id}?submit=` | Owner (unpublished) or Admin | 204 / 403 / 404 |
 | `DELETE /api/articles/{id}` | Owner (unpublished) or Admin | 204 / 403 / 404 |
 | `POST /api/articles/{id}/submit` | Author (owner) | 204 / 409 |
-| `POST /api/articles/{id}/approve`, `/reject` | Admin | 204 / 409 |
+| `POST /api/articles/{id}/approve` (optional body `{ "publishAt": "..." }`), `/reject` | Admin | 204 / 409 |
+| `GET /api/articles/scheduled`, `POST /api/articles/{id}/publish-now` | Admin | 200 / 204 / 409 |
 | `GET /api/articles/{id}/comments` | Public | 200 |
 | `POST /api/articles/{id}/comments` | Any token, rate limited | 201 |
 | `DELETE /api/comments/{id}` | Comment owner or Admin | 204 / 403 |
@@ -374,6 +394,8 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 4d | Author pages with bios | Done |
 | 4e | Bookmarks ("read later") | Done |
 | 4f | Safe Markdown formatting with toolbar and live preview | Done |
-| 4g | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
+| 4g | Scheduled publishing | Done |
+| 4h | Dependency injection through interfaces, no service locator, container validation | Done |
+| 4i | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

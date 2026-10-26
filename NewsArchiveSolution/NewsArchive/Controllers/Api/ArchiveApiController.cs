@@ -1,5 +1,6 @@
+using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NewsArchive.Controllers.Api
@@ -7,9 +8,9 @@ namespace NewsArchive.Controllers.Api
     [Route("api/archive")]
     public class ArchiveApiController : ApiControllerBase
     {
-        private readonly ArticleService articleService;
+        private readonly IArticleService articleService;
 
-        public ArchiveApiController(ArticleService articleService)
+        public ArchiveApiController(IArticleService articleService)
         {
             this.articleService = articleService;
         }
@@ -26,7 +27,7 @@ namespace NewsArchive.Controllers.Api
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public IActionResult Period(int year, int month, [FromQuery] int? day, [FromQuery] string? lang, [FromQuery] int page = 1, [FromQuery] int pageSize = 12)
         {
-            if (!ArticleService.IsValidArchiveDate(year, month, day)) return NotFound();
+            if (!ArticleRules.IsValidArchiveDate(year, month, day)) return NotFound();
 
             page = Math.Max(page, 1);
             pageSize = Math.Clamp(pageSize, 1, 50);
@@ -38,7 +39,7 @@ namespace NewsArchive.Controllers.Api
         [ProducesResponseType(typeof(Dictionary<int, int>), StatusCodes.Status200OK)]
         public IActionResult Days(int year, int month, [FromQuery] string? lang)
         {
-            if (!ArticleService.IsValidArchiveDate(year, month)) return NotFound();
+            if (!ArticleRules.IsValidArchiveDate(year, month)) return NotFound();
             return Ok(articleService.GetArchiveDayCounts(year, month, ParseLanguage(lang)));
         }
     }

@@ -1,5 +1,5 @@
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -9,9 +9,9 @@ namespace NewsArchive.Controllers.Api
     [ApiAuthorize]
     public class BookmarksApiController : ApiControllerBase
     {
-        private readonly BookmarkService bookmarkService;
+        private readonly IBookmarkService bookmarkService;
 
-        public BookmarksApiController(BookmarkService bookmarkService)
+        public BookmarksApiController(IBookmarkService bookmarkService)
         {
             this.bookmarkService = bookmarkService;
         }

@@ -19,5 +19,6 @@ namespace DAL.EF
         public const int Pending = 2;
         public const int Published = 3;
         public const int Rejected = 4;
+        public const int Scheduled = 5;
     }
 }

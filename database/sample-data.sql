@@ -4,6 +4,8 @@ SET ANSI_NULLS ON;
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
+DELETE FROM [Bookmarks];
+DELETE FROM [UserTokens];
 DELETE FROM [ContentLabels];
 DELETE FROM [Comments];
 DELETE FROM [Articles];
@@ -16,6 +18,7 @@ DBCC CHECKIDENT ('[Categories]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT ('[Tags]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT ('[Articles]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT ('[Comments]', RESEED, 0) WITH NO_INFOMSGS;
+DBCC CHECKIDENT ('[UserTokens]', RESEED, 0) WITH NO_INFOMSGS;
 
 SET IDENTITY_INSERT [Users] ON;
 INSERT INTO [Users] ([UserId], [Name], [Email], [PasswordHash], [RoleId], [CreatedAt]) VALUES (1, N'Editorial Desk', N'admin@meridiannewsfolio.local', '492c58498f3fdffb6261ce8f3272edab', 1, '2026-07-28T09:00:00');
@@ -277,8 +280,124 @@ INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (20
 INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (22, 4, N'মোবাইলে বানানো ছবির জন্য পুরস্কারের ধারণাটা দারুণ।', '2026-10-24T10:24:00');
 INSERT INTO [Comments] ([ArticleId], [UserId], [Text], [CreatedDate]) VALUES (17, 6, N'আমাদের এলাকাতেও এ বছর বৃষ্টি খুব অনিয়মিত। কৃষকদের জন্য ভালো খবর।', '2026-10-23T04:12:00');
 
-UPDATE [Users] SET [Bio] = N'The Meridian Newsfolio editorial desk reviews every story before it is published and keeps the archive accurate.' WHERE [Email] = N'admin@meridiannewsfolio.local';
-UPDATE [Users] SET [Bio] = N'Farhana Rahman covers Dhaka, transport and sport, with a focus on how city life is changing.' WHERE [Email] = N'farhana@meridiannewsfolio.local';
-UPDATE [Users] SET [Bio] = N'Tanvir Ahmed reports on business, technology and science from Chattogram and Dhaka.' WHERE [Email] = N'tanvir@meridiannewsfolio.local';
+UPDATE [Users] SET [AvatarPath] = CASE [UserId] WHEN 1 THEN N'/images/avatars/editorial-desk.png' WHEN 2 THEN N'/images/avatars/farhana-rahman.png' WHEN 3 THEN N'/images/avatars/tanvir-ahmed.png' WHEN 4 THEN N'/images/avatars/nusrat-jahan.png' WHEN 5 THEN N'/images/avatars/imran-hossain.png' WHEN 6 THEN N'/images/avatars/sadia-islam.png' END;
+UPDATE [Users] SET [Bio] = N'The Meridian Newsfolio editorial desk reviews every story before it is published and keeps the archive accurate.' WHERE [UserId] = 1;
+UPDATE [Users] SET [Bio] = N'Farhana Rahman covers Dhaka, transport and sport, with a focus on how city life is changing.' WHERE [UserId] = 2;
+UPDATE [Users] SET [Bio] = N'Tanvir Ahmed reports on business, technology and science from Chattogram and Dhaka.' WHERE [UserId] = 3;
+UPDATE [Users] SET [Bio] = N'Nusrat Jahan is a teacher in Sylhet who reads the archive for stories on education and health.' WHERE [UserId] = 4;
+UPDATE [Users] SET [Bio] = N'Imran Hossain follows cricket, football and the local startup scene from Rajshahi.' WHERE [UserId] = 5;
+UPDATE [Users] SET [Bio] = N'Sadia Islam is a university student in Khulna interested in climate, science and culture.' WHERE [UserId] = 6;
+UPDATE [Articles] SET [Slug] = N'dhaka-commuters-welcome-longer-evening-hours-on-city-rail-services' WHERE [ArticleId] = 1;
+UPDATE [Articles] SET [Slug] = N'chattogram-port-speeds-up-container-checks-with-new-digital-booking-system' WHERE [ArticleId] = 2;
+UPDATE [Articles] SET [Slug] = N'farmers-in-the-north-turn-to-drought-tolerant-rice-as-dry-spells-grow-longer' WHERE [ArticleId] = 3;
+UPDATE [Articles] SET [Slug] = N'bangladeshi-fintech-startups-attract-new-funding-for-rural-digital-payments' WHERE [ArticleId] = 4;
+UPDATE [Articles] SET [Slug] = N'bangladesh-name-three-uncapped-players-in-squad-for-tri-series' WHERE [ArticleId] = 5;
+UPDATE [Articles] SET [Slug] = N'universities-expand-evening-degree-programmes-for-working-students' WHERE [ArticleId] = 6;
+UPDATE [Articles] SET [Slug] = N'coastal-nations-agree-joint-early-warning-plan-for-extreme-storms' WHERE [ArticleId] = 7;
+UPDATE [Articles] SET [Slug] = N'new-cross-border-rail-freight-link-halves-journey-times' WHERE [ArticleId] = 8;
+UPDATE [Articles] SET [Slug] = N'software-teams-adopt-ai-coding-assistants-but-keep-humans-in-charge-of-review' WHERE [ArticleId] = 9;
+UPDATE [Articles] SET [Slug] = N'banks-urge-customers-to-enable-two-step-verification-after-phishing-wave' WHERE [ArticleId] = 10;
+UPDATE [Articles] SET [Slug] = N'clinics-extend-evening-hours-for-seasonal-vaccination-campaign' WHERE [ArticleId] = 11;
+UPDATE [Articles] SET [Slug] = N'walking-every-day-linked-to-better-sleep-readers-say' WHERE [ArticleId] = 12;
+UPDATE [Articles] SET [Slug] = N'rooftop-solar-on-public-schools-cuts-electricity-bills-by-a-third' WHERE [ArticleId] = 13;
+UPDATE [Articles] SET [Slug] = N'student-built-satellite-sends-its-first-images-from-orbit' WHERE [ArticleId] = 14;
+UPDATE [Articles] SET [Slug] = N'ঢাকায়-সন্ধ্যার-রেলসেবা-বাড়ানোয়-স্বস্তিতে-যাত্রীরা' WHERE [ArticleId] = 15;
+UPDATE [Articles] SET [Slug] = N'চট্টগ্রাম-বন্দরে-অনলাইন-বুকিংয়ে-কনটেইনার-পরীক্ষায়-গতি' WHERE [ArticleId] = 16;
+UPDATE [Articles] SET [Slug] = N'খরাসহিষ্ণু-ধানে-ঝুঁকছেন-উত্তরাঞ্চলের-কৃষকেরা' WHERE [ArticleId] = 17;
+UPDATE [Articles] SET [Slug] = N'উপকূল-রক্ষায়-ম্যানগ্রোভের-চারা-রোপণে-স্বেচ্ছাসেবকেরা' WHERE [ArticleId] = 18;
+UPDATE [Articles] SET [Slug] = N'গ্রামের-দোকানে-ডিজিটাল-লেনদেনে-বিনিয়োগ-পাচ্ছে-স্টার্টআপ' WHERE [ArticleId] = 19;
+UPDATE [Articles] SET [Slug] = N'ত্রিদেশীয়-সিরিজের-দলে-তিন-নতুন-মুখ' WHERE [ArticleId] = 20;
+UPDATE [Articles] SET [Slug] = N'কর্মজীবী-শিক্ষার্থীদের-জন্য-সান্ধ্য-কোর্স-বাড়াচ্ছে-বিশ্ববিদ্যালয়' WHERE [ArticleId] = 21;
+UPDATE [Articles] SET [Slug] = N'রেকর্ডসংখ্যক-ছবি-নিয়ে-শুরু-হলো-স্বাধীন-চলচ্চিত্র-উৎসব' WHERE [ArticleId] = 22;
+UPDATE [Articles] SET [Slug] = N'ঝড়ের-আগাম-সতর্কতায়-উপকূলীয়-দেশগুলোর-যৌথ-উদ্যোগ' WHERE [ArticleId] = 23;
+UPDATE [Articles] SET [Slug] = N'গ্রামের-পরিবারের-জন্য-সাশ্রয়ী-পানি-পরীক্ষার-কিট-উদ্ভাবন' WHERE [ArticleId] = 24;
+UPDATE [Articles] SET [Slug] = N'বাংলা-ভাষার-এআই-সহকারী-তৈরিতে-কাজ-করছেন-তরুণ-প্রকৌশলীরা' WHERE [ArticleId] = 25;
+UPDATE [Articles] SET [Slug] = N'ডেঙ্গু-প্রতিরোধে-বাড়ির-আশপাশে-পানি-জমতে-না-দেওয়ার-পরামর্শ' WHERE [ArticleId] = 26;
+UPDATE [Articles] SET [Slug] = N'coastal-districts-plan-a-mangrove-belt-to-soften-storm-surges' WHERE [ArticleId] = 27;
+UPDATE [Articles] SET [Slug] = N'শিক্ষার্থীদের-তৈরি-আবহাওয়া-বেলুন-পাঠাবে-উচ্চ-বায়ুমণ্ডলের-তথ্য' WHERE [ArticleId] = 28;
+UPDATE [Tags] SET [Slug] = N'dhaka' WHERE [TagId] = 1;
+UPDATE [Tags] SET [Slug] = N'chattogram' WHERE [TagId] = 2;
+UPDATE [Tags] SET [Slug] = N'climate' WHERE [TagId] = 3;
+UPDATE [Tags] SET [Slug] = N'renewable-energy' WHERE [TagId] = 4;
+UPDATE [Tags] SET [Slug] = N'elections' WHERE [TagId] = 5;
+UPDATE [Tags] SET [Slug] = N'startups' WHERE [TagId] = 6;
+UPDATE [Tags] SET [Slug] = N'markets' WHERE [TagId] = 7;
+UPDATE [Tags] SET [Slug] = N'exports' WHERE [TagId] = 8;
+UPDATE [Tags] SET [Slug] = N'universities' WHERE [TagId] = 9;
+UPDATE [Tags] SET [Slug] = N'cricket' WHERE [TagId] = 10;
+UPDATE [Tags] SET [Slug] = N'football' WHERE [TagId] = 11;
+UPDATE [Tags] SET [Slug] = N'film' WHERE [TagId] = 12;
+UPDATE [Tags] SET [Slug] = N'public-health' WHERE [TagId] = 13;
+UPDATE [Tags] SET [Slug] = N'space' WHERE [TagId] = 14;
+UPDATE [Tags] SET [Slug] = N'research' WHERE [TagId] = 15;
+UPDATE [Tags] SET [Slug] = N'artificial-intelligence' WHERE [TagId] = 16;
+UPDATE [Tags] SET [Slug] = N'cybersecurity' WHERE [TagId] = 17;
+UPDATE [Tags] SET [Slug] = N'transport' WHERE [TagId] = 18;
+UPDATE [Tags] SET [Slug] = N'diplomacy' WHERE [TagId] = 19;
+UPDATE [Tags] SET [Slug] = N'agriculture' WHERE [TagId] = 20;
+UPDATE [Articles] SET [UpdatedAt] = DATEADD(MINUTE, 35 + [ArticleId] * 7, [PublishDate]) WHERE [StatusId] = 3;
+UPDATE [Articles] SET [UpdatedAt] = DATEADD(HOUR, 3, [CreatedAt]) WHERE [StatusId] <> 3;
+UPDATE [Articles] SET [ScheduledAt] = [PublishDate] WHERE [StatusId] = 3;
+UPDATE [Articles] SET [ScheduledAt] = DATEADD(DAY, 2, [CreatedAt]) WHERE [StatusId] IN (1, 2, 4);
+UPDATE [Articles] SET [ReviewNote] = CASE [LanguageCode] WHEN 'bn' THEN N'সূত্র ও তথ্য যাচাইয়ের পর সম্পাদকীয় ডেস্ক অনুমোদন দিয়েছে।' ELSE N'Approved by the editorial desk after checking sources and figures.' END WHERE [StatusId] = 3;
+UPDATE [Articles] SET [ReviewedById] = 1, [ReviewedAt] = DATEADD(HOUR, 1, [CreatedAt]),
+    [ReviewNote] = CASE [LanguageCode] WHEN 'bn' THEN N'আগের খসড়ায় একটি উৎস যোগ করতে বলা হয়েছিল; লেখক তা যোগ করে আবার জমা দিয়েছেন।' ELSE N'An earlier version was returned to add a second source; the author has resubmitted it.' END
+WHERE [StatusId] IN (1, 2);
+SET IDENTITY_INSERT [Articles] ON;
+INSERT INTO [Articles] ([ArticleId], [Title], [Slug], [Summary], [Content], [PublishDate], [ViewsCount], [IsBreakingNews], [ImagePath], [CategoryId], [AuthorId], [StatusId], [LanguageCode], [CreatedAt], [UpdatedAt], [ReviewedById], [ReviewedAt], [ReviewNote], [ScheduledAt]) VALUES (27, N'Coastal districts plan a mangrove belt to soften storm surges', N'coastal-districts-plan-a-mangrove-belt-to-soften-storm-surges', N'Officials in three coastal districts want to plant a continuous belt of mangroves along embankments, saying the trees can reduce the force of storm surges and protect farmland.', N'Officials in three coastal districts have proposed planting a continuous belt of mangroves along vulnerable embankments before next year''s cyclone season.
+
+## Why mangroves
+
+Mangrove roots slow down waves and trap sediment, which helps embankments last longer. Local engineers say a wide belt of trees can reduce the height of a storm surge before it reaches villages.
+
+> "We cannot stop storms, but we can make them less destructive," said one district planner.
+
+## What happens next
+
+- Nurseries will raise seedlings over the winter.
+- Planting will start along the most exposed stretches first.
+- Communities will be paid to look after the young trees for three years.
+
+The plan still needs final approval and funding from the national budget.', DATEADD(DAY, 3, CAST(CAST(GETDATE() AS date) AS datetime)) + CAST('08:00' AS datetime), 0, 0, N'images/articles/27-en-environment.jpg', 10, 2, 5, 'en', DATEADD(DAY, -1, GETDATE()), DATEADD(HOUR, -6, GETDATE()), 1, DATEADD(HOUR, -5, GETDATE()), N'Approved and scheduled for the start of the cyclone preparedness week.', DATEADD(DAY, 3, CAST(CAST(GETDATE() AS date) AS datetime)) + CAST('08:00' AS datetime));
+INSERT INTO [Articles] ([ArticleId], [Title], [Slug], [Summary], [Content], [PublishDate], [ViewsCount], [IsBreakingNews], [ImagePath], [CategoryId], [AuthorId], [StatusId], [LanguageCode], [CreatedAt], [UpdatedAt], [ReviewedById], [ReviewedAt], [ReviewNote], [ScheduledAt]) VALUES (28, N'শিক্ষার্থীদের তৈরি আবহাওয়া বেলুন পাঠাবে উচ্চ বায়ুমণ্ডলের তথ্য', N'শিক্ষার্থীদের-তৈরি-আবহাওয়া-বেলুন-পাঠাবে-উচ্চ-বায়ুমণ্ডলের-তথ্য', N'একটি বিশ্ববিদ্যালয়ের শিক্ষার্থীরা নিজেরাই আবহাওয়া বেলুন ও সেন্সর তৈরি করেছেন। বেলুনটি প্রায় ত্রিশ কিলোমিটার উঁচু থেকে তাপমাত্রা ও বাতাসের তথ্য পাঠাবে।', N'একটি বিশ্ববিদ্যালয়ের শিক্ষার্থীরা নিজেরাই আবহাওয়া বেলুন ও তার সেন্সর তৈরি করেছেন। আগামী সপ্তাহে বেলুনটি উড়ানো হবে।
+
+## কী মাপা হবে
+
+বেলুনটি প্রায় ত্রিশ কিলোমিটার উঁচুতে উঠে **তাপমাত্রা**, **বায়ুচাপ** ও **বাতাসের গতি** মাপবে এবং রেডিওর মাধ্যমে তথ্য পাঠাবে।
+
+> "নিজেদের হাতে তৈরি যন্ত্র আকাশে পাঠানো আমাদের জন্য বড় অভিজ্ঞতা," বললেন দলের এক সদস্য।
+
+## কেন গুরুত্বপূর্ণ
+
+- স্থানীয় আবহাওয়ার পূর্বাভাস আরও নির্ভুল করতে সাহায্য করবে।
+- সংগ্রহ করা তথ্য অন্য গবেষকদের জন্য উন্মুক্ত রাখা হবে।
+- স্কুলের শিক্ষার্থীদের বিজ্ঞানে আগ্রহী করতে প্রদর্শনী করা হবে।', DATEADD(DAY, 3, CAST(CAST(GETDATE() AS date) AS datetime)) + CAST('08:00' AS datetime), 0, 0, N'images/articles/28-bn-science.jpg', 11, 3, 5, 'bn', DATEADD(DAY, -1, GETDATE()), DATEADD(HOUR, -6, GETDATE()), 1, DATEADD(HOUR, -5, GETDATE()), N'অনুমোদিত। উৎক্ষেপণের দিন সকালে প্রকাশের জন্য নির্ধারিত।', DATEADD(DAY, 3, CAST(CAST(GETDATE() AS date) AS datetime)) + CAST('08:00' AS datetime));
+SET IDENTITY_INSERT [Articles] OFF;
+INSERT INTO [ContentLabels] ([ArticleId], [TagId]) VALUES (27, 3);
+INSERT INTO [ContentLabels] ([ArticleId], [TagId]) VALUES (27, 4);
+INSERT INTO [ContentLabels] ([ArticleId], [TagId]) VALUES (27, 20);
+INSERT INTO [ContentLabels] ([ArticleId], [TagId]) VALUES (28, 14);
+INSERT INTO [ContentLabels] ([ArticleId], [TagId]) VALUES (28, 15);
+INSERT INTO [ContentLabels] ([ArticleId], [TagId]) VALUES (28, 9);
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (4, 6, DATEADD(MINUTE, -47, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (4, 11, DATEADD(MINUTE, -94, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (4, 21, DATEADD(MINUTE, -141, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (4, 23, DATEADD(MINUTE, -188, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (5, 5, DATEADD(MINUTE, -235, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (5, 20, DATEADD(MINUTE, -282, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (5, 9, DATEADD(MINUTE, -329, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (5, 19, DATEADD(MINUTE, -376, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (6, 13, DATEADD(MINUTE, -423, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (6, 14, DATEADD(MINUTE, -470, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (6, 24, DATEADD(MINUTE, -517, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (6, 22, DATEADD(MINUTE, -564, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (2, 4, DATEADD(MINUTE, -611, GETDATE()));
+INSERT INTO [Bookmarks] ([UserId], [ArticleId], [CreatedAt]) VALUES (3, 7, DATEADD(MINUTE, -658, GETDATE()));
+INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (1, 'C25353171A843C3F580E6D16C78572AB8B98480E39B2AB290B994AFB305CC352', 'web', DATEADD(HOUR, -30, GETDATE()), DATEADD(HOUR, -18, GETDATE()), DATEADD(HOUR, -20, GETDATE()));
+INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (2, 'CFAA2EFB72B4A7AAD3489652569FD20C5A2747AC3DA0CB6312D61DF5F1C28E2C', 'api', DATEADD(HOUR, -31, GETDATE()), DATEADD(HOUR, -19, GETDATE()), DATEADD(HOUR, -21, GETDATE()));
+INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (3, '4DDE73A5E0E4F79DEE7A66E4B955A6AC5B58AD038B530B1304C9B51CD14D80E7', 'web', DATEADD(HOUR, -32, GETDATE()), DATEADD(HOUR, -20, GETDATE()), DATEADD(HOUR, -22, GETDATE()));
+INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (4, 'FD10C8122997A12736419578F009DD1B7057B27D5FDEBB876D9647C0100EE0E0', 'api', DATEADD(HOUR, -33, GETDATE()), DATEADD(HOUR, -21, GETDATE()), DATEADD(HOUR, -23, GETDATE()));
+INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (5, 'E34B02906B26A73126C771360570E8C05E4CD0A7F4B49FE32DB5EB5D0D4CA9EB', 'web', DATEADD(HOUR, -34, GETDATE()), DATEADD(HOUR, -22, GETDATE()), DATEADD(HOUR, -24, GETDATE()));
+INSERT INTO [UserTokens] ([UserId], [TokenHash], [ClientType], [CreatedAt], [ExpiresAt], [RevokedAt]) VALUES (6, '3B5188D7386D8AB76AEE179C9DAC8656DC45E032E86B14AD552BCEED2822D037', 'api', DATEADD(HOUR, -35, GETDATE()), DATEADD(HOUR, -23, GETDATE()), DATEADD(HOUR, -25, GETDATE()));
 
 COMMIT TRANSACTION;

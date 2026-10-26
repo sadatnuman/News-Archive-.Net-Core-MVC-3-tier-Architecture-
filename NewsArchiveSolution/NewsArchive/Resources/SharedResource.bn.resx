@@ -93,6 +93,9 @@
   <data name="Article approved and published." xml:space="preserve">
     <value>সংবাদটি অনুমোদিত ও প্রকাশিত হয়েছে।</value>
   </data>
+  <data name="Article approved and scheduled." xml:space="preserve">
+    <value>সংবাদটি অনুমোদিত হয়েছে এবং প্রকাশের সময় নির্ধারিত হয়েছে।</value>
+  </data>
   <data name="Article deleted." xml:space="preserve">
     <value>সংবাদটি মুছে ফেলা হয়েছে।</value>
   </data>
@@ -128,6 +131,9 @@
   </data>
   <data name="Back to profile" xml:space="preserve">
     <value>প্রোফাইলে ফিরুন</value>
+  </data>
+  <data name="Back to review" xml:space="preserve">
+    <value>আবার পর্যালোচনায়</value>
   </data>
   <data name="Back to sign in" xml:space="preserve">
     <value>লগ-ইনে ফিরুন</value>
@@ -417,6 +423,9 @@
   <data name="Go to the homepage" xml:space="preserve">
     <value>প্রথম পাতায় যান</value>
   </data>
+  <data name="Goes live {0}" xml:space="preserve">
+    <value>প্রকাশিত হবে {0}</value>
+  </data>
   <data name="Guest" xml:space="preserve">
     <value>অতিথি</value>
   </data>
@@ -500,6 +509,9 @@
   </data>
   <data name="Latest news – page {0}" xml:space="preserve">
     <value>সর্বশেষ সংবাদ – পাতা {0}</value>
+  </data>
+  <data name="Leave empty to publish immediately." xml:space="preserve">
+    <value>এখনই প্রকাশ করতে ফাঁকা রাখুন।</value>
   </data>
   <data name="Light" xml:space="preserve">
     <value>লাইট</value>
@@ -669,6 +681,12 @@
   <data name="Only pending articles can be rejected." xml:space="preserve">
     <value>শুধু অপেক্ষমাণ লেখা ফেরত পাঠানো যায়।</value>
   </data>
+  <data name="Only scheduled articles can be changed." xml:space="preserve">
+    <value>শুধু নির্ধারিত সংবাদ পরিবর্তন করা যায়।</value>
+  </data>
+  <data name="Only scheduled articles can be published early." xml:space="preserve">
+    <value>শুধু নির্ধারিত সংবাদ আগেভাগে প্রকাশ করা যায়।</value>
+  </data>
   <data name="Or use an existing picture address" xml:space="preserve">
     <value>অথবা আগে থেকে থাকা ছবির ঠিকানা দিন</value>
   </data>
@@ -740,6 +758,15 @@
   </data>
   <data name="Publish" xml:space="preserve">
     <value>প্রকাশ করুন</value>
+  </data>
+  <data name="Publish at" xml:space="preserve">
+    <value>প্রকাশের সময়</value>
+  </data>
+  <data name="Publish at (leave empty to publish now)" xml:space="preserve">
+    <value>প্রকাশের সময় (এখনই প্রকাশ করতে ফাঁকা রাখুন)</value>
+  </data>
+  <data name="Publish now" xml:space="preserve">
+    <value>এখনই প্রকাশ করুন</value>
   </data>
   <data name="Published" xml:space="preserve">
     <value>প্রকাশিত</value>
@@ -827,6 +854,15 @@
   </data>
   <data name="Saved stories" xml:space="preserve">
     <value>সংরক্ষিত সংবাদ</value>
+  </data>
+  <data name="Schedule cancelled. The article is back in the review queue." xml:space="preserve">
+    <value>নির্ধারিত সময় বাতিল হয়েছে। সংবাদটি আবার পর্যালোচনার তালিকায়।</value>
+  </data>
+  <data name="Scheduled" xml:space="preserve">
+    <value>নির্ধারিত</value>
+  </data>
+  <data name="Scheduled to publish" xml:space="preserve">
+    <value>প্রকাশের অপেক্ষায়</value>
   </data>
   <data name="Search" xml:space="preserve">
     <value>অনুসন্ধান</value>

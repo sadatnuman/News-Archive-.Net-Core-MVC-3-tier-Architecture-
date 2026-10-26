@@ -1,16 +1,17 @@
 using BLL.DTOs;
+using BLL.Interfaces;
 using DAL;
 using DAL.Interfaces;
 
 namespace BLL.Services
 {
-    public class AnalyticsService
+    public class AnalyticsService : IAnalyticsService
     {
         private readonly IArticleRepository articleRepo;
         private readonly IUserRepository userRepo;
         private readonly ICategoryRepository categoryRepo;
 
-        public AnalyticsService(DataAccessFactory factory)
+        public AnalyticsService(IDataAccessFactory factory)
         {
             articleRepo = factory.GetArticleRepository();
             userRepo = factory.GetUserRepository();

@@ -1,4 +1,4 @@
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -9,10 +9,12 @@ namespace NewsArchive.Controllers
     {
         private const int PageSize = 12;
 
-        private readonly BookmarkService bookmarkService;
+        private readonly IArticleLookupService lookupService;
+        private readonly IBookmarkService bookmarkService;
 
-        public BookmarkController(BookmarkService bookmarkService)
+        public BookmarkController(IBookmarkService bookmarkService, IArticleLookupService lookupService)
         {
+            this.lookupService = lookupService;
             this.bookmarkService = bookmarkService;
         }
 
@@ -21,7 +23,7 @@ namespace NewsArchive.Controllers
         {
             page = Math.Max(page, 1);
             var articles = bookmarkService.GetSaved(CurrentUserId ?? 0, page, PageSize, out var total);
-            SetArticleLookups(articles);
+            SetArticleLookups(lookupService.Build(articles, CurrentUserId, CurrentLanguage));
             ViewBag.Page = page;
             ViewBag.PageSize = PageSize;
             ViewBag.Total = total;

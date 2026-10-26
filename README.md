@@ -25,6 +25,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 
 **Admins**
 - Approve or reject submitted articles; nothing written by an author is published without approval
+- Schedule approved articles for a future date and time; they go live automatically
 - Add, rename and delete any number of sections, with English and Bangla names; articles are moved when a section is deleted
 - Manage topic tags in English and Bangla; every tag gets its own page at `/tag/{id}/{slug}`
 - Manage users and roles, and moderate comments
@@ -111,7 +112,17 @@ This creates every table, key and index, plus the seed data for roles, article s
 sqlcmd -S "localhost\SQLEXPRESS" -E -d NewsArchiveDB -f 65001 -i database/sample-data.sql
 ```
 
-`-f 65001` is required so Bangla text is read as UTF-8. The script replaces all users, sections, articles, tags and comments.
+`-f 65001` is required so Bangla text is read as UTF-8. In SSMS, open the file, choose **NewsArchiveDB** in the toolbar and press **Execute**.
+
+The script replaces all users, sections, articles, tags, comments, bookmarks and tokens, and fills every column of every table:
+
+| Data | Rows |
+|---|---|
+| Users with profile pictures (`wwwroot/images/avatars`) and bios | 6 |
+| Sections and topic tags in English and Bangla | 11 sections, 20 tags |
+| Articles (15 English, 13 Bangla) with pictures, slugs, review history and update times | 28: 22 published, 2 scheduled three days ahead, 2 pending, 1 draft, 1 rejected |
+| Comments, tag links, bookmarks | 11, 46, 14 |
+| Expired and revoked API tokens (random hashes, they cannot be used to sign in) | 6 |
 
 Sample accounts (all use the password `Meridian@2026`; change them before going live):
 

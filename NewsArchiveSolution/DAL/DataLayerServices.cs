@@ -1,4 +1,5 @@
 using DAL.EF;
+using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,7 +10,7 @@ namespace DAL
         public static IServiceCollection AddDataLayer(this IServiceCollection services, string connectionString)
         {
             services.AddDbContext<NewsArchiveDbContext>(opt => opt.UseSqlServer(connectionString));
-            services.AddScoped<DataAccessFactory>();
+            services.AddScoped<IDataAccessFactory, DataAccessFactory>();
             return services;
         }
 

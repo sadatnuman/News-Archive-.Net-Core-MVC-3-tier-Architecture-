@@ -1,7 +1,8 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using NewsArchive.Auth;
 using NewsArchive.Filters;
@@ -10,15 +11,21 @@ namespace NewsArchive.Controllers
 {
     public class ArticleController : AppController
     {
-        ArticleService articleService;
-        CategoryService categoryService;
-        CommentService commentService;
-        UserService userService;
-        TagService tagService;
-        MediaService mediaService;
+        private readonly IBookmarkService bookmarkService;
+        private readonly IStringLocalizer<SharedResource> L;
+        private readonly IArticleLookupService lookupService;
+        private readonly IArticleService articleService;
+        private readonly ICategoryService categoryService;
+        private readonly ICommentService commentService;
+        private readonly IUserService userService;
+        private readonly ITagService tagService;
+        private readonly IMediaService mediaService;
 
-        public ArticleController(ArticleService articleService, CategoryService categoryService, CommentService commentService, UserService userService, TagService tagService, MediaService mediaService)
+        public ArticleController(IArticleService articleService, ICategoryService categoryService, ICommentService commentService, IUserService userService, ITagService tagService, IMediaService mediaService, IArticleLookupService lookupService, IStringLocalizer<SharedResource> localizer, IBookmarkService bookmarkService)
         {
+            this.bookmarkService = bookmarkService;
+            L = localizer;
+            this.lookupService = lookupService;
             this.tagService = tagService;
             this.mediaService = mediaService;
             this.articleService = articleService;
@@ -67,7 +74,7 @@ namespace NewsArchive.Controllers
             int total;
             var data = articleService.Search(keyword, from, to, page, pageSize, out total, CurrentLanguage);
             var trending = isSearch ? new List<ArticleDTO>() : articleService.GetTrendingArticles(5, CurrentLanguage);
-            SetArticleLookups(data.Concat(trending));
+            SetArticleLookups(lookupService.Build(data.Concat(trending), CurrentUserId, CurrentLanguage));
 
             ViewBag.IsSearch = isSearch;
             ViewBag.Trending = trending;
@@ -88,7 +95,7 @@ namespace NewsArchive.Controllers
         public IActionResult BreakingNews()
         {
             var data = articleService.GetBreakingNews(CurrentLanguage);
-            SetArticleLookups(data);
+            SetArticleLookups(lookupService.Build(data, CurrentUserId, CurrentLanguage));
 
             ViewBag.Heading = "Breaking News";
             ViewBag.Intro = "The most important developing stories, updated as they happen.";
@@ -101,7 +108,7 @@ namespace NewsArchive.Controllers
         public IActionResult TrendingNews()
         {
             var trending = articleService.GetTrendingArticles(12, CurrentLanguage);
-            SetArticleLookups(trending);
+            SetArticleLookups(lookupService.Build(trending, CurrentUserId, CurrentLanguage));
 
             ViewBag.Heading = "Trending News";
             ViewBag.Intro = "The stories readers are viewing and discussing the most right now.";
@@ -116,7 +123,7 @@ namespace NewsArchive.Controllers
             var article = articleService.GetWithDetails(id);
             var userId = CurrentUserId;
             var roleId = CurrentRoleId;
-            if (article == null || !ArticleService.CanView(article, userId, roleId))
+            if (article == null || !ArticleRules.CanView(article, userId, roleId))
                 return NotFound();
 
             if (article.IsPublished && slug != article.Slug)
@@ -138,13 +145,13 @@ namespace NewsArchive.Controllers
                 c => users.TryGetValue(c.UserId, out var name) ? name : L["Reader"].Value);
             ViewBag.UserId = userId;
             ViewBag.RoleId = roleId;
-            ViewBag.CanEdit = ArticleService.CanEdit(article.AuthorId, article.StatusId, userId ?? 0, roleId);
-            ViewBag.IsSaved = userId.HasValue && HttpContext.RequestServices.GetRequiredService<BookmarkService>().IsSaved(userId.Value, id);
+            ViewBag.CanEdit = ArticleRules.CanEdit(article.AuthorId, article.StatusId, userId ?? 0, roleId);
+            ViewBag.IsSaved = userId.HasValue && bookmarkService.IsSaved(userId.Value, id);
             var recommendations = article.IsPublished
                 ? articleService.GetRecommendedArticles(id, 4)
                 : new List<ArticleDTO>();
             var latest = articleService.GetLatest(6, article.LanguageCode).Where(a => a.ArticleId != id).Take(5).ToList();
-            SetArticleLookups(recommendations.Concat(latest));
+            SetArticleLookups(lookupService.Build(recommendations.Concat(latest), CurrentUserId, CurrentLanguage));
             ViewBag.Recommendations = recommendations;
             ViewBag.Latest = latest;
 
@@ -161,8 +168,8 @@ namespace NewsArchive.Controllers
 
         [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
-        [RequestSizeLimit(MediaService.MaxRequestBytes)]
-        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        [RequestSizeLimit(MediaLimits.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaLimits.MaxRequestBytes)]
         public IActionResult Create(ArticleFormDTO form, string? submitAction, IFormFile? imageFile, bool removeImage = false)
         {
             var userId = CurrentUserId;
@@ -195,7 +202,7 @@ namespace NewsArchive.Controllers
             var form = articleService.GetForm(id);
             var article = articleService.Get(id);
             if (form == null || article == null) return NotFound();
-            if (!ArticleService.CanEdit(article.AuthorId, article.StatusId, CurrentUserId ?? 0, CurrentRoleId))
+            if (!ArticleRules.CanEdit(article.AuthorId, article.StatusId, CurrentUserId ?? 0, CurrentRoleId))
                 return NotFound();
 
             SetFormData();
@@ -204,8 +211,8 @@ namespace NewsArchive.Controllers
 
         [CustomAuthorize(AppRoles.Admin, AppRoles.Author)]
         [HttpPost]
-        [RequestSizeLimit(MediaService.MaxRequestBytes)]
-        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        [RequestSizeLimit(MediaLimits.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaLimits.MaxRequestBytes)]
         public IActionResult Edit(int id, ArticleFormDTO form, string? submitAction, IFormFile? imageFile, bool removeImage = false)
         {
             var userId = CurrentUserId;
@@ -243,7 +250,7 @@ namespace NewsArchive.Controllers
         {
             var data = articleService.Get(id);
             if (data == null) return NotFound();
-            if (!ArticleService.CanEdit(data.AuthorId, data.StatusId, CurrentUserId ?? 0, CurrentRoleId))
+            if (!ArticleRules.CanEdit(data.AuthorId, data.StatusId, CurrentUserId ?? 0, CurrentRoleId))
                 return NotFound();
             return View(data);
         }

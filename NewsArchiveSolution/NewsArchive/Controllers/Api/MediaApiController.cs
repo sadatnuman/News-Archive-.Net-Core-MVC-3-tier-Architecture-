@@ -1,5 +1,5 @@
 using BLL;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -8,9 +8,9 @@ namespace NewsArchive.Controllers.Api
     [Route("api/media")]
     public class MediaApiController : ApiControllerBase
     {
-        private readonly MediaService mediaService;
+        private readonly IMediaService mediaService;
 
-        public MediaApiController(MediaService mediaService)
+        public MediaApiController(IMediaService mediaService)
         {
             this.mediaService = mediaService;
         }
@@ -18,8 +18,8 @@ namespace NewsArchive.Controllers.Api
         [HttpPost("images")]
         [ApiAuthorize(AppRoles.Admin, AppRoles.Author)]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(MediaService.MaxRequestBytes)]
-        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        [RequestSizeLimit(MediaLimits.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaLimits.MaxRequestBytes)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public IActionResult UploadImage(IFormFile file)

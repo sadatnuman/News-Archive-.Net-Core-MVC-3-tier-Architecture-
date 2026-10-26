@@ -39,6 +39,9 @@ namespace BLL.DTOs
         [Display(Name = "Tags")]
         public List<int> TagIds { get; set; } = new();
 
+        [Display(Name = "Publish at")]
+        public DateTime? PublishAt { get; set; }
+
         public int StatusId { get; set; }
 
         public string? ReviewNote { get; set; }

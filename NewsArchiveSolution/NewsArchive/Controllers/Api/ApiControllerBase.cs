@@ -1,6 +1,6 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Auth;
@@ -14,14 +14,10 @@ namespace NewsArchive.Controllers.Api
     [Produces("application/json")]
     public abstract class ApiControllerBase : ControllerBase
     {
-        protected Task<AuthUserDTO?> GetApiUserAsync()
+        protected Task<AuthUserDTO> RequireApiUserAsync()
         {
-            return TokenAuthorizationFilter.ResolveUserAsync(HttpContext, HttpContext.RequestServices.GetRequiredService<AuthService>());
-        }
-
-        protected async Task<AuthUserDTO> RequireApiUserAsync()
-        {
-            return await GetApiUserAsync() ?? throw new InvalidOperationException("ApiAuthorize must run before this action.");
+            return Task.FromResult(TokenAuthorizationFilter.CurrentUser(HttpContext)
+                ?? throw new InvalidOperationException("ApiAuthorize must run before this action."));
         }
 
         protected static string? ParseLanguage(string? lang)

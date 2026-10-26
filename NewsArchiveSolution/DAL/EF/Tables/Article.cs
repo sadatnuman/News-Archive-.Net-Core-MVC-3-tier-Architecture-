@@ -35,6 +35,8 @@ public partial class Article
 
     public DateTime? UpdatedAt { get; set; }
 
+    public DateTime? ScheduledAt { get; set; }
+
     public int? ReviewedById { get; set; }
 
     public DateTime? ReviewedAt { get; set; }
