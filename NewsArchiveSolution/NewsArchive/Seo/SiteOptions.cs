@@ -25,5 +25,16 @@ namespace NewsArchive.Seo
         public string[] SocialProfiles { get; set; } = Array.Empty<string>();
 
         public bool ShowDemoNotice { get; set; }
+
+        public DemoAccount[] DemoAccounts { get; set; } = Array.Empty<DemoAccount>();
+    }
+
+    public class DemoAccount
+    {
+        public string Role { get; set; } = string.Empty;
+
+        public string Email { get; set; } = string.Empty;
+
+        public string Password { get; set; } = string.Empty;
     }
 }

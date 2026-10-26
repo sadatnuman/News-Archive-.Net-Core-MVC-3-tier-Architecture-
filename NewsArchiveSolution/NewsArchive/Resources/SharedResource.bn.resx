@@ -267,6 +267,9 @@
   <data name="Clear your whole reading history?" xml:space="preserve">
     <value>পুরো পড়ার ইতিহাস মুছে ফেলবেন?</value>
   </data>
+  <data name="Click an account to fill in the email and password, then press Sign in." xml:space="preserve">
+    <value>একটি অ্যাকাউন্টে ক্লিক করলে ইমেইল ও পাসওয়ার্ড বসে যাবে, তারপর লগ-ইন চাপুন।</value>
+  </data>
   <data name="Close" xml:space="preserve">
     <value>বন্ধ করুন</value>
   </data>
@@ -410,6 +413,9 @@
   </data>
   <data name="Demo site: the stories shown here are sample content and are not real news." xml:space="preserve">
     <value>ডেমো সাইট: এখানে দেখানো সংবাদগুলো নমুনা কনটেন্ট, বাস্তব সংবাদ নয়।</value>
+  </data>
+  <data name="Demo {0}" xml:space="preserve">
+    <value>ডেমো {0}</value>
   </data>
   <data name="Description (Bangla)" xml:space="preserve">
     <value>বিবরণ (বাংলা)</value>
@@ -1506,6 +1512,9 @@
   <data name="Trending now" xml:space="preserve">
     <value>এখন আলোচিত</value>
   </data>
+  <data name="Try a demo account" xml:space="preserve">
+    <value>ডেমো অ্যাকাউন্ট দিয়ে দেখুন</value>
+  </data>
   <data name="Try a different keyword or widen the date range." xml:space="preserve">
     <value>অন্য কীওয়ার্ড দিয়ে চেষ্টা করুন বা তারিখের পরিসর বাড়ান।</value>
   </data>
@@ -1721,6 +1730,9 @@
   </data>
   <data name="{0} news" xml:space="preserve">
     <value>{0} সংবাদ</value>
+  </data>
+  <data name="{0} news – page {1}" xml:space="preserve">
+    <value>{0} সংবাদ – পাতা {1}</value>
   </data>
   <data name="{0} news, page {1}" xml:space="preserve">
     <value>{0} সংবাদ, পৃষ্ঠা {1}</value>

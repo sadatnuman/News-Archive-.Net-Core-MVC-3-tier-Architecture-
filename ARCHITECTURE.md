@@ -297,7 +297,7 @@ Controllers in `Controllers/Api` inherit `ApiControllerBase` (`[ApiController]`,
 | Member | `Profile`, `ChangePassword` | Reader, Author |
 | Avatar | `Upload`, `Remove` | Signed in, own picture |
 | Bookmark, History | `/bookmarks`, `/bookmarks/toggle`, `/history`, `/history/remove`, `/history/clear` | Signed in, own data |
-| Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
+| Auth | `Login` (with demo account buttons from `Site:DemoAccounts` while `Site:ShowDemoNotice` is on), `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 | Newsletter | `/newsletter/subscribe`, `/newsletter/confirm`, `/newsletter/unsubscribe` | Public |
 
 All MVC controllers except `Seo` and `Pages` inherit `AppController`, which exposes `CurrentUserId`, `CurrentRoleId`, `CurrentEmail`, `CurrentLanguage`, `SignInUserAsync`, `SetArticleLookups` and `Flash`. Flash messages store the English key and the layout translates it.

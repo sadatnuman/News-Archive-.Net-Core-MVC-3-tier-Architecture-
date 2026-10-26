@@ -1,9 +1,14 @@
 @model BLL.DTOs.LoginDTO
+@using Microsoft.Extensions.Options
+@inject IOptions<SiteOptions> SiteConfig
 
 @{
     ViewData["Title"] = L["Sign in"];
     ViewData["NoIndex"] = true;
     var returnUrl = ViewBag.ReturnUrl as string;
+    var site = SiteConfig.Value;
+    var demos = site.ShowDemoNotice ? site.DemoAccounts : Array.Empty<DemoAccount>();
+    string Icon(string role) => role switch { "Admin" => "bi-shield-lock", "Author" => "bi-pencil-square", _ => "bi-book" };
 }
 
 <div class="container">
@@ -27,6 +32,23 @@
             </div>
             <button type="submit" class="btn btn-primary w-100">@L["Sign in"]</button>
         </form>
+        @if (demos.Length > 0)
+        {
+            <div class="demo-accounts mt-4">
+                <p class="small fw-semibold mb-2"><i class="bi bi-person-badge" aria-hidden="true"></i> @L["Try a demo account"]</p>
+                <div class="d-grid gap-2 demo-account-list">
+                    @foreach (var demo in demos)
+                    {
+                        <button type="button" class="btn btn-outline-secondary btn-sm text-start" data-demo-email="@demo.Email" data-demo-password="@demo.Password">
+                            <i class="bi @Icon(demo.Role) me-1" aria-hidden="true"></i>
+                            <strong>@L["Demo {0}", L[demo.Role]]</strong>
+                            <span class="d-block small text-muted text-truncate">@demo.Email</span>
+                        </button>
+                    }
+                </div>
+                <p class="small text-muted mt-2 mb-0">@L["Click an account to fill in the email and password, then press Sign in."]</p>
+            </div>
+        }
         <p class="text-center small mt-4 mb-0">@L["New here?"] <a asp-action="Create">@L["Create an account"]</a></p>
     </div>
 </div>
