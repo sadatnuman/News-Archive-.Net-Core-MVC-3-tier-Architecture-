@@ -1,7 +1,8 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
@@ -9,15 +10,17 @@ namespace NewsArchive.Controllers
     [CustomAuthorize(AppRoles.Admin)]
     public class AdminController : AppController
     {
-        private readonly UserService _userService;
-        private readonly RoleService _roleService;
-        private readonly AnalyticsService analyticsService;
-        private readonly ArticleService articleService;
-        private readonly CategoryService categoryService;
-        private readonly AuthService authService;
+        private readonly IStringLocalizer<SharedResource> L;
+        private readonly IUserService _userService;
+        private readonly IRoleService _roleService;
+        private readonly IAnalyticsService analyticsService;
+        private readonly IArticleService articleService;
+        private readonly ICategoryService categoryService;
+        private readonly IAuthService authService;
 
-        public AdminController(UserService userService, RoleService roleService, AnalyticsService analyticsService, ArticleService articleService, CategoryService categoryService, AuthService authService)
+        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, IStringLocalizer<SharedResource> localizer)
         {
+            L = localizer;
             this.authService = authService;
             _userService = userService;
             _roleService = roleService;
@@ -51,7 +54,7 @@ namespace NewsArchive.Controllers
         [HttpPost]
         public IActionResult Approve(int id, DateTime? publishAt)
         {
-            var scheduled = ArticleService.IsFutureSchedule(publishAt, DateTime.Now);
+            var scheduled = ArticleRules.IsFutureSchedule(publishAt, DateTime.Now);
             if (articleService.Approve(id, CurrentUserId ?? 0, publishAt))
                 Flash("success", scheduled ? "Article approved and scheduled." : "Article approved and published.");
             else

@@ -1,22 +1,20 @@
-using AutoMapper;
 using BLL.DTOs;
+using BLL.Interfaces;
 using BLL.Security;
 using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
-        public const string WebClient = "web";
-        public const string ApiClient = "api";
-
         private readonly IUserRepository userRepo;
         private readonly ITokenRepository tokenRepo;
         private readonly IMapper mapper;
 
-        public AuthService(DataAccessFactory factory, IMapper mapper)
+        public AuthService(IDataAccessFactory factory, IMapper mapper)
         {
             userRepo = factory.GetUserRepository();
             tokenRepo = factory.GetTokenRepository();
@@ -80,7 +78,7 @@ namespace BLL.Services
             {
                 UserId = user.UserId,
                 TokenHash = PasswordHasher.HashToken(token),
-                ClientType = clientType == WebClient ? WebClient : ApiClient,
+                ClientType = clientType == TokenClients.Web ? TokenClients.Web : TokenClients.Api,
                 CreatedAt = now,
                 ExpiresAt = now.Add(lifetime)
             };

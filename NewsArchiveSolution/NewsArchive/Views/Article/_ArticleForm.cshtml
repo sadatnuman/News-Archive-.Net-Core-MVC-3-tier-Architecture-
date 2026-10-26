@@ -90,7 +90,7 @@
             </div>
         }
         <label for="imageFile" class="form-label small">@L["Upload a picture"]</label>
-        <input id="imageFile" name="imageFile" type="file" class="form-control" accept="@BLL.Services.MediaService.AcceptedTypes" data-max-bytes="@BLL.Services.MediaService.MaxArticleImageBytes" data-too-large="@L["The image is too large. The limit is 5 MB."]" />
+        <input id="imageFile" name="imageFile" type="file" class="form-control" accept="@MediaLimits.AcceptedTypes" data-max-bytes="@MediaLimits.MaxArticleImageBytes" data-too-large="@L["The image is too large. The limit is 5 MB."]" />
         <div class="form-text">@L["JPEG, PNG, WebP or GIF, up to 5 MB. Use a landscape picture, ideally 1200 × 675 pixels."]</div>
         <span asp-validation-for="ImagePath" class="text-danger small"></span>
         <span class="text-danger small d-block">@Html.ValidationMessage("imageFile")</span>
@@ -104,8 +104,8 @@
     {
         <fieldset class="mb-4">
             <legend class="form-label fw-semibold fs-6 mb-1">@L["Tags"]</legend>
-            <p class="small text-muted mb-2">@L["Choose up to {0} topics that describe the story.", BLL.Services.TagService.MaxTagsPerArticle]</p>
-            <div class="tag-picker" data-max-tags="@BLL.Services.TagService.MaxTagsPerArticle">
+            <p class="small text-muted mb-2">@L["Choose up to {0} topics that describe the story.", ArticleRules.MaxTagsPerArticle]</p>
+            <div class="tag-picker" data-max-tags="@ArticleRules.MaxTagsPerArticle">
                 @foreach (var tag in tags)
                 {
                     var id = $"tag-{tag.TagId}";

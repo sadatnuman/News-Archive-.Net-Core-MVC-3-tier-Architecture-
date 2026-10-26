@@ -5,7 +5,7 @@ using DAL.Repos;
 
 namespace DAL
 {
-    public class DataAccessFactory
+    public class DataAccessFactory : IDataAccessFactory
     {
         private readonly NewsArchiveDbContext db;
 

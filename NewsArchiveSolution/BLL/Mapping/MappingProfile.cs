@@ -1,7 +1,7 @@
-using AutoMapper;
 using BLL.DTOs;
 using BLL.Security;
 using DAL.EF.Tables;
+using AutoMapper;
 
 namespace BLL.Mapping
 {

@@ -1,17 +1,18 @@
-using AutoMapper;
 using BLL.DTOs;
-using DAL.EF.Tables;
+using BLL.Interfaces;
 using DAL;
+using DAL.EF.Tables;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class CategoryService
+    public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository repo;
         private readonly IMapper mapper;
 
-        public CategoryService(DataAccessFactory factory, IMapper mapper)
+        public CategoryService(IDataAccessFactory factory, IMapper mapper)
         {
             repo = factory.GetCategoryRepository();
             this.mapper = mapper;

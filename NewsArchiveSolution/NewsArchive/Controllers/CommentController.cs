@@ -1,5 +1,5 @@
 using BLL;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -7,9 +7,9 @@ namespace NewsArchive.Controllers
 {
     public class CommentController : AppController
     {
-        private readonly CommentService commentService;
+        private readonly ICommentService commentService;
 
-        public CommentController(CommentService commentService)
+        public CommentController(ICommentService commentService)
         {
             this.commentService = commentService;
         }

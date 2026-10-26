@@ -1,19 +1,18 @@
-using AutoMapper;
 using BLL.DTOs;
+using BLL.Interfaces;
 using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class TagService
+    public class TagService : ITagService
     {
-        public const int MaxTagsPerArticle = 8;
-
         private readonly ITagRepository repo;
         private readonly IMapper mapper;
 
-        public TagService(DataAccessFactory factory, IMapper mapper)
+        public TagService(IDataAccessFactory factory, IMapper mapper)
         {
             repo = factory.GetTagRepository();
             this.mapper = mapper;
@@ -94,7 +93,7 @@ namespace BLL.Services
 
         public bool SetArticleTags(int articleId, IEnumerable<int>? tagIds)
         {
-            return repo.SetArticleTags(articleId, (tagIds ?? Enumerable.Empty<int>()).Distinct().Take(MaxTagsPerArticle));
+            return repo.SetArticleTags(articleId, (tagIds ?? Enumerable.Empty<int>()).Distinct().Take(ArticleRules.MaxTagsPerArticle));
         }
 
         public void EnsureSlugs()

@@ -28,6 +28,22 @@ The boundaries are enforced by the build:
 - BLL has no ASP.NET MVC or HTTP dependencies. Authorization filters live in `NewsArchive/Filters`.
 - Only DAL touches the `DbContext`. Filtering, sorting, paging and counting happen in SQL.
 
+## Dependency injection
+
+Everything is wired through the built-in container with constructor injection; nothing outside the composition root resolves services by hand.
+
+| Layer | Registered in | Registrations |
+|---|---|---|
+| DAL | `DataLayerServices.AddDataLayer` | `NewsArchiveDbContext` (scoped), `IDataAccessFactory` → `DataAccessFactory` (scoped); repositories stay `internal` and are handed out by the factory |
+| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile; `IArticleService`, `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService` → their implementations (scoped) |
+| UI | `Program.cs` | `IFileStorage` → `WebRootFileStorage` (singleton), `LoginThrottle` (singleton), `CookieSessionValidator` (scoped, used as the cookie `EventsType`), `ScheduledPublisher` (hosted), `SeoUrls`, health checks |
+
+- Interfaces live in `BLL/Interfaces` and `DAL/Interfaces`; controllers, filters, view `@inject`s, the health check and the cookie validator depend only on interfaces.
+- Pure business rules with no dependencies are static classes: `ArticleRules` (who can edit or view, archive dates, scheduling window, tag limit), `MediaLimits`, `TokenClients`.
+- Controllers that show story lists inject `IArticleLookupService` (author names, section names and slugs, saved ids in one call); controllers that build localized messages inject `IStringLocalizer<SharedResource>`. Flash messages store the English key and the layout translates it.
+- `ScheduledPublisher` is a singleton, so it creates a scope through `IServiceScopeFactory` for each run, which is the supported way to use scoped services from a background service.
+- `ValidateOnBuild` and `ValidateScopes` are on, so a missing registration or a captive dependency stops the app at startup.
+
 ## Roles and editorial workflow
 
 | RoleId | Role | Can do |
@@ -379,6 +395,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 4e | Bookmarks ("read later") | Done |
 | 4f | Safe Markdown formatting with toolbar and live preview | Done |
 | 4g | Scheduled publishing | Done |
-| 4h | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
+| 4h | Dependency injection through interfaces, no service locator, container validation | Done |
+| 4i | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

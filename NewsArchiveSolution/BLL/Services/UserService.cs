@@ -1,18 +1,19 @@
-using AutoMapper;
 using BLL.DTOs;
+using BLL.Interfaces;
 using BLL.Security;
-using DAL.EF.Tables;
 using DAL;
+using DAL.EF.Tables;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly IUserRepository repo;
         private readonly IMapper mapper;
 
-        public UserService(DataAccessFactory factory, IMapper mapper)
+        public UserService(IDataAccessFactory factory, IMapper mapper)
         {
             repo = factory.GetUserRepository();
             this.mapper = mapper;

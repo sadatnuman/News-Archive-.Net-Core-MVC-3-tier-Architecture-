@@ -1,3 +1,4 @@
+using BLL.Interfaces;
 using BLL.Mapping;
 using BLL.Services;
 using DAL;
@@ -12,18 +13,19 @@ namespace BLL
             services.AddDataLayer(connectionString);
             services.AddAutoMapper(typeof(MappingProfile));
 
-            services.AddScoped<ArticleService>();
-            services.AddScoped<CategoryService>();
-            services.AddScoped<CommentService>();
-            services.AddScoped<TagService>();
-            services.AddScoped<UserService>();
-            services.AddScoped<RoleService>();
-            services.AddScoped<AnalyticsService>();
-            services.AddScoped<AuthService>();
-            services.AddScoped<MediaService>();
-            services.AddScoped<SystemService>();
-            services.AddScoped<AuthorService>();
-            services.AddScoped<BookmarkService>();
+            services.AddScoped<IArticleService, ArticleService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<ICommentService, CommentService>();
+            services.AddScoped<ITagService, TagService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IAnalyticsService, AnalyticsService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IMediaService, MediaService>();
+            services.AddScoped<ISystemService, SystemService>();
+            services.AddScoped<IAuthorService, AuthorService>();
+            services.AddScoped<IBookmarkService, BookmarkService>();
+            services.AddScoped<IArticleLookupService, ArticleLookupService>();
 
             return services;
         }
@@ -35,10 +37,10 @@ namespace BLL
 
             using var scope = services.CreateScope();
             var provider = scope.ServiceProvider;
-            provider.GetRequiredService<ArticleService>().EnsureSlugs();
-            provider.GetRequiredService<CategoryService>().EnsureSlugs();
-            provider.GetRequiredService<TagService>().EnsureSlugs();
-            provider.GetRequiredService<AuthService>().PurgeExpiredTokens();
+            provider.GetRequiredService<IArticleService>().EnsureSlugs();
+            provider.GetRequiredService<ICategoryService>().EnsureSlugs();
+            provider.GetRequiredService<ITagService>().EnsureSlugs();
+            provider.GetRequiredService<IAuthService>().PurgeExpiredTokens();
         }
     }
 }

@@ -1,5 +1,5 @@
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NewsArchive.Controllers.Api
@@ -7,9 +7,9 @@ namespace NewsArchive.Controllers.Api
     [Route("api/authors")]
     public class AuthorsApiController : ApiControllerBase
     {
-        private readonly AuthorService authorService;
+        private readonly IAuthorService authorService;
 
-        public AuthorsApiController(AuthorService authorService)
+        public AuthorsApiController(IAuthorService authorService)
         {
             this.authorService = authorService;
         }

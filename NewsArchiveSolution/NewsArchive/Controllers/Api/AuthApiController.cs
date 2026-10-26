@@ -1,5 +1,6 @@
+using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
@@ -11,13 +12,13 @@ namespace NewsArchive.Controllers.Api
     [Route("api/auth")]
     public class AuthApiController : ApiControllerBase
     {
-        private readonly AuthService authService;
+        private readonly IAuthService authService;
         private readonly LoginThrottle throttle;
         private readonly ApiOptions options;
-        private readonly UserService userService;
-        private readonly MediaService mediaService;
+        private readonly IUserService userService;
+        private readonly IMediaService mediaService;
 
-        public AuthApiController(AuthService authService, LoginThrottle throttle, IOptions<ApiOptions> options, UserService userService, MediaService mediaService)
+        public AuthApiController(IAuthService authService, LoginThrottle throttle, IOptions<ApiOptions> options, IUserService userService, IMediaService mediaService)
         {
             this.authService = authService;
             this.userService = userService;
@@ -45,7 +46,7 @@ namespace NewsArchive.Controllers.Api
 
             throttle.Reset(login.Email);
 
-            var token = authService.IssueToken(user, webClient ? AuthService.WebClient : AuthService.ApiClient, options.TokenLifetime);
+            var token = authService.IssueToken(user, webClient ? TokenClients.Web : TokenClients.Api, options.TokenLifetime);
             if (token == null)
                 return Problem(statusCode: StatusCodes.Status500InternalServerError, title: "Could not create a token");
 
@@ -87,8 +88,8 @@ namespace NewsArchive.Controllers.Api
         [HttpPut("me/avatar")]
         [ApiAuthorize]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(MediaService.MaxRequestBytes)]
-        [RequestFormLimits(MultipartBodyLengthLimit = MediaService.MaxRequestBytes)]
+        [RequestSizeLimit(MediaLimits.MaxRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaLimits.MaxRequestBytes)]
         [ProducesResponseType(typeof(AuthUserDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UploadAvatar(IFormFile file)

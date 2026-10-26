@@ -1,6 +1,6 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -9,9 +9,9 @@ namespace NewsArchive.Controllers.Api
     [Route("api/tags")]
     public class TagsApiController : ApiControllerBase
     {
-        private readonly TagService tagService;
+        private readonly ITagService tagService;
 
-        public TagsApiController(TagService tagService)
+        public TagsApiController(ITagService tagService)
         {
             this.tagService = tagService;
         }

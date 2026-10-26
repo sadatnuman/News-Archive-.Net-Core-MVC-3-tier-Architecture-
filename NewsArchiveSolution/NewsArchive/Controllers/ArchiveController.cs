@@ -1,4 +1,5 @@
-using BLL.Services;
+using BLL;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Seo;
 
@@ -8,10 +9,12 @@ namespace NewsArchive.Controllers
     {
         private const int PageSize = 12;
 
-        private readonly ArticleService articleService;
+        private readonly IArticleLookupService lookupService;
+        private readonly IArticleService articleService;
 
-        public ArchiveController(ArticleService articleService)
+        public ArchiveController(IArticleService articleService, IArticleLookupService lookupService)
         {
+            this.lookupService = lookupService;
             this.articleService = articleService;
         }
 
@@ -24,7 +27,7 @@ namespace NewsArchive.Controllers
         [HttpGet("archive/{year:int}")]
         public IActionResult Year(int year)
         {
-            if (!ArticleService.IsValidArchiveDate(year)) return NotFound();
+            if (!ArticleRules.IsValidArchiveDate(year)) return NotFound();
 
             var months = articleService.GetArchiveMonths(CurrentLanguage).Where(m => m.Year == year).ToList();
             ViewBag.Year = year;
@@ -35,7 +38,7 @@ namespace NewsArchive.Controllers
         [HttpGet("archive/{year:int}/{month:int}/{day:int?}")]
         public IActionResult Period(int year, int month, int? day, int page = 1)
         {
-            if (!ArticleService.IsValidArchiveDate(year, month, day)) return NotFound();
+            if (!ArticleRules.IsValidArchiveDate(year, month, day)) return NotFound();
 
             var canonical = SeoUrls.ArchivePath(year, month, day);
             if (!string.Equals(Request.Path.Value, canonical, StringComparison.Ordinal))
@@ -50,7 +53,7 @@ namespace NewsArchive.Controllers
             var newer = months.Where(m => m.Year * 12 + m.Month > key).OrderBy(m => m.Year * 12 + m.Month).FirstOrDefault();
             var older = months.Where(m => m.Year * 12 + m.Month < key).OrderByDescending(m => m.Year * 12 + m.Month).FirstOrDefault();
 
-            SetArticleLookups(articles);
+            SetArticleLookups(lookupService.Build(articles, CurrentUserId, CurrentLanguage));
             ViewBag.Year = year;
             ViewBag.Month = month;
             ViewBag.Day = day;

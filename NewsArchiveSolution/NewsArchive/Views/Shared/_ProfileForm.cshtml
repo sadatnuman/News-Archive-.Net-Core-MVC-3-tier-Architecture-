@@ -17,7 +17,7 @@
                 <p class="small text-muted mb-2">@L["JPEG, PNG, WebP or GIF, up to 2 MB."]</p>
                 <form asp-controller="Avatar" asp-action="Upload" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
                     <label for="photo" class="visually-hidden">@L["Profile picture"]</label>
-                    <input id="photo" name="photo" type="file" class="form-control form-control-sm" accept="@BLL.Services.MediaService.AcceptedTypes" data-max-bytes="@BLL.Services.MediaService.MaxAvatarBytes" data-too-large="@L["The image is too large. The limit is 2 MB."]" required />
+                    <input id="photo" name="photo" type="file" class="form-control form-control-sm" accept="@MediaLimits.AcceptedTypes" data-max-bytes="@MediaLimits.MaxAvatarBytes" data-too-large="@L["The image is too large. The limit is 2 MB."]" required />
                     <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-upload"></i> @L["Upload"]</button>
                 </form>
                 @if (!string.IsNullOrEmpty(Model.AvatarPath))

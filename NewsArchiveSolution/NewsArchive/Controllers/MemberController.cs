@@ -1,6 +1,6 @@
 using BLL;
 using BLL.DTOs;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -9,10 +9,10 @@ namespace NewsArchive.Controllers
     [CustomAuthorize(AppRoles.Reader, AppRoles.Author)]
     public class MemberController : AppController
     {
-        private readonly UserService userService;
-        private readonly AuthService authService;
+        private readonly IUserService userService;
+        private readonly IAuthService authService;
 
-        public MemberController(UserService userService, AuthService authService)
+        public MemberController(IUserService userService, IAuthService authService)
         {
             this.userService = userService;
             this.authService = authService;

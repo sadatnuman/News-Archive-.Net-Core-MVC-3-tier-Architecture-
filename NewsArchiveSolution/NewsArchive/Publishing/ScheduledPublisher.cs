@@ -1,4 +1,4 @@
-using BLL.Services;
+using BLL.Interfaces;
 
 namespace NewsArchive.Publishing
 {
@@ -23,7 +23,7 @@ namespace NewsArchive.Publishing
                 try
                 {
                     using var scope = scopeFactory.CreateScope();
-                    var published = scope.ServiceProvider.GetRequiredService<ArticleService>().PublishDue();
+                    var published = scope.ServiceProvider.GetRequiredService<IArticleService>().PublishDue();
                     if (published > 0)
                         logger.LogInformation("Published {Count} scheduled article(s)", published);
                 }

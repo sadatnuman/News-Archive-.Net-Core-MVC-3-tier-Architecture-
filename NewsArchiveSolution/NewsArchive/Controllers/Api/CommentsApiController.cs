@@ -1,5 +1,5 @@
 using BLL;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NewsArchive.Filters;
 
@@ -8,9 +8,9 @@ namespace NewsArchive.Controllers.Api
     [Route("api/comments")]
     public class CommentsApiController : ApiControllerBase
     {
-        private readonly CommentService commentService;
+        private readonly ICommentService commentService;
 
-        public CommentsApiController(CommentService commentService)
+        public CommentsApiController(ICommentService commentService)
         {
             this.commentService = commentService;
         }

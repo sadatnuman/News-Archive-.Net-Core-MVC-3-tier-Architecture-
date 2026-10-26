@@ -1,11 +1,12 @@
-using AutoMapper;
 using BLL.DTOs;
+using BLL.Interfaces;
 using DAL;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class BookmarkService
+    public class BookmarkService : IBookmarkService
     {
         public const int MaxBookmarks = 500;
 
@@ -13,7 +14,7 @@ namespace BLL.Services
         private readonly IArticleRepository articleRepo;
         private readonly IMapper mapper;
 
-        public BookmarkService(DataAccessFactory factory, IMapper mapper)
+        public BookmarkService(IDataAccessFactory factory, IMapper mapper)
         {
             repo = factory.GetBookmarkRepository();
             articleRepo = factory.GetArticleRepository();

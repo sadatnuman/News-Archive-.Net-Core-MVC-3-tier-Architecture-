@@ -1,13 +1,13 @@
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace NewsArchive.Health
 {
     public class DatabaseHealthCheck : IHealthCheck
     {
-        private readonly SystemService systemService;
+        private readonly ISystemService systemService;
 
-        public DatabaseHealthCheck(SystemService systemService)
+        public DatabaseHealthCheck(ISystemService systemService)
         {
             this.systemService = systemService;
         }

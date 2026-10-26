@@ -27,7 +27,7 @@
 
     @if (TempData["Msg"] is string flashMessage)
     {
-        <div class="alert alert-@(TempData["Class"] as string ?? "info") flash text-center" role="status">@flashMessage</div>
+        <div class="alert alert-@(TempData["Class"] as string ?? "info") flash text-center" role="status">@L[flashMessage]</div>
     }
 
     <main id="main" role="main">

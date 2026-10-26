@@ -1,18 +1,19 @@
-using AutoMapper;
 using BLL.DTOs;
+using BLL.Interfaces;
 using DAL;
 using DAL.EF.Tables;
 using DAL.Interfaces;
+using AutoMapper;
 
 namespace BLL.Services
 {
-    public class AuthorService
+    public class AuthorService : IAuthorService
     {
         private readonly IArticleRepository articleRepo;
         private readonly IUserRepository userRepo;
         private readonly IMapper mapper;
 
-        public AuthorService(DataAccessFactory factory, IMapper mapper)
+        public AuthorService(IDataAccessFactory factory, IMapper mapper)
         {
             articleRepo = factory.GetArticleRepository();
             userRepo = factory.GetUserRepository();

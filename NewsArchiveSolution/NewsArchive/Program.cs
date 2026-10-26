@@ -1,23 +1,23 @@
 using BLL;
-using BLL.Services;
+using BLL.Interfaces;
+using BLL.Media;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.Extensions.WebEncoders;
+using Microsoft.OpenApi;
 using NewsArchive;
 using NewsArchive.Auth;
-using NewsArchive.Media;
 using NewsArchive.Health;
+using NewsArchive.Media;
 using NewsArchive.Publishing;
-using BLL.Media;
 using NewsArchive.Seo;
 using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
-using Microsoft.Extensions.WebEncoders;
-using Microsoft.OpenApi;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +25,11 @@ var isDevelopment = builder.Environment.IsDevelopment();
 var secureCookies = isDevelopment ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
+});
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -39,6 +44,7 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginThrottle>();
+builder.Services.AddScoped<CookieSessionValidator>();
 builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
 builder.Services.AddHostedService<ScheduledPublisher>();
 builder.Services.AddAntiforgery(options =>
@@ -60,26 +66,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = secureCookies;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
-        options.Events = new CookieAuthenticationEvents
-        {
-            OnValidatePrincipal = async context =>
-            {
-                var userId = context.Principal?.UserId();
-                var authService = context.HttpContext.RequestServices.GetRequiredService<AuthService>();
-                var current = userId.HasValue ? authService.GetUser(userId.Value) : null;
-                if (context.Principal == null || !context.Principal.MatchesCurrent(current))
-                {
-                    context.RejectPrincipal();
-                    context.HttpContext.Session.Clear();
-                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                }
-                else if (context.Principal.NeedsRefresh(current!))
-                {
-                    context.ReplacePrincipal(AuthClaims.CreatePrincipal(current!));
-                    context.ShouldRenew = true;
-                }
-            }
-        };
+        options.EventsType = typeof(CookieSessionValidator);
     });
 
 var apiOptions = builder.Configuration.GetSection("Api").Get<ApiOptions>() ?? new ApiOptions();
