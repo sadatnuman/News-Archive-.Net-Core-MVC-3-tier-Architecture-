@@ -326,11 +326,12 @@ Pure CSS and a few lines of JavaScript; no WebGL library and no inline scripts, 
 
 | Asset | Path |
 |---|---|
-| Logo mark (SVG) | `wwwroot/images/brand/logo-mark.svg` |
+| Logo mark | `wwwroot/images/brand/logo-mark-ink.svg` (black, light masthead), `logo-mark-light.svg` (white, dark masthead and footer), `logo-mark.svg` (original gold, used for icons and the share image) |
 | Share image 1200×630 | `wwwroot/images/brand/og-default.png` |
 | Icons | `wwwroot/favicon.ico`, `wwwroot/images/brand/{favicon-32,apple-touch-icon,icon-192,icon-512}.png` |
-| Palette | Navy `#0b1a33`, gold `#d6b064` / text gold `#8a6516`, cream `#f3ead7`, breaking red `#c8102e` |
-
+| Theme | **Classic newspaper**: light uses white masthead, paper `#fbfaf7`, ink `#121212`, red accent `#c8102e`, black top bar and footer; dark uses `#121212` with red `#ff4d5e`. Tokens are at the top of `wwwroot/css/site.css`; the default mode follows the visitor's system setting |
+| Article pictures | `wwwroot/images/articles` generated in the same style (section colour, red stripe and label, white logo) |
+| Profile pictures | `wwwroot/images/avatars` generated monograms for the sample users |
 ## SEO
 
 | Concern | Implementation |
