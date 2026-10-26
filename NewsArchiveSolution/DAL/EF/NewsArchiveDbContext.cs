@@ -34,6 +34,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<Bookmark> Bookmarks { get; set; }
 
+    public virtual DbSet<ReadingHistory> ReadingHistory { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -195,6 +197,34 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.ArticleId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Bookmarks_Articles");
+        });
+
+        modelBuilder.Entity<ReadingHistory>(entity =>
+        {
+            entity.ToTable("ReadingHistory", t => t.HasCheckConstraint("CK_ReadingHistory_ReadCount", "[ReadCount] >= 1"));
+
+            entity.HasKey(e => new { e.UserId, e.ArticleId }).HasName("PK_ReadingHistory");
+
+            entity.HasIndex(e => e.ArticleId, "IX_ReadingHistory_ArticleId");
+            entity.HasIndex(e => new { e.UserId, e.LastReadAt }, "IX_ReadingHistory_UserId_LastReadAt").IsDescending(false, true);
+
+            entity.Property(e => e.FirstReadAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastReadAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ReadCount).HasDefaultValue(1);
+
+            entity.HasOne(d => d.User).WithMany(p => p.ReadingHistory)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ReadingHistory_Users");
+
+            entity.HasOne(d => d.Article).WithMany(p => p.Readers)
+                .HasForeignKey(d => d.ArticleId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ReadingHistory_Articles");
         });
 
         modelBuilder.Entity<Comment>(entity =>

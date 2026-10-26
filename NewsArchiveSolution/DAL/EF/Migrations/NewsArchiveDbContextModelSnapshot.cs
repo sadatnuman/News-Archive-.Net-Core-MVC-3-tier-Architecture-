@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using DAL.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -333,6 +333,43 @@ namespace DAL.EF.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.ReadingHistory", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FirstReadAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<DateTime>("LastReadAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<int>("ReadCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.HasKey("UserId", "ArticleId")
+                        .HasName("PK_ReadingHistory");
+
+                    b.HasIndex(new[] { "ArticleId" }, "IX_ReadingHistory_ArticleId");
+
+                    b.HasIndex(new[] { "UserId", "LastReadAt" }, "IX_ReadingHistory_UserId_LastReadAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("ReadingHistory", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ReadingHistory_ReadCount", "[ReadCount] >= 1");
+                        });
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -604,6 +641,27 @@ namespace DAL.EF.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.ReadingHistory", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Article", "Article")
+                        .WithMany("Readers")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ReadingHistory_Articles");
+
+                    b.HasOne("DAL.EF.Tables.User", "User")
+                        .WithMany("ReadingHistory")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ReadingHistory_Users");
+
+                    b.Navigation("Article");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.User", b =>
                 {
                     b.HasOne("DAL.EF.Tables.Role", "Role")
@@ -632,6 +690,8 @@ namespace DAL.EF.Migrations
                     b.Navigation("Bookmarks");
 
                     b.Navigation("Comments");
+
+                    b.Navigation("Readers");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.ArticleStatus", b =>
@@ -661,6 +721,8 @@ namespace DAL.EF.Migrations
                     b.Navigation("Bookmarks");
 
                     b.Navigation("Comments");
+
+                    b.Navigation("ReadingHistory");
 
                     b.Navigation("ReviewedArticles");
 

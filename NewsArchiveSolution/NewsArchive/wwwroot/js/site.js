@@ -286,6 +286,71 @@
         });
     }
 
+    document.addEventListener("submit", function (event) {
+        var form = event.target.closest("form[data-confirm]");
+        if (form && !window.confirm(form.getAttribute("data-confirm"))) event.preventDefault();
+    }, true);
+
+    var articleBody = document.querySelector("[data-article-body]");
+    var progress = document.querySelector("[data-read-progress] span");
+    var readNext = document.querySelector("[data-read-next]");
+    var upNext = document.querySelector("[data-up-next]");
+    var dismissKey = "readNextDismissed";
+    var readNextDismissed = false;
+    var upNextVisible = false;
+
+    try { readNextDismissed = sessionStorage.getItem(dismissKey) === "1"; } catch (e) { }
+
+    function readingRatio() {
+        var rect = articleBody.getBoundingClientRect();
+        var total = rect.height - window.innerHeight * 0.5;
+        if (total <= 0) return rect.top < window.innerHeight ? 1 : 0;
+        return Math.min(1, Math.max(0, (window.innerHeight * 0.5 - rect.top) / total));
+    }
+
+    function updateReading() {
+        if (!articleBody) return;
+        var ratio = readingRatio();
+        if (progress) progress.style.transform = "scaleX(" + ratio.toFixed(3) + ")";
+        if (readNext && !readNextDismissed) {
+            var show = ratio > 0.45 && !upNextVisible;
+            if (show && readNext.hidden) {
+                readNext.hidden = false;
+                requestAnimationFrame(function () { readNext.classList.add("is-open"); });
+            } else if (!show && !readNext.hidden) {
+                readNext.classList.remove("is-open");
+                readNext.hidden = true;
+            }
+        }
+    }
+
+    if (articleBody) {
+        var ticking = false;
+        window.addEventListener("scroll", function () {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(function () { ticking = false; updateReading(); });
+        }, { passive: true });
+        window.addEventListener("resize", updateReading);
+
+        if (upNext && "IntersectionObserver" in window) {
+            new IntersectionObserver(function (entries) {
+                upNextVisible = entries[0].isIntersecting;
+                updateReading();
+            }, { threshold: 0.2 }).observe(upNext);
+        }
+        updateReading();
+    }
+
+    if (readNext) {
+        readNext.querySelector("[data-read-next-close]").addEventListener("click", function () {
+            readNextDismissed = true;
+            try { sessionStorage.setItem(dismissKey, "1"); } catch (e) { }
+            readNext.classList.remove("is-open");
+            readNext.hidden = true;
+        });
+    }
+
     media.addEventListener("change", function () {
         if (storedChoice() === "system") apply("system");
     });

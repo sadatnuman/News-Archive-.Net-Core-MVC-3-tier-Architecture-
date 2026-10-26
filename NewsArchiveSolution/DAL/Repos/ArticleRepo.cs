@@ -142,41 +142,40 @@ namespace DAL.Repos
                 .ToList();
         }
 
-        public List<Article> GetRecommended(int articleId, int count)
+        public List<Article> GetRecommendationCandidates(string language, IEnumerable<int> excludeIds, IEnumerable<int> categoryIds,
+            IEnumerable<int> tagIds, IEnumerable<int> authorIds, int relatedLimit, int popularLimit)
         {
-            var target = db.Articles.AsNoTracking()
-                .Where(a => a.ArticleId == articleId)
-                .Select(a => new { a.CategoryId, a.LanguageCode, TagIds = a.Tags.Select(t => t.TagId).ToList() })
-                .FirstOrDefault();
-            if (target == null) return new List<Article>();
+            var excluded = excludeIds.Distinct().ToList();
+            var categories = categoryIds.Distinct().ToList();
+            var tags = tagIds.Distinct().ToList();
+            var authors = authorIds.Distinct().ToList();
 
-            var result = Published(target.LanguageCode)
-                .Where(a => a.ArticleId != articleId && a.CategoryId == target.CategoryId)
+            var related = Published(language)
+                .Where(a => !excluded.Contains(a.ArticleId)
+                    && (categories.Contains(a.CategoryId) || authors.Contains(a.AuthorId) || a.Tags.Any(t => tags.Contains(t.TagId))))
                 .OrderByDescending(a => a.PublishDate)
-                .Take(count)
+                .Take(relatedLimit)
+                .Include(a => a.Tags)
                 .ToList();
 
-            if (result.Count < count && target.TagIds.Count > 0)
-            {
-                var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(Published(target.LanguageCode)
-                    .Where(a => !excluded.Contains(a.ArticleId) && a.Tags.Any(t => target.TagIds.Contains(t.TagId)))
-                    .OrderByDescending(a => a.PublishDate)
-                    .Take(count - result.Count)
-                    .ToList());
-            }
+            var known = related.Select(a => a.ArticleId).Concat(excluded).ToList();
+            related.AddRange(Published(language)
+                .Where(a => !known.Contains(a.ArticleId))
+                .OrderByDescending(a => a.ViewsCount)
+                .ThenByDescending(a => a.PublishDate)
+                .Take(popularLimit)
+                .Include(a => a.Tags)
+                .ToList());
+            return related;
+        }
 
-            if (result.Count < count)
-            {
-                var excluded = result.Select(a => a.ArticleId).Append(articleId).ToList();
-                result.AddRange(Published(target.LanguageCode)
-                    .Where(a => !excluded.Contains(a.ArticleId))
-                    .OrderByDescending(a => a.ViewsCount)
-                    .ThenByDescending(a => a.PublishDate)
-                    .Take(count - result.Count)
-                    .ToList());
-            }
-            return result;
+        public List<Article> GetManyWithTags(IEnumerable<int> articleIds)
+        {
+            var ids = articleIds.Distinct().ToList();
+            return db.Articles.AsNoTracking()
+                .Where(a => ids.Contains(a.ArticleId))
+                .Include(a => a.Tags)
+                .ToList();
         }
 
         public List<Article> GetByAuthor(int authorId)

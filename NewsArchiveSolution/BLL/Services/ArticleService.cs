@@ -301,11 +301,6 @@ namespace BLL.Services
             return mapper.Map<List<ArticleDTO>>(repo.GetLatest(count, language));
         }
 
-        public List<ArticleDTO> GetRecommendedArticles(int articleId, int count = 4)
-        {
-            return mapper.Map<List<ArticleDTO>>(repo.GetRecommended(articleId, count));
-        }
-
         public List<ArticleDTO> GetPublishedForSitemap()
         {
             return mapper.Map<List<ArticleDTO>>(repo.GetPublishedForSitemap());

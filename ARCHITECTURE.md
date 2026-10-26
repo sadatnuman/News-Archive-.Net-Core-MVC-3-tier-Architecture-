@@ -35,7 +35,7 @@ Everything is wired through the built-in container with constructor injection; n
 | Layer | Registered in | Registrations |
 |---|---|---|
 | DAL | `DataLayerServices.AddDataLayer` | `NewsArchiveDbContext` (scoped), `IDataAccessFactory` → `DataAccessFactory` (scoped); repositories stay `internal` and are handed out by the factory |
-| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile; `IArticleService`, `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService` → their implementations (scoped) |
+| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile; `IArticleService`, `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService`, `IRecommendationService` → their implementations (scoped) |
 | UI | `Program.cs` | `IFileStorage` → `WebRootFileStorage` (singleton), `LoginThrottle` (singleton), `CookieSessionValidator` (scoped, used as the cookie `EventsType`), `ScheduledPublisher` (hosted), `SeoUrls`, health checks |
 
 - Interfaces live in `BLL/Interfaces` and `DAL/Interfaces`; controllers, filters, view `@inject`s, the health check and the cookie validator depend only on interfaces.
@@ -83,6 +83,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `AddUserBio` | `Users.Bio` (up to 500 characters) for author pages |
 | `AddBookmarks` | `Bookmarks` join table for "read later" |
 | `AddScheduledPublishing` | `Articles.ScheduledAt`, `Scheduled` status row, `IX_Articles_StatusId_ScheduledAt` |
+| `AddReadingHistory` | `ReadingHistory` table (what each signed-in reader opened, first and last time, read count) for recommendations |
 
 ### Tables (3NF)
 
@@ -99,6 +100,7 @@ The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
 | `Comments` | `CommentId` | `ArticleId → Articles` (cascade), `UserId → Users` | |
 | `UserTokens` | `TokenId` | `UserId → Users` (cascade) | `UX_UserTokens_TokenHash` |
 | `Bookmarks` | `(UserId, ArticleId)` | `UserId → Users` (cascade), `ArticleId → Articles` (cascade) | `IX_Bookmarks_ArticleId`, `IX_Bookmarks_UserId_CreatedAt` |
+| `ReadingHistory` | `(UserId, ArticleId)` | `UserId → Users` (cascade), `ArticleId → Articles` (cascade) | `CK_ReadingHistory_ReadCount` (`>= 1`) |
 
 Normalization changes:
 
@@ -120,6 +122,7 @@ Normalization changes:
 | `IX_Comments_ArticleId_CreatedDate` (desc) | Comments under an article |
 | `IX_Comments_UserId`, `IX_Users_Role`, `IX_ContentLabels_TagId` | Foreign key lookups |
 | `UX_UserTokens_TokenHash`, `IX_UserTokens_UserId_ExpiresAt` | Token lookup on every API call, revoke-all per user |
+| `IX_ReadingHistory_UserId_LastReadAt` (desc), `IX_ReadingHistory_ArticleId` | A reader's latest reads for recommendations and the history page |
 
 Duplicate indexes from the original database (`IX_Users_Email`, `IX_ContentLabels_ArticleId`, single-column article indexes) were dropped because a unique constraint, primary key or composite index already covers them.
 
@@ -129,15 +132,16 @@ Duplicate indexes from the original database (`IX_Users_Email`, `IX_ContentLabel
 |---|---|
 | `Interfaces/IRepository<T>` | Generic contract: `Get(id)`, `Get()`, `Create`, `Update`, `Delete`, `Count`, `SaveChanges` |
 | `Repos/Repository<T>` | Generic EF implementation; `Update` finds the row by its primary key and copies the new values |
-| `Interfaces/IArticleRepository`, `ICategoryRepository`, `ICommentRepository`, `IUserRepository`, `ITokenRepository`, `ITagRepository` | Entity-specific queries on top of the generic contract |
+| `Interfaces/IArticleRepository`, `ICategoryRepository`, `ICommentRepository`, `IUserRepository`, `ITokenRepository`, `ITagRepository`, `IBookmarkRepository`, `IReadingHistoryRepository` | Entity-specific queries on top of the generic contract |
 | `Repos/ArticleRepo`, `CategoryRepo`, `CommentRepo`, `UserRepo`, `TokenRepo`, `TagRepo` | `internal` implementations deriving from `Repository<T>` |
-| `DataAccessFactory` | The only public entry point: `GetArticleRepository()`, `GetCategoryRepository()`, `GetCommentRepository()`, `GetUserRepository()`, `GetTokenRepository()`, `GetRoleRepository()`, `GetTagRepository()` |
+| `Repos/BookmarkRepo`, `ReadingHistoryRepo` | `internal` repositories for the composite-key join tables |
+| `DataAccessFactory` | The only public entry point: `GetArticleRepository()`, `GetCategoryRepository()`, `GetCommentRepository()`, `GetUserRepository()`, `GetTokenRepository()`, `GetRoleRepository()`, `GetTagRepository()`, `GetBookmarkRepository()`, `GetReadingHistoryRepository()` |
 
 Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 
 - `Search` keyword in title, summary or content and a date range (the `to` date includes the whole day), paged.
 - `GetTrending` score = views + 2 × comments, computed in SQL.
-- `GetRecommended` same section, then shared tags, then most viewed.
+- `GetRecommendationCandidates` published stories in one language that share a section, a tag or an author with the source (newest 60), plus the most viewed ones as a fallback, with their tags loaded; the scoring happens in BLL.
 - `GetByAuthor`, `GetByStatus`, `CountByStatus` editorial workflow.
 - `GetPublishedForSitemap`, `GetLatest` sitemap and RSS.
 - `IncrementViewCount` single `UPDATE` through `ExecuteUpdate`.
@@ -164,6 +168,27 @@ Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
 `AuthService` handles sign-in (`Authenticate`, with automatic hash upgrade), `Register`, `ChangePassword`, `IssueToken`, `ValidateTokenAsync`, `LogoutAsync`, `RevokeAllAsync` and `PurgeExpiredTokens`.
 
 On startup `ArticleService.EnsureSlugs()` and `CategoryService.EnsureSlugs()` fill missing slugs for existing rows, and `AuthService.PurgeExpiredTokens()` deletes tokens that expired or were revoked more than 30 days ago.
+
+## Recommendations
+
+`BLL/Services/RecommendationService` (behind `IRecommendationService`) ranks stories; the weights live in `BLL/Rules/RecommendationRules`.
+
+| Signal | Weight |
+|---|---|
+| Each shared topic tag | 3.0 |
+| Similar words in the headline and summary (Jaccard similarity of keywords; English and Bangla stop words removed; Unicode-normalized so Bangla works) | up to 6.0 |
+| Same section | 2.0 |
+| Same author | 1.0 |
+| Freshness (decays over about 30 days) | up to 1.5 |
+| Popularity | 0.6 × log10(1 + views) |
+| Breaking news | +0.3 |
+| Already read by this reader | score × 0.25 |
+
+- **For an article** (`ForArticle`): candidates come from the same language only; the current story, unpublished and scheduled stories are never suggested. Each suggestion carries its strongest reason (`SharedTopic` with the tag, `SimilarStory`, `SameSection`, `SameAuthor`, `Popular`), shown as a chip such as "Same topic: Cricket".
+- **For a reader** (`ForReader`): a profile is built from the last 20 stories read, newer reads weighing more (`1 / (1 + 0.15 × position)`); tag, section and author affinities and the keywords of the five newest reads score unread stories in the current language.
+- **History**: signed-in readers' reads are stored in `ReadingHistory` (one row per story with a read count, capped at 200 stories per reader). For anonymous readers the last 20 stories are kept only in the server session (`NewsArchive/Personalization/SessionReadingList`).
+- **Article page**: an **Up next** card after the story, **More like this** (four cards with reasons), **Recommended for you** in the sidebar once the reader has read two stories, a reading progress bar, and a **Read next** pop-up that appears after 45% of the story and hides while the Up next card is on screen (dismissal is remembered for the visit).
+- **Home page**: **Recommended for you** (four cards) for readers with history. **History page** `/history`: last read time and read count per story, remove one or clear all.
 
 ## Sections (categories)
 
@@ -234,6 +259,7 @@ Sections are not fixed. Admins can add, rename and delete any number of sections
 | Member | `Profile`, `ChangePassword` | Reader, Author |
 | Avatar | `Upload`, `Remove` (POST) | Any signed-in user, own picture only |
 | Bookmark | `/bookmarks` (saved stories, paged), `POST /bookmarks/toggle` (JSON for the page script, redirect without JavaScript) | Any signed-in user; published articles only, up to 500 per user |
+| History | `/history` (reading history, paged, with recommendations), `POST /history/remove`, `POST /history/clear` | Any signed-in user, own history only |
 | Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 
 Access is declared with `[CustomAuthorize(roles...)]` (`Filters/CustomAuthorize.cs`, an `IAuthorizationFilter`). Anonymous users are sent to `/Auth/Login?returnUrl=...`; signed-in users without the role are sent to `/Auth/AccessDenied` (HTTP 403).
@@ -256,7 +282,10 @@ API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiCon
 | `POST /api/auth/logout-all` | Any token | 204, every token of the user revoked |
 | `GET /api/articles?q=&from=&to=&lang=&page=&pageSize=` | Public | 200 `PagedResultDTO<ArticleDTO>` (page size 1-50) |
 | `GET /api/articles/{id}` | Public; unpublished only for its author and admins | 200 / 404 |
-| `GET /api/articles/breaking`, `/trending`, `/{id}/related` | Public | 200 |
+| `GET /api/articles/breaking`, `/trending`, `/{id}/related?count=` | Public | 200 |
+| `GET /api/articles/{id}/recommendations?count=` | Public (with a token, stories the reader has read rank lower) | 200 list of `RecommendationDTO` (`article`, `reason`, `reasonTag`, `score`) / 404 |
+| `GET /api/recommendations?lang=&count=` | Any token | 200, personal recommendations from the reader's history |
+| `GET /api/history?page=&pageSize=`, `POST /api/history/{articleId}`, `DELETE /api/history/{articleId}`, `DELETE /api/history` | Any token, own history only | 200 / 204 / 404 |
 | `GET /api/articles/mine` | Author, Admin | 200 |
 | `GET /api/articles/pending` | Admin | 200 |
 | `POST /api/articles?submit=` | Admin, Author | 201 with `Location` |
@@ -287,7 +316,7 @@ Swagger UI is served at `/swagger` in Development, or anywhere when `Api:Swagger
 - `Views/Shared/_Layout.cshtml` page shell with skip link, flash messages, header and footer partials.
 - `_Navigation.cshtml` top bar, masthead with search, sticky section navigation, role menus, breaking-news ticker.
 - `_Footer.cshtml` brand, sections, explore links, company and policy links, RSS.
-- Story partials: `_StoryLead`, `_StoryCard`, `_StoryCompact`, built from `_StoryMedia`, `_StoryKicker`, `_StoryMeta`.
+- Story partials: `_StoryLead`, `_StoryCard`, `_StoryCompact`, built from `_StoryMedia`, `_StoryKicker`, `_StoryMeta`; recommendation partials `_UpNext`, `_RecCard`, `_RecCompact` and `_RecReason`.
 - The article form has a Markdown toolbar (heading, bold, italic, quote, lists, link) and a **Preview** tab that renders through `POST /Article/Preview` (Admin, Author, antiforgery) with the same renderer as the article page. Plain-text articles keep rendering one paragraph per blank line.
 - `wwwroot/js/site.js` adds a show/hide button to every password field (localized label from `data-show-password` / `data-hide-password` on `<body>`, `aria-pressed`, the field is masked again on submit) and limits the tag picker to 8 choices.
 - Design tokens and components in `wwwroot/css/site.css` (Source Serif 4 and Inter, with Noto Bengali fallbacks).
@@ -330,8 +359,9 @@ Pure CSS and a few lines of JavaScript; no WebGL library and no inline scripts, 
 | Share image 1200×630 | `wwwroot/images/brand/og-default.png` |
 | Icons | `wwwroot/favicon.ico`, `wwwroot/images/brand/{favicon-32,apple-touch-icon,icon-192,icon-512}.png` |
 | Theme | **Classic newspaper**: light uses white masthead, paper `#fbfaf7`, ink `#121212`, red accent `#c8102e`, black top bar and footer; dark uses `#121212` with red `#ff4d5e`. Tokens are at the top of `wwwroot/css/site.css`; the default mode follows the visitor's system setting |
-| Article pictures | `wwwroot/images/articles` generated in the same style (section colour, red stripe and label, white logo) |
-| Profile pictures | `wwwroot/images/avatars` generated monograms for the sample users |
+| Article pictures | `wwwroot/images/articles`: AI-generated photographic pictures of fictional scenes (no real people, text or logos), 1200×675 JPEG |
+| Profile pictures | `wwwroot/images/avatars`: AI-generated portraits of the fictional sample users and a desk emblem for the editorial account, 320×320 PNG |
+
 ## SEO
 
 | Concern | Implementation |
@@ -397,6 +427,7 @@ Site identity is configured in the `Site` section of `appsettings.json` (`SiteOp
 | 4f | Safe Markdown formatting with toolbar and live preview | Done |
 | 4g | Scheduled publishing | Done |
 | 4h | Dependency injection through interfaces, no service locator, container validation | Done |
+| 4j | Recommendations (Up next, More like this, Recommended for you, reading history) | Done |
 | 4i | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
 | 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
 | 6 | Tests, CI, health checks, Docker | Planned |

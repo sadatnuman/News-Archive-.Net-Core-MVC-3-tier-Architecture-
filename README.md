@@ -15,7 +15,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design, database schema, URL map 
 - Sections, topics (tags), trending and breaking news, search by keyword and date range
 - Date archive by year, month and day with a calendar (`/archive/2026/10`) and an "On this day" panel on the home page
 - Author pages with picture, bio and every story (`/authors`, `/author/{id}/{name}`); bylines link there
-- Article pages with byline, reading time, share buttons (LinkedIn, X, Facebook, WhatsApp), comments and related stories
+- Article pages with byline, reading time, share buttons (LinkedIn, X, Facebook, WhatsApp) and comments
+- Recommendations while reading: an **Up next** story, **More like this** with the reason for every suggestion (same topic, similar story, same section or author), a **Read next** pop-up and a reading progress bar
+- **Recommended for you** on the home page and the article sidebar, based on what the reader has read; signed-in readers can see, remove or clear their reading history (`/history`)
 - Save stories to read later with the bookmark button on every card and article (`/bookmarks`)
 - Sign up, sign in, profile with a profile picture, password change and password reset with a one-time code; every password field has a show/hide eye button
 
@@ -114,14 +116,14 @@ sqlcmd -S "localhost\SQLEXPRESS" -E -d NewsArchiveDB -f 65001 -i database/sample
 
 `-f 65001` is required so Bangla text is read as UTF-8. In SSMS, open the file, choose **NewsArchiveDB** in the toolbar and press **Execute**.
 
-The script replaces all users, sections, articles, tags, comments, bookmarks and tokens, and fills every column of every table:
+The script replaces all users, sections, articles, tags, comments, bookmarks, reading history and tokens, and fills every column of every table:
 
 | Data | Rows |
 |---|---|
 | Users with profile pictures (`wwwroot/images/avatars`) and bios | 6 |
 | Sections and topic tags in English and Bangla | 11 sections, 20 tags |
 | Articles (15 English, 13 Bangla) with pictures, slugs, review history and update times | 28: 22 published, 2 scheduled three days ahead, 2 pending, 1 draft, 1 rejected |
-| Comments, tag links, bookmarks | 11, 46, 14 |
+| Comments, tag links, bookmarks, reading history | 11, 46, 14, 30 |
 | Expired and revoked API tokens (random hashes, they cannot be used to sign in) | 6 |
 
 Sample accounts (all use the password `Meridian@2026`; change them before going live):

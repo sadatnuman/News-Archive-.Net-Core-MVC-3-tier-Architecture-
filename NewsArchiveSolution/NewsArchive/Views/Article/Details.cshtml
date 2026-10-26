@@ -15,7 +15,10 @@
     var authorName = ViewBag.AuthorName as string ?? L["Staff reporter"].Value;
     var comments = ViewBag.Comments as List<BLL.DTOs.CommentDTO> ?? new List<BLL.DTOs.CommentDTO>();
     var commentNames = ViewBag.CommentUserNames as Dictionary<int, string> ?? new Dictionary<int, string>();
-    var recommendations = ViewBag.Recommendations as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
+    var recommendations = ViewBag.Recommendations as List<BLL.DTOs.RecommendationDTO> ?? new List<BLL.DTOs.RecommendationDTO>();
+    var forYou = ViewBag.ForYou as List<BLL.DTOs.RecommendationDTO> ?? new List<BLL.DTOs.RecommendationDTO>();
+    var upNext = recommendations.FirstOrDefault();
+    var moreLikeThis = recommendations.Skip(1).ToList();
     var latest = ViewBag.Latest as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
     var avatars = ViewBag.Avatars as Dictionary<int, string> ?? new Dictionary<int, string>();
     string? AvatarOf(int id) => avatars.TryGetValue(id, out var a) ? a : null;
@@ -167,7 +170,7 @@
                 </figure>
             }
 
-            <div class="article-body" lang="@Model.LanguageCode">
+            <div class="article-body" lang="@Model.LanguageCode" data-article-body>
                 @NewsArchive.Content.ArticleRenderer.Render(Model.Content)
             </div>
 
@@ -192,6 +195,29 @@
                     <a class="btn btn-outline-danger btn-sm" asp-action="Delete" asp-route-id="@Model.ArticleId"><i class="bi bi-trash"></i> @L["Delete"]</a>
                 }
             </div>
+
+            @if (upNext != null)
+            {
+                <partial name="_UpNext" model="upNext" />
+            }
+
+            @if (moreLikeThis.Count > 0)
+            {
+                <section class="mt-5" aria-labelledby="related-heading">
+                    <div class="section-head">
+                        <h2 id="related-heading">@L["More like this"]</h2>
+                        <a href="@categoryUrl">@L["More in {0}", categoryName] <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                    </div>
+                    <div class="row g-4">
+                        @foreach (var rec in moreLikeThis)
+                        {
+                            <div class="col-md-6">
+                                <partial name="_RecCard" model="rec" />
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
 
             @if (Model.IsPublished)
             {
@@ -240,26 +266,25 @@
                 </section>
             }
 
-            @if (recommendations.Count > 0)
-            {
-                <section class="mt-5" aria-labelledby="related-heading">
-                    <div class="section-head">
-                        <h2 id="related-heading">@L["Related stories"]</h2>
-                    </div>
-                    <div class="row g-4">
-                        @foreach (var rec in recommendations)
-                        {
-                            <div class="col-md-6">
-                                <partial name="_StoryCard" model="rec" />
-                            </div>
-                        }
-                    </div>
-                </section>
-            }
         </article>
 
         <aside class="col-lg-4">
             <div class="sticky-aside">
+                @if (forYou.Count > 0)
+                {
+                    <div class="side-panel" aria-labelledby="for-you-heading">
+                        <h2 id="for-you-heading" class="side-panel-title">@L["Recommended for you"]</h2>
+                        <p class="small text-muted mb-2">@L["Based on the stories you have read."]</p>
+                        @foreach (var rec in forYou)
+                        {
+                            <partial name="_RecCompact" model="rec" />
+                        }
+                        @if (isLoggedIn)
+                        {
+                            <a class="small fw-semibold d-inline-block mt-2" href="@SeoUrls.Page("/history")">@L["Your reading history"] <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                        }
+                    </div>
+                }
                 @if (latest.Count > 0)
                 {
                     <div class="side-panel">
@@ -282,3 +307,19 @@
         </aside>
     </div>
 </div>
+
+@if (Model.IsPublished)
+{
+    <div class="read-progress" data-read-progress aria-hidden="true"><span></span></div>
+}
+
+@if (upNext != null)
+{
+    <aside class="read-next" data-read-next hidden aria-label="@L["Read next"]">
+        <a class="read-next-link" href="@SeoUrls.Article(upNext.Article)">
+            <span class="read-next-label"><i class="bi bi-book" aria-hidden="true"></i> @L["Read next"]</span>
+            <span class="read-next-title" lang="@upNext.Article.LanguageCode">@upNext.Article.Title</span>
+        </a>
+        <button type="button" class="read-next-close" data-read-next-close aria-label="@L["Close"]"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </aside>
+}

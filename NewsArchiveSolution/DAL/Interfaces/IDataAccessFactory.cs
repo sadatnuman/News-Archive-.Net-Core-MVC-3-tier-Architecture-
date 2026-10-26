@@ -21,5 +21,7 @@ namespace DAL.Interfaces
         ITagRepository GetTagRepository();
 
         IBookmarkRepository GetBookmarkRepository();
+
+        IReadingHistoryRepository GetReadingHistoryRepository();
     }
 }

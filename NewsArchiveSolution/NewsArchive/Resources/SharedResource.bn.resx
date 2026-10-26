@@ -138,6 +138,9 @@
   <data name="Back to sign in" xml:space="preserve">
     <value>লগ-ইনে ফিরুন</value>
   </data>
+  <data name="Based on the stories you have read." xml:space="preserve">
+    <value>আপনার পড়া সংবাদের ভিত্তিতে।</value>
+  </data>
   <data name="Bio cannot exceed 500 characters" xml:space="preserve">
     <value>পরিচিতি ৫০০ অক্ষরের বেশি হতে পারবে না</value>
   </data>
@@ -224,6 +227,15 @@
   </data>
   <data name="Clear" xml:space="preserve">
     <value>মুছুন</value>
+  </data>
+  <data name="Clear history" xml:space="preserve">
+    <value>ইতিহাস মুছুন</value>
+  </data>
+  <data name="Clear your whole reading history?" xml:space="preserve">
+    <value>পুরো পড়ার ইতিহাস মুছে ফেলবেন?</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>বন্ধ করুন</value>
   </data>
   <data name="Comment must be between 2 and 500 characters" xml:space="preserve">
     <value>মন্তব্য ২ থেকে ৫০০ অক্ষরের মধ্যে হতে হবে</value>
@@ -495,6 +507,9 @@
   <data name="Last change" xml:space="preserve">
     <value>সর্বশেষ পরিবর্তন</value>
   </data>
+  <data name="Last read {0}" xml:space="preserve">
+    <value>শেষ পড়া {0}</value>
+  </data>
   <data name="Latest from {0}" xml:space="preserve">
     <value>{0}-এর সাম্প্রতিক লেখা</value>
   </data>
@@ -528,8 +543,14 @@
   <data name="More" xml:space="preserve">
     <value>আরও</value>
   </data>
+  <data name="More from {0}" xml:space="preserve">
+    <value>{0}-এর আরও লেখা</value>
+  </data>
   <data name="More in {0}" xml:space="preserve">
     <value>{0}-এর আরও সংবাদ</value>
+  </data>
+  <data name="More like this" xml:space="preserve">
+    <value>একই ধরনের আরও সংবাদ</value>
   </data>
   <data name="More stories" xml:space="preserve">
     <value>আরও সংবাদ</value>
@@ -608,6 +629,9 @@
   </data>
   <data name="No published authors yet" xml:space="preserve">
     <value>এখনো কোনো প্রকাশিত লেখক নেই</value>
+  </data>
+  <data name="No reading history yet" xml:space="preserve">
+    <value>এখনো পড়ার কোনো ইতিহাস নেই</value>
   </data>
   <data name="No sections yet" xml:space="preserve">
     <value>এখনো কোনো বিভাগ নেই</value>
@@ -729,6 +753,9 @@
   <data name="Please select a category" xml:space="preserve">
     <value>একটি বিভাগ বেছে নিন</value>
   </data>
+  <data name="Popular now" xml:space="preserve">
+    <value>এখন জনপ্রিয়</value>
+  </data>
   <data name="Popular topics" xml:space="preserve">
     <value>জনপ্রিয় বিষয়</value>
   </data>
@@ -783,17 +810,29 @@
   <data name="Read" xml:space="preserve">
     <value>পড়ুন</value>
   </data>
+  <data name="Read next" xml:space="preserve">
+    <value>এরপর পড়ুন</value>
+  </data>
   <data name="Read the latest news" xml:space="preserve">
     <value>সর্বশেষ সংবাদ পড়ুন</value>
   </data>
   <data name="Read {0} news" xml:space="preserve">
     <value>{0} সংবাদ পড়ুন</value>
   </data>
+  <data name="Read {0} times" xml:space="preserve">
+    <value>{0} বার পড়েছেন</value>
+  </data>
   <data name="Reader" xml:space="preserve">
     <value>পাঠক</value>
   </data>
+  <data name="Reading history" xml:space="preserve">
+    <value>পড়ার ইতিহাস</value>
+  </data>
   <data name="Reason for rejection" xml:space="preserve">
     <value>ফেরত পাঠানোর কারণ</value>
+  </data>
+  <data name="Recommended for you" xml:space="preserve">
+    <value>আপনার জন্য সুপারিশ</value>
   </data>
   <data name="Reject" xml:space="preserve">
     <value>ফেরত পাঠান</value>
@@ -803,6 +842,9 @@
   </data>
   <data name="Related stories" xml:space="preserve">
     <value>সম্পর্কিত সংবাদ</value>
+  </data>
+  <data name="Remove from history" xml:space="preserve">
+    <value>ইতিহাস থেকে সরান</value>
   </data>
   <data name="Remove from saved" xml:space="preserve">
     <value>সংরক্ষিত তালিকা থেকে সরান</value>
@@ -839,6 +881,9 @@
   </data>
   <data name="Role name must be between 2 and 50 characters" xml:space="preserve">
     <value>ভূমিকার নাম ২ থেকে ৫০ অক্ষরের মধ্যে হতে হবে</value>
+  </data>
+  <data name="Same topic: {0}" xml:space="preserve">
+    <value>একই বিষয়: {0}</value>
   </data>
   <data name="Save changes" xml:space="preserve">
     <value>পরিবর্তন সংরক্ষণ</value>
@@ -942,6 +987,9 @@
   <data name="Signed in as {0}" xml:space="preserve">
     <value>{0} হিসেবে লগ-ইন</value>
   </data>
+  <data name="Similar story" xml:space="preserve">
+    <value>একই ধরনের সংবাদ</value>
+  </data>
   <data name="Sitemap" xml:space="preserve">
     <value>সাইটম্যাপ</value>
   </data>
@@ -971,6 +1019,12 @@
   </data>
   <data name="Stories by {0}, page {1}" xml:space="preserve">
     <value>{0}-এর লেখা সংবাদ, পৃষ্ঠা {1}</value>
+  </data>
+  <data name="Stories you open while signed in will appear here." xml:space="preserve">
+    <value>লগ-ইন অবস্থায় যে সংবাদ খুলবেন, তা এখানে দেখা যাবে।</value>
+  </data>
+  <data name="Story removed from your reading history." xml:space="preserve">
+    <value>সংবাদটি আপনার পড়ার ইতিহাস থেকে সরানো হয়েছে।</value>
   </data>
   <data name="Story removed from your saved list." xml:space="preserve">
     <value>সংবাদটি আপনার সংরক্ষিত তালিকা থেকে সরানো হয়েছে।</value>
@@ -1080,6 +1134,9 @@
   <data name="This story could not be saved." xml:space="preserve">
     <value>সংবাদটি সংরক্ষণ করা যায়নি।</value>
   </data>
+  <data name="This story is not in your reading history." xml:space="preserve">
+    <value>সংবাদটি আপনার পড়ার ইতিহাসে নেই।</value>
+  </data>
   <data name="This user has written articles. Reassign or delete them first." xml:space="preserve">
     <value>এই ব্যবহারকারী সংবাদ লিখেছেন। আগে সেগুলো অন্য কাউকে দিন বা মুছে ফেলুন।</value>
   </data>
@@ -1136,6 +1193,9 @@
   </data>
   <data name="Unknown" xml:space="preserve">
     <value>অজানা</value>
+  </data>
+  <data name="Up next" xml:space="preserve">
+    <value>এরপর</value>
   </data>
   <data name="Update failed" xml:space="preserve">
     <value>হালনাগাদ করা যায়নি</value>
@@ -1236,6 +1296,12 @@
   <data name="Your comment" xml:space="preserve">
     <value>আপনার মন্তব্য</value>
   </data>
+  <data name="Your reading history" xml:space="preserve">
+    <value>আপনার পড়ার ইতিহাস</value>
+  </data>
+  <data name="Your reading history has been cleared." xml:space="preserve">
+    <value>আপনার পড়ার ইতিহাস মুছে ফেলা হয়েছে।</value>
+  </data>
   <data name="to join the conversation." xml:space="preserve">
     <value>করে আলোচনায় অংশ নিন।</value>
   </data>
@@ -1265,6 +1331,9 @@
   </data>
   <data name="{0} stories saved to read later." xml:space="preserve">
     <value>পরে পড়ার জন্য {0}টি সংবাদ সংরক্ষিত।</value>
+  </data>
+  <data name="{0} stories you have read. We use them to recommend similar stories." xml:space="preserve">
+    <value>আপনি {0}টি সংবাদ পড়েছেন। এগুলোর ভিত্তিতে আমরা একই ধরনের সংবাদ সুপারিশ করি।</value>
   </data>
   <data name="{0} stories, organised by year, month and day." xml:space="preserve">
     <value>{0}টি সংবাদ, বছর, মাস ও দিন অনুযায়ী সাজানো।</value>

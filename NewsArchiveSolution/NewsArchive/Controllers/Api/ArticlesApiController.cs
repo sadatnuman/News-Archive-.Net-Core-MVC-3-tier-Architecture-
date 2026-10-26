@@ -16,9 +16,11 @@ namespace NewsArchive.Controllers.Api
         private readonly ICategoryService categoryService;
         private readonly ICommentService commentService;
         private readonly IMediaService mediaService;
+        private readonly IRecommendationService recommendationService;
 
-        public ArticlesApiController(IArticleService articleService, ICategoryService categoryService, ICommentService commentService, IMediaService mediaService, IAuthService authService)
+        public ArticlesApiController(IArticleService articleService, ICategoryService categoryService, ICommentService commentService, IMediaService mediaService, IAuthService authService, IRecommendationService recommendationService)
         {
+            this.recommendationService = recommendationService;
             this.authService = authService;
             this.mediaService = mediaService;
             this.articleService = articleService;
@@ -73,7 +75,18 @@ namespace NewsArchive.Controllers.Api
         {
             var article = articleService.Get(id);
             if (article == null || !article.IsPublished) return NotFound();
-            return Ok(articleService.GetRecommendedArticles(id, Math.Clamp(count, 1, 20)));
+            return Ok(recommendationService.ForArticle(id, Math.Clamp(count, 1, RecommendationRules.MaxCount)).Select(r => r.Article).ToList());
+        }
+
+        [HttpGet("{id:int}/recommendations")]
+        [ProducesResponseType(typeof(List<RecommendationDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Recommendations(int id, [FromQuery] int count = 5)
+        {
+            var article = articleService.Get(id);
+            if (article == null || !article.IsPublished) return NotFound();
+            var user = await TokenAuthorizationFilter.ResolveUserAsync(HttpContext, authService);
+            return Ok(recommendationService.ForArticle(id, Math.Clamp(count, 1, RecommendationRules.MaxCount), user?.UserId));
         }
 
         [HttpGet("mine")]

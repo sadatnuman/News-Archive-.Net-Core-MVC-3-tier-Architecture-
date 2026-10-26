@@ -6,11 +6,16 @@ using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using NewsArchive.Auth;
 using NewsArchive.Filters;
+using NewsArchive.Personalization;
 
 namespace NewsArchive.Controllers
 {
     public class ArticleController : AppController
     {
+        private const int ArticleRecommendations = 5;
+        private const int ReaderRecommendations = 4;
+
+        private readonly IRecommendationService recommendationService;
         private readonly IBookmarkService bookmarkService;
         private readonly IStringLocalizer<SharedResource> L;
         private readonly IArticleLookupService lookupService;
@@ -21,8 +26,9 @@ namespace NewsArchive.Controllers
         private readonly ITagService tagService;
         private readonly IMediaService mediaService;
 
-        public ArticleController(IArticleService articleService, ICategoryService categoryService, ICommentService commentService, IUserService userService, ITagService tagService, IMediaService mediaService, IArticleLookupService lookupService, IStringLocalizer<SharedResource> localizer, IBookmarkService bookmarkService)
+        public ArticleController(IArticleService articleService, ICategoryService categoryService, ICommentService commentService, IUserService userService, ITagService tagService, IMediaService mediaService, IArticleLookupService lookupService, IStringLocalizer<SharedResource> localizer, IBookmarkService bookmarkService, IRecommendationService recommendationService)
         {
+            this.recommendationService = recommendationService;
             this.bookmarkService = bookmarkService;
             L = localizer;
             this.lookupService = lookupService;
@@ -74,10 +80,15 @@ namespace NewsArchive.Controllers
             int total;
             var data = articleService.Search(keyword, from, to, page, pageSize, out total, CurrentLanguage);
             var trending = isSearch ? new List<ArticleDTO>() : articleService.GetTrendingArticles(5, CurrentLanguage);
-            SetArticleLookups(lookupService.Build(data.Concat(trending), CurrentUserId, CurrentLanguage));
+            var forYou = isSearch || page > 1
+                ? new List<RecommendationDTO>()
+                : recommendationService.ForReader(CurrentUserId, SessionReadingList.Get(HttpContext.Session), CurrentLanguage, ReaderRecommendations,
+                    data.Take(4).Select(a => a.ArticleId));
+            SetArticleLookups(lookupService.Build(data.Concat(trending).Concat(forYou.Select(r => r.Article)), CurrentUserId, CurrentLanguage));
 
             ViewBag.IsSearch = isSearch;
             ViewBag.Trending = trending;
+            ViewBag.ForYou = forYou;
             ViewBag.PopularTags = isSearch ? new List<TagDTO>() : tagService.GetPopular(12, CurrentLanguage);
             ViewBag.OnThisDay = isSearch ? new List<ArticleDTO>() : articleService.GetOnThisDay(DateTime.Now, 3, CurrentLanguage);
             ViewBag.Keyword = keyword;
@@ -132,6 +143,15 @@ namespace NewsArchive.Controllers
             if (article.IsPublished && userId.HasValue)
                 articleService.IncrementViewCount(id);
 
+            List<int>? sessionReads = null;
+            if (article.IsPublished)
+            {
+                if (userId.HasValue)
+                    recommendationService.RecordRead(userId.Value, id);
+                else
+                    sessionReads = SessionReadingList.Add(HttpContext.Session, id);
+            }
+
             var comments = article.IsPublished ? commentService.GetByArticleId(id) : new List<CommentDTO>();
             var users = userService.GetNames(comments.Select(c => c.UserId).Append(article.AuthorId));
             ViewBag.Avatars = userService.GetAvatars(comments.Select(c => c.UserId).Append(article.AuthorId));
@@ -148,11 +168,20 @@ namespace NewsArchive.Controllers
             ViewBag.CanEdit = ArticleRules.CanEdit(article.AuthorId, article.StatusId, userId ?? 0, roleId);
             ViewBag.IsSaved = userId.HasValue && bookmarkService.IsSaved(userId.Value, id);
             var recommendations = article.IsPublished
-                ? articleService.GetRecommendedArticles(id, 4)
-                : new List<ArticleDTO>();
-            var latest = articleService.GetLatest(6, article.LanguageCode).Where(a => a.ArticleId != id).Take(5).ToList();
-            SetArticleLookups(lookupService.Build(recommendations.Concat(latest), CurrentUserId, CurrentLanguage));
+                ? recommendationService.ForArticle(id, ArticleRecommendations, userId, sessionReads)
+                : new List<RecommendationDTO>();
+            var shown = recommendations.Select(r => r.Article.ArticleId).Append(id).ToList();
+            var forYou = article.IsPublished
+                ? recommendationService.ForReader(userId, sessionReads, article.LanguageCode, ReaderRecommendations, shown, minHistory: 2)
+                : new List<RecommendationDTO>();
+            var latest = articleService.GetLatest(10, article.LanguageCode)
+                .Where(a => !shown.Contains(a.ArticleId) && forYou.All(r => r.Article.ArticleId != a.ArticleId))
+                .Take(5)
+                .ToList();
+            SetArticleLookups(lookupService.Build(
+                recommendations.Concat(forYou).Select(r => r.Article).Concat(latest), CurrentUserId, CurrentLanguage));
             ViewBag.Recommendations = recommendations;
+            ViewBag.ForYou = forYou;
             ViewBag.Latest = latest;
 
             return View(article);

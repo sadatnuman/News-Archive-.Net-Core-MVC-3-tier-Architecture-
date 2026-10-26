@@ -31,5 +31,7 @@ public partial class User
 
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
 
+    public virtual ICollection<ReadingHistory> ReadingHistory { get; set; } = new List<ReadingHistory>();
+
     public virtual Role Role { get; set; } = null!;
 }

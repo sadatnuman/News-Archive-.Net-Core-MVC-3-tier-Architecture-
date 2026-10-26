@@ -1,0 +1,29 @@
+@model BLL.DTOs.RecommendationDTO
+
+@{
+    var article = Model.Article;
+    var img = SeoUrls.Image(article.ImagePath);
+    var url = SeoUrls.Article(article);
+}
+
+<section id="up-next" class="up-next" aria-labelledby="up-next-heading" data-up-next>
+    <a class="up-next-media" href="@url" tabindex="-1" aria-hidden="true">
+        @if (img != null)
+        {
+            <img src="@img" alt="" width="800" height="450" loading="lazy" decoding="async" />
+        }
+        else
+        {
+            <span class="placeholder-icon"><i class="bi bi-newspaper"></i></span>
+        }
+    </a>
+    <div class="up-next-body" lang="@article.LanguageCode">
+        <div class="up-next-label" lang="@UiLanguage.Current">
+            <span id="up-next-heading" class="up-next-kicker"><i class="bi bi-arrow-right-circle" aria-hidden="true"></i> @L["Up next"]</span>
+            <partial name="_RecReason" model="Model" />
+        </div>
+        <h2 class="up-next-title"><a href="@url">@article.Title</a></h2>
+        <p class="up-next-summary">@PageMeta.Shorten(article.Summary, 180)</p>
+        <partial name="_StoryMeta" model="article" />
+    </div>
+</section>

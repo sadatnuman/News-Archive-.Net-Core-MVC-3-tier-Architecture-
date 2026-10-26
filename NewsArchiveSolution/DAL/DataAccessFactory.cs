@@ -31,5 +31,7 @@ namespace DAL
         public ITagRepository GetTagRepository() => new TagRepo(db);
 
         public IBookmarkRepository GetBookmarkRepository() => new BookmarkRepo(db);
+
+        public IReadingHistoryRepository GetReadingHistoryRepository() => new ReadingHistoryRepo(db);
     }
 }

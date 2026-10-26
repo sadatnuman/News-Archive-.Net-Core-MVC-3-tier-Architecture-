@@ -58,8 +58,6 @@ namespace BLL.Interfaces
 
         List<ArticleDTO> GetLatest(int count, string? language = null);
 
-        List<ArticleDTO> GetRecommendedArticles(int articleId, int count = 4);
-
         List<ArticleDTO> GetPublishedForSitemap();
 
         int GetCommentCount(int articleId);
