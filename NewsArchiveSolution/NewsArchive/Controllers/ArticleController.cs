@@ -97,7 +97,7 @@ namespace NewsArchive.Controllers
             var data = articleService.GetBreakingNews(CurrentLanguage);
             SetArticleLookups(lookupService.Build(data, CurrentUserId, CurrentLanguage));
 
-            ViewBag.Heading = "Breaking News";
+            ViewBag.Heading = "Breaking news";
             ViewBag.Intro = "The most important developing stories, updated as they happen.";
             ViewBag.CanonicalPath = Seo.SeoUrls.Page("/breaking-news");
             return View("List", data);
