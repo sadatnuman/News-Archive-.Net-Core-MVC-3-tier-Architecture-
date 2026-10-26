@@ -25,5 +25,7 @@ namespace DAL.Interfaces
         IReadingHistoryRepository GetReadingHistoryRepository();
 
         IAuditLogRepository GetAuditLogRepository();
+
+        ISubscriberRepository GetSubscriberRepository();
     }
 }

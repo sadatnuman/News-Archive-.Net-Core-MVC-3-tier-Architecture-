@@ -9,4 +9,6 @@ public partial class Language
     public string NativeName { get; set; } = null!;
 
     public virtual ICollection<Article> Articles { get; set; } = new List<Article>();
+
+    public virtual ICollection<Subscriber> Subscribers { get; set; } = new List<Subscriber>();
 }

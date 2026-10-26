@@ -551,6 +551,69 @@ namespace DAL.EF.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.Subscriber", b =>
+                {
+                    b.Property<int>("SubscriberId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubscriberId"));
+
+                    b.Property<string>("ConfirmTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)")
+                        .HasDefaultValue("en");
+
+                    b.Property<DateTime?>("LastSentAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("UnsubscribeToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("UnsubscribedAt")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("SubscriberId")
+                        .HasName("PK_Subscribers");
+
+                    b.HasIndex(new[] { "LanguageCode", "ConfirmedAt", "UnsubscribedAt" }, "IX_Subscribers_Language_Status");
+
+                    b.HasIndex(new[] { "ConfirmTokenHash" }, "UX_Subscribers_ConfirmTokenHash")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "Email" }, "UX_Subscribers_Email")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "UnsubscribeToken" }, "UX_Subscribers_UnsubscribeToken")
+                        .IsUnique();
+
+                    b.ToTable("Subscribers");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.Tag", b =>
                 {
                     b.Property<int>("TagId")
@@ -850,6 +913,17 @@ namespace DAL.EF.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.Subscriber", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Language", "Language")
+                        .WithMany("Subscribers")
+                        .HasForeignKey("LanguageCode")
+                        .IsRequired()
+                        .HasConstraintName("FK_Subscribers_Languages");
+
+                    b.Navigation("Language");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.User", b =>
                 {
                     b.HasOne("DAL.EF.Tables.Role", "Role")
@@ -900,6 +974,8 @@ namespace DAL.EF.Migrations
             modelBuilder.Entity("DAL.EF.Tables.Language", b =>
                 {
                     b.Navigation("Articles");
+
+                    b.Navigation("Subscribers");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.ReportReason", b =>

@@ -35,5 +35,7 @@ namespace DAL
         public IReadingHistoryRepository GetReadingHistoryRepository() => new ReadingHistoryRepo(db);
 
         public IAuditLogRepository GetAuditLogRepository() => new AuditLogRepo(db);
+
+        public ISubscriberRepository GetSubscriberRepository() => new SubscriberRepo(db);
     }
 }

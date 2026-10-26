@@ -8,8 +8,9 @@ namespace BLL.Audit
         public const string Section = "Section";
         public const string Tag = "Tag";
         public const string Security = "Security";
+        public const string Newsletter = "Newsletter";
 
-        public static readonly string[] All = { Article, Comment, User, Section, Tag, Security };
+        public static readonly string[] All = { Article, Comment, User, Section, Tag, Newsletter, Security };
     }
 
     public static class AuditActions
@@ -47,6 +48,10 @@ namespace BLL.Audit
         public const string PasswordChanged = "PasswordChanged";
         public const string AllSessionsRevoked = "AllSessionsRevoked";
         public const string AccountRegistered = "AccountRegistered";
+        public const string PasswordResetRequested = "PasswordResetRequested";
+
+        public const string NewsletterSent = "NewsletterSent";
+        public const string SubscriberRemoved = "SubscriberRemoved";
     }
 
     public static class AuditRules

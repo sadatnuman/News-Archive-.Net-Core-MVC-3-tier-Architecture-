@@ -222,11 +222,20 @@ img {
   font-size: .8rem;
 }
 
-.topbar a {
+.topbar a,
+.topbar .topbar-link {
   color: #e2e8f0;
 }
 
-.topbar a:hover {
+.topbar .topbar-link {
+  font-size: inherit;
+  text-decoration: none;
+  vertical-align: baseline;
+  border: 0;
+}
+
+.topbar a:hover,
+.topbar .topbar-link:hover {
   color: #fff;
 }
 

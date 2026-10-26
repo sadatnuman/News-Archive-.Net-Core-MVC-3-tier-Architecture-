@@ -3,6 +3,8 @@ using BLL.DTOs;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using BLL.Email;
+using NewsArchive.Email;
 using NewsArchive.Filters;
 
 namespace NewsArchive.Controllers
@@ -19,13 +21,22 @@ namespace NewsArchive.Controllers
         private readonly IAuthService authService;
         private readonly ICommentService commentService;
         private readonly IAuditService auditService;
+        private readonly INewsletterService newsletterService;
+        private readonly IEmailSender emailSender;
+        private readonly MailComposer mail;
 
         private const int ModerationPageSize = 20;
         private const int AuditPageSize = 30;
+        private const int SubscriberPageSize = 30;
 
-        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService, ICategoryService categoryService, IAuthService authService, ICommentService commentService, IAuditService auditService, IStringLocalizer<SharedResource> localizer)
+        public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService,
+            ICategoryService categoryService, IAuthService authService, ICommentService commentService, IAuditService auditService,
+            INewsletterService newsletterService, IEmailSender emailSender, MailComposer mail, IStringLocalizer<SharedResource> localizer)
         {
             L = localizer;
+            this.newsletterService = newsletterService;
+            this.emailSender = emailSender;
+            this.mail = mail;
             this.commentService = commentService;
             this.auditService = auditService;
             this.authService = authService;
@@ -128,6 +139,62 @@ namespace NewsArchive.Controllers
             ViewBag.PageSize = AuditPageSize;
             ViewBag.Total = total;
             return View(entries);
+        }
+
+        [HttpGet]
+        public IActionResult Newsletter(int page = 1)
+        {
+            page = Math.Max(page, 1);
+            var subscribers = newsletterService.Get(page, SubscriberPageSize, out var total);
+            ViewBag.Stats = newsletterService.GetStats();
+            ViewBag.DigestEnglish = newsletterService.BuildDigest(AppLanguages.English);
+            ViewBag.DigestBangla = newsletterService.BuildDigest(AppLanguages.Bangla);
+            ViewBag.Page = page;
+            ViewBag.PageSize = SubscriberPageSize;
+            ViewBag.Total = total;
+            return View(subscribers);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendDigest(string language, CancellationToken cancellationToken)
+        {
+            var digest = newsletterService.BuildDigest(language);
+            if (digest.Stories.Count == 0)
+            {
+                Flash("warning", "There are no stories from the past week to send.");
+                return RedirectToAction("Newsletter");
+            }
+            if (digest.Recipients.Count == 0)
+            {
+                Flash("warning", "No confirmed subscribers for this edition yet.");
+                return RedirectToAction("Newsletter");
+            }
+
+            var sections = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.LocalName(digest.LanguageCode));
+            var sent = new List<int>();
+            foreach (var recipient in digest.Recipients)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+                if (await emailSender.SendAsync(mail.Digest(digest, recipient, sections), cancellationToken))
+                    sent.Add(recipient.SubscriberId);
+            }
+            newsletterService.MarkSent(sent, digest.LanguageCode, digest.Stories.Count);
+
+            if (sent.Count == digest.Recipients.Count)
+                Flash("success", "Digest sent to every subscriber.");
+            else
+                Flash("warning", "Some emails could not be sent. Check the email settings and the log.");
+            return RedirectToAction("Newsletter");
+        }
+
+        [HttpPost]
+        public IActionResult RemoveSubscriber(int id)
+        {
+            if (newsletterService.Remove(id))
+                Flash("success", "Subscriber removed.");
+            else
+                Flash("danger", "This subscriber no longer exists.");
+            return RedirectToAction("Newsletter");
         }
 
         private IActionResult BackTo(string? returnUrl)

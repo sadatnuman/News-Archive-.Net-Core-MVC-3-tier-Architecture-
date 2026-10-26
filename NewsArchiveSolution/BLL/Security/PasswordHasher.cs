@@ -71,6 +71,11 @@ namespace BLL.Security
             return Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
         }
 
+        public static string NewHexToken()
+        {
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        }
+
         public static string HashToken(string token)
         {
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));

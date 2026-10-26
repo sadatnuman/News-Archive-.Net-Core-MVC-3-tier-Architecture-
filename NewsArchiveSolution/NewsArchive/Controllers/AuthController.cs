@@ -1,32 +1,37 @@
 using BLL;
+using BLL.Audit;
 using BLL.DTOs;
+using BLL.Email;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using NewsArchive.Auth;
-using System.Security.Cryptography;
+using NewsArchive.Email;
 
 namespace NewsArchive.Controllers
 {
     public class AuthController : AppController
     {
-        private const int MaxOtpAttempts = 5;
-
         private readonly IAuthService authService;
         private readonly IUserService userService;
         private readonly LoginThrottle throttle;
-        private readonly ILogger<AuthController> logger;
-        private readonly IWebHostEnvironment environment;
+        private readonly PasswordResetStore resetStore;
+        private readonly IEmailSender emailSender;
+        private readonly MailComposer mail;
+        private readonly IAuditService audit;
 
-        public AuthController(IAuthService authService, IUserService userService, LoginThrottle throttle, ILogger<AuthController> logger, IWebHostEnvironment environment)
+        public AuthController(IAuthService authService, IUserService userService, LoginThrottle throttle, PasswordResetStore resetStore,
+            IEmailSender emailSender, MailComposer mail, IAuditService audit)
         {
             this.authService = authService;
             this.userService = userService;
             this.throttle = throttle;
-            this.logger = logger;
-            this.environment = environment;
+            this.resetStore = resetStore;
+            this.emailSender = emailSender;
+            this.mail = mail;
+            this.audit = audit;
         }
 
         [HttpGet]
@@ -88,12 +93,20 @@ namespace NewsArchive.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
+        {
+            if (!User.IsSignedIn()) return RedirectToAction("Login");
+            return View();
+        }
+
+        [HttpPost]
+        [ActionName("Logout")]
+        public async Task<IActionResult> LogoutConfirmed(string? next)
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Clear();
             Flash("success", "Logged out successfully");
-            return RedirectToAction("Index", "Article");
+            return next == "login" ? RedirectToAction("Login") : RedirectToAction("Index", "Article");
         }
 
         [HttpGet]
@@ -111,9 +124,9 @@ namespace NewsArchive.Controllers
 
         [HttpPost]
         [EnableRateLimiting(ApiOptions.LoginRateLimit)]
-        public IActionResult ForgetPassword(string email)
+        public async Task<IActionResult> ForgetPassword(string email)
         {
-            if (string.IsNullOrWhiteSpace(email))
+            if (string.IsNullOrWhiteSpace(email) || email.Length > 150)
             {
                 Flash("danger", "Email is required");
                 return View();
@@ -121,25 +134,17 @@ namespace NewsArchive.Controllers
 
             email = email.Trim();
             var user = userService.GetByEmail(email);
-            if (user == null)
+            if (user != null)
             {
-                Flash("success", "If an account exists for that email, a verification code has been sent.");
-                return RedirectToAction("VerifyOtp", new { email });
+                var code = resetStore.Issue(user.UserId, email);
+                if (code != null)
+                {
+                    await emailSender.SendAsync(mail.PasswordResetCode(user.Email, code, CurrentLanguage, PasswordResetStore.CodeLifetime));
+                    audit.Record(AuditActions.PasswordResetRequested, AuditEntities.Security, user.UserId, null, user.UserId);
+                }
             }
 
-            var otpString = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            var expiry = DateTime.UtcNow.AddMinutes(5);
-            HttpContext.Session.SetString($"PwdReset:Otp:{email}", otpString);
-            HttpContext.Session.SetString($"PwdReset:Expiry:{email}", expiry.ToString("o"));
-            HttpContext.Session.SetInt32($"PwdReset:Used:{email}", 0);
-            HttpContext.Session.SetInt32($"PwdReset:UserId:{email}", user.UserId);
-            HttpContext.Session.SetInt32($"PwdReset:Attempts:{email}", 0);
-
-            if (environment.IsDevelopment())
-                logger.LogInformation("Password reset code for {Email}: {Otp}", email, otpString);
-
             Flash("success", "If an account exists for that email, a verification code has been sent.");
-
             return RedirectToAction("VerifyOtp", new { email });
         }
 
@@ -162,55 +167,23 @@ namespace NewsArchive.Controllers
             }
 
             email = email.Trim();
-            var sessionOtp = HttpContext.Session.GetString($"PwdReset:Otp:{email}");
-            var expiryString = HttpContext.Session.GetString($"PwdReset:Expiry:{email}");
-            var usedFlag = HttpContext.Session.GetInt32($"PwdReset:Used:{email}");
-            var userId = HttpContext.Session.GetInt32($"PwdReset:UserId:{email}");
-
-            if (string.IsNullOrEmpty(sessionOtp) || string.IsNullOrEmpty(expiryString) || userId == null)
+            switch (resetStore.Verify(email, otp, out var userId))
             {
-                Flash("danger", "No OTP request found for this email");
-                return View();
+                case PasswordResetStore.VerifyResult.NotRequested:
+                    Flash("danger", "No OTP request found for this email");
+                    return View();
+                case PasswordResetStore.VerifyResult.Expired:
+                    Flash("danger", "OTP expired");
+                    return View();
+                case PasswordResetStore.VerifyResult.TooManyAttempts:
+                    Flash("danger", "Too many failed attempts. Request a new code.");
+                    return View();
+                case PasswordResetStore.VerifyResult.Invalid:
+                    Flash("danger", "Invalid OTP");
+                    return View();
             }
 
-            if (usedFlag == 1)
-            {
-                Flash("danger", "OTP already used");
-                return View();
-            }
-
-            var attempts = HttpContext.Session.GetInt32($"PwdReset:Attempts:{email}") ?? 0;
-            if (attempts >= MaxOtpAttempts)
-            {
-                HttpContext.Session.SetInt32($"PwdReset:Used:{email}", 1);
-                Flash("danger", "Too many failed attempts. Request a new code.");
-                return View();
-            }
-
-            if (!DateTime.TryParse(expiryString, null, System.Globalization.DateTimeStyles.RoundtripKind, out var expiry))
-            {
-                Flash("danger", "Invalid OTP data");
-                return View();
-            }
-
-            if (DateTime.UtcNow > expiry)
-            {
-                Flash("danger", "OTP expired");
-                return View();
-            }
-
-            if (!CryptographicOperations.FixedTimeEquals(
-                    System.Text.Encoding.UTF8.GetBytes(sessionOtp),
-                    System.Text.Encoding.UTF8.GetBytes(otp.Trim())))
-            {
-                HttpContext.Session.SetInt32($"PwdReset:Attempts:{email}", attempts + 1);
-                Flash("danger", "Invalid OTP");
-                return View();
-            }
-
-            HttpContext.Session.SetInt32($"PwdReset:Used:{email}", 1);
-
-            var user = authService.GetUser(userId.Value);
+            var user = authService.GetUser(userId);
             if (user == null)
             {
                 Flash("danger", "User not found");

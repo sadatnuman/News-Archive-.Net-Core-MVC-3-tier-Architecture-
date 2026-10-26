@@ -41,7 +41,10 @@
         [AuditActions.SignInFailed] = "Failed sign-in",
         [AuditActions.PasswordChanged] = "Changed password",
         [AuditActions.AllSessionsRevoked] = "Signed out everywhere",
-        [AuditActions.AccountRegistered] = "Created an account"
+        [AuditActions.AccountRegistered] = "Created an account",
+        [AuditActions.PasswordResetRequested] = "Asked for a password reset code",
+        [AuditActions.NewsletterSent] = "Sent the newsletter",
+        [AuditActions.SubscriberRemoved] = "Removed a subscriber"
     };
     var warning = new HashSet<string> { AuditActions.SignInFailed, AuditActions.ArticleDeleted, AuditActions.UserDeleted, AuditActions.SectionDeleted, AuditActions.TagDeleted, AuditActions.CommentRemoved, AuditActions.UserRoleChanged };
     var typeLabels = new Dictionary<string, string>
@@ -51,6 +54,7 @@
         [AuditEntities.User] = "Users",
         [AuditEntities.Section] = "Sections",
         [AuditEntities.Tag] = "Topics",
+        [AuditEntities.Newsletter] = "Newsletter",
         [AuditEntities.Security] = "Security"
     };
     string Link(string? t, int? u, int p = 1) => Url.Action("Audit", new { type = t, user = u, page = p > 1 ? p : (int?)null })!;

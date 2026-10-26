@@ -29,6 +29,7 @@ namespace BLL
             services.AddScoped<IRecommendationService, RecommendationService>();
             services.AddScoped<ISearchService, SearchService>();
             services.AddScoped<IAuditService, AuditService>();
+            services.AddScoped<INewsletterService, NewsletterService>();
 
             return services;
         }
@@ -45,6 +46,7 @@ namespace BLL
             provider.GetRequiredService<ITagService>().EnsureSlugs();
             provider.GetRequiredService<IAuthService>().PurgeExpiredTokens();
             provider.GetRequiredService<IAuditService>().PurgeOld();
+            provider.GetRequiredService<INewsletterService>().PurgeStale();
         }
     }
 }

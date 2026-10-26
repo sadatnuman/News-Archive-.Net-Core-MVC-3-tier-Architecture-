@@ -1,5 +1,6 @@
 using BLL;
 using BLL.Audit;
+using BLL.Email;
 using BLL.Interfaces;
 using BLL.Media;
 using Microsoft.AspNetCore.Authentication;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.WebEncoders;
 using Microsoft.OpenApi;
 using NewsArchive;
 using NewsArchive.Auth;
+using NewsArchive.Email;
 using NewsArchive.Health;
 using NewsArchive.Media;
 using NewsArchive.Publishing;
@@ -89,16 +91,25 @@ builder.Services.AddRateLimiter(options =>
                 "api:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })
             : RateLimitPartition.GetNoLimiter("web"));
-    options.AddPolicy(ApiOptions.CommentRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 6, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
-    options.AddPolicy(ApiOptions.ReportRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
-    options.AddPolicy(ApiOptions.LoginRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    void PerIpPerMinute(string policy, int permits) =>
+        options.AddPolicy(policy, context => RateLimitPartition.GetFixedWindowLimiter(
+            policy + ":" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = permits, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
+    PerIpPerMinute(ApiOptions.CommentRateLimit, 6);
+    PerIpPerMinute(ApiOptions.ReportRateLimit, 10);
+    PerIpPerMinute(ApiOptions.LoginRateLimit, 20);
+    PerIpPerMinute(ApiOptions.NewsletterRateLimit, 5);
 });
+
+var emailOptions = builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>() ?? new EmailOptions();
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+if (emailOptions.UseSmtp)
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+else
+    builder.Services.AddSingleton<IEmailSender, OutboxEmailSender>();
+builder.Services.AddScoped<MailComposer>();
+builder.Services.AddSingleton<PasswordResetStore>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");

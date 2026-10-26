@@ -29,6 +29,11 @@
                     }
                     <a href="@SeoUrls.Page("/rss.xml")" aria-label="@L["RSS feed"]"><i class="bi bi-rss"></i></a>
                 </div>
+                <div class="footer-newsletter mt-4">
+                    <h2 id="footer-newsletter-heading">@L["Weekly digest"]</h2>
+                    <p class="small mb-2">@L["The week's most important stories, once a week. Unsubscribe any time."]</p>
+                    @await Html.PartialAsync("_NewsletterForm", "footer")
+                </div>
             </div>
 
             <div class="col-6 col-md-4 col-lg-3">

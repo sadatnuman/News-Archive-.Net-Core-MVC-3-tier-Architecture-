@@ -42,6 +42,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+    public virtual DbSet<Subscriber> Subscribers { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -288,6 +290,32 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_AuditLogs_Users");
+        });
+
+        modelBuilder.Entity<Subscriber>(entity =>
+        {
+            entity.HasKey(e => e.SubscriberId).HasName("PK_Subscribers");
+
+            entity.HasIndex(e => e.Email, "UX_Subscribers_Email").IsUnique();
+            entity.HasIndex(e => e.ConfirmTokenHash, "UX_Subscribers_ConfirmTokenHash").IsUnique();
+            entity.HasIndex(e => e.UnsubscribeToken, "UX_Subscribers_UnsubscribeToken").IsUnique();
+            entity.HasIndex(e => new { e.LanguageCode, e.ConfirmedAt, e.UnsubscribedAt }, "IX_Subscribers_Language_Status");
+
+            entity.Property(e => e.Email).HasMaxLength(150);
+            entity.Property(e => e.LanguageCode).HasMaxLength(5).HasDefaultValue(LanguageCodes.English);
+            entity.Property(e => e.ConfirmTokenHash).HasMaxLength(64).IsFixedLength();
+            entity.Property(e => e.UnsubscribeToken).HasMaxLength(64).IsFixedLength();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ConfirmedAt).HasColumnType("datetime");
+            entity.Property(e => e.UnsubscribedAt).HasColumnType("datetime");
+            entity.Property(e => e.LastSentAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Language).WithMany(p => p.Subscribers)
+                .HasForeignKey(d => d.LanguageCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Subscribers_Languages");
         });
 
         modelBuilder.Entity<ReportReason>(entity =>

@@ -180,8 +180,9 @@
                     </div>
                     <div class="side-panel">
                         <h2 class="side-panel-title">@L["Stay informed"]</h2>
-                        <p class="small text-muted mb-3">@L["Follow every story as it is published with our RSS feed."]</p>
-                        <a class="btn btn-dark btn-sm" href="@SeoUrls.Page("/rss.xml")"><i class="bi bi-rss"></i> @L["Subscribe via RSS"]</a>
+                        <p class="small text-muted mb-3">@L["Get the weekly digest by email, or follow every story with our RSS feed."]</p>
+                        @await Html.PartialAsync("_NewsletterForm", "home")
+                        <a class="btn btn-outline-secondary btn-sm mt-3" href="@SeoUrls.Page("/rss.xml")"><i class="bi bi-rss"></i> @L["Subscribe via RSS"]</a>
                     </div>
                 </div>
             </aside>

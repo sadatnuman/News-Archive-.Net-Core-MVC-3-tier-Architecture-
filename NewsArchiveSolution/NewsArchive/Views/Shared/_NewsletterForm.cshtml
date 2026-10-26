@@ -1,0 +1,16 @@
+@model string
+
+@{
+    var id = Model + "-newsletter-email";
+    var lang = UiLanguage.Current;
+}
+
+<form class="newsletter-form" method="post" action="/newsletter/subscribe@(lang == AppLanguages.Bangla ? "?lang=bn" : "")" asp-antiforgery="true" data-newsletter>
+    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+    <label for="@id" class="visually-hidden">@L["Email address"]</label>
+    <div class="input-group">
+        <input id="@id" type="email" name="email" class="form-control" placeholder="@L["Your email address"]" autocomplete="email" maxlength="150" required />
+        <button type="submit" class="btn btn-primary">@L["Subscribe"]</button>
+    </div>
+    <p class="newsletter-status small mt-2 mb-0" role="status" aria-live="polite"></p>
+</form>

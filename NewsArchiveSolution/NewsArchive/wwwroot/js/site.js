@@ -491,6 +491,32 @@
     }
 
     document.addEventListener("submit", function (event) {
+        var form = event.target.closest("form[data-newsletter]");
+        if (!form || !window.fetch) return;
+        event.preventDefault();
+        var button = form.querySelector("button[type=submit]");
+        var status = form.querySelector(".newsletter-status");
+        var token = form.querySelector("input[name=__RequestVerificationToken]");
+        button.disabled = true;
+        fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            credentials: "same-origin",
+            headers: { "Accept": "application/json", "RequestVerificationToken": token ? token.value : "" }
+        }).then(function (response) {
+            return response.json().then(function (data) { return { ok: response.ok, data: data }; });
+        }).then(function (result) {
+            status.textContent = result.data.message || "";
+            status.classList.toggle("is-error", !result.ok);
+            if (result.ok) form.querySelector("input[type=email]").value = "";
+        }).catch(function () {
+            form.submit();
+        }).finally(function () {
+            button.disabled = false;
+        });
+    });
+
+    document.addEventListener("submit", function (event) {
         var form = event.target.closest("form[data-confirm]");
         if (form && !window.confirm(form.getAttribute("data-confirm"))) event.preventDefault();
     }, true);
