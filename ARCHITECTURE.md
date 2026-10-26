@@ -1,182 +1,179 @@
 # Architecture
 
-This document describes how NewsArchive is structured today and where it is heading.
-Update it whenever a layer, entity, endpoint or cross-cutting concern changes.
+How **The Meridian Newsfolio** is built: the three layers, the data model, every feature, the security model and the tooling. Keep this file up to date whenever a layer, table, endpoint or cross-cutting concern changes.
 
-## Overview
+**Contents**
 
-**The Meridian Newsfolio** (*News Preserved. Stories Rediscovered.*) is an ASP.NET Core MVC application on .NET 10 with SQL Server. The solution keeps its original project names and is split into three projects:
+1. [Overview](#1-overview)
+2. [Layers and dependency injection](#2-layers-and-dependency-injection)
+3. [Data model](#3-data-model)
+4. [Roles and the editorial workflow](#4-roles-and-the-editorial-workflow)
+5. [Features](#5-features)
+6. [Security](#6-security)
+7. [REST API](#7-rest-api)
+8. [Presentation layer](#8-presentation-layer)
+9. [Languages, theme and design](#9-languages-theme-and-design)
+10. [SEO](#10-seo)
+11. [Performance and offline support](#11-performance-and-offline-support)
+12. [Testing and tooling](#12-testing-and-tooling)
+13. [Known limitations](#13-known-limitations)
+
+---
+
+## 1. Overview
+
+An ASP.NET Core MVC news archive on **.NET 10** and **SQL Server**, published in **English and Bangla**. Readers browse, search, save and comment on stories; authors write them; admins review, schedule and moderate. A token-protected REST API exposes the same features to apps.
 
 ```
 NewsArchiveSolution/
-├── DAL/          Data Access Layer    (EF Core DbContext, entities, migrations, repository interfaces, DataAccessFactory)
-├── BLL/          Business Logic Layer (services, DTOs, AutoMapper profile, password and token security, validation)
-└── NewsArchive/  Presentation Layer   (MVC controllers, REST API controllers, filters, Razor views, SEO, static files)
+├── DAL/               Data Access Layer     EF Core DbContext, entities, migrations, repositories, DataAccessFactory
+├── BLL/               Business Logic Layer  services, rules, DTOs, AutoMapper profile, security, audit, caching contracts
+├── NewsArchive/       Presentation Layer    MVC + API controllers, filters, Razor views, email, SEO, wwwroot
+└── NewsArchive.Tests/ xUnit tests           rules and services with in-memory fakes
 ```
 
-Dependencies flow one way only:
+Dependencies flow one way:
 
 ```
 NewsArchive  ──►  BLL  ──►  DAL  ──►  SQL Server
 ```
 
-The boundaries are enforced by the build:
+## 2. Layers and dependency injection
 
-- `BLL.csproj` references DAL with `PrivateAssets="compile"`, so the presentation layer cannot compile against DAL types. `DAL.dll` is still copied for runtime.
-- DAL registers the `DbContext` and `DataAccessFactory` in `DAL/DataLayerServices.cs` (`AddDataLayer`); BLL registers AutoMapper, its services and calls `AddDataLayer` in `BLL/BusinessLayerServices.cs` (`AddBusinessLayer`). `Program.cs` only calls `AddBusinessLayer`.
-- Concrete repositories are `internal` to DAL. BLL only sees the repository interfaces returned by `DataAccessFactory`.
-- BLL has no ASP.NET MVC or HTTP dependencies. Authorization filters live in `NewsArchive/Filters`.
-- Only DAL touches the `DbContext`. Filtering, sorting, paging and counting happen in SQL.
+### Boundaries enforced by the build
 
-## Dependency injection
+- `BLL.csproj` references DAL with `PrivateAssets="compile"`, so the presentation layer cannot compile against DAL types (`DAL.dll` is still copied for runtime).
+- Concrete repositories are `internal sealed` in DAL. BLL only sees the interfaces in `DAL/Interfaces`, handed out by `IDataAccessFactory`.
+- BLL has no MVC or HTTP dependencies. Anything it needs from the web host is an interface that the presentation layer implements:
 
-Everything is wired through the built-in container with constructor injection; nothing outside the composition root resolves services by hand.
-
-| Layer | Registered in | Registrations |
+| BLL contract | Implemented in the UI by | Purpose |
 |---|---|---|
-| DAL | `DataLayerServices.AddDataLayer` | `NewsArchiveDbContext` (scoped), `IDataAccessFactory` → `DataAccessFactory` (scoped); repositories stay `internal` and are handed out by the factory |
-| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile; `IArticleService`, `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService`, `IRecommendationService` → their implementations (scoped) |
-| UI | `Program.cs` | `IFileStorage` → `WebRootFileStorage` (singleton), `LoginThrottle` (singleton), `CookieSessionValidator` (scoped, used as the cookie `EventsType`), `ScheduledPublisher` (hosted), `SeoUrls`, health checks |
+| `Media/IFileStorage` | `Media/WebRootFileStorage` | Save and delete uploaded pictures under `wwwroot/uploads` |
+| `Audit/IActorContext` | `Auth/HttpActorContext` | Who is acting (cookie or API token) and from which IP |
+| `Email/IEmailSender` | `Email/OutboxEmailSender`, `Email/SmtpEmailSender` | Send email; outbox in Development, SMTP once configured |
+| `Caching/IAppCache` | `Caching/MemoryAppCache` | In-memory cache with invalidation by region |
 
-- Interfaces live in `BLL/Interfaces` and `DAL/Interfaces`; controllers, filters, view `@inject`s, the health check and the cookie validator depend only on interfaces.
-- Pure business rules with no dependencies are static classes: `ArticleRules` (who can edit or view, archive dates, scheduling window, tag limit), `MediaLimits`, `TokenClients`.
-- Controllers that show story lists inject `IArticleLookupService` (author names, section names and slugs, saved ids in one call); controllers that build localized messages inject `IStringLocalizer<SharedResource>`. Flash messages store the English key and the layout translates it.
-- `ScheduledPublisher` is a singleton, so it creates a scope through `IServiceScopeFactory` for each run, which is the supported way to use scoped services from a background service.
-- `ValidateOnBuild` and `ValidateScopes` are on, so a missing registration or a captive dependency stops the app at startup.
+- Only DAL touches the `DbContext`. Filtering, sorting, paging and counting run in SQL; bulk changes use `ExecuteUpdate` / `ExecuteDelete`.
 
-## Roles and editorial workflow
+### Registrations
 
-| RoleId | Role | Can do |
+| Layer | Registered in | What |
 |---|---|---|
-| 1 | Admin | Everything: publish directly, approve or reject submissions, manage users, sections and comments |
-| 2 | Reader | Read, comment, manage own profile (default for new sign-ups) |
-| 3 | Author | Write drafts, submit for approval, edit or delete own unpublished articles |
+| DAL | `DataLayerServices.AddDataLayer` | `NewsArchiveDbContext`, `IDataAccessFactory` → `DataAccessFactory` (scoped) |
+| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile and 18 scoped services: `IArticleService`, `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService`, `IRecommendationService`, `ISearchService`, `IAuditService`, `INewsletterService` |
+| UI | `Program.cs` | The four contracts above, `LoginThrottle`, `PasswordResetStore`, `PasswordChanger`, `MailComposer`, `CookieSessionValidator`, `SeoUrls`, the `ScheduledPublisher` hosted service, rate limiting, health checks, Swagger |
 
-Article status (`ArticleStatuses` lookup table):
+- `ValidateOnBuild` and `ValidateScopes` are on, so a missing registration or captive dependency stops the app at startup.
+- Nothing resolves services by hand except `ScheduledPublisher`, which creates one scope per run through `IServiceScopeFactory` (the supported pattern for background services).
+- Pure rules with no dependencies are static classes in `BLL/Rules`: `ArticleRules`, `RecommendationRules`, `ModerationRules`, `NewsletterRules`, `SearchRules`, `MediaLimits`, `TokenClients`; `BLL/Audit/AuditActions.cs` holds `AuditRules`.
 
-```
-Draft (1) ──submit──► Pending (2) ──approve──► Published (3)
-   ▲                      │   │                      ▲
-   │                      │   └─approve with time──► Scheduled (5) ──time reached / publish now
-   └──── edit/resubmit ── Rejected (4) ◄──reject (with note)
-```
+### Startup
 
-- Nothing written by an Author is public until an Admin approves it.
-- Articles created by an Admin are published immediately, or at the **Publish at** time when one is given.
-- Admins can approve with a future **Publish at** time (up to a year ahead). `Publishing/ScheduledPublisher` (a hosted `BackgroundService`) calls `ArticleService.PublishDue()` every 30 seconds, which publishes due articles in one `ExecuteUpdate`. Scheduled articles can be published early or sent back to review from **Pending articles**.
-- Public queries (`ArticleRepo.Published()`) only return Published articles. Non-published articles return 404 to everyone except the author and admins.
-- Business rules live in `BLL/Services/ArticleService.cs` (`Create`, `Update`, `Submit`, `Approve`, `Reject`, `Delete`, `CanEdit`, `CanView`). Controllers only call them.
-- Role and status ids are defined once in `DAL/EF/LookupIds.cs` and exposed to the UI through `BLL/AppRoles.cs` (`AppRoles`, `ArticleStatus`).
+`BusinessLayerServices.InitializeBusinessLayer` runs once:
 
-## Data layer (DAL)
+1. Applies pending migrations (always in Development, or when `Database:MigrateOnStartup` is `true`).
+2. Fills missing slugs for articles, sections and tags.
+3. Purges expired tokens (30 days), audit entries older than 365 days and unconfirmed newsletter sign-ups older than 7 days.
 
-The schema is managed with EF Core migrations in `DAL/EF/Migrations`:
+If the database is unreachable, the log names the setting to check.
 
-| Migration | Purpose |
-|---|---|
-| `InitialSchema` | Baseline of the original database schema |
-| `NormalizeSchemaAndApprovalWorkflow` | 3NF clean-up, approval workflow columns, slugs, keys, indexes and seed data |
-| `AddLanguages` | `Languages` lookup table, `Articles.LanguageCode` foreign key, Bangla names for sections |
-| `AddUserTokens` | `UserTokens` table for API tokens (hash only, expiry, revocation) |
-| `AddTagTranslationsAndSlugs` | Bangla tag names and unique slugs for tag pages |
-| `AddUserAvatars` | `Users.AvatarPath` for profile pictures |
-| `AddUserBio` | `Users.Bio` (up to 500 characters) for author pages |
-| `AddBookmarks` | `Bookmarks` join table for "read later" |
-| `AddScheduledPublishing` | `Articles.ScheduledAt`, `Scheduled` status row, `IX_Articles_StatusId_ScheduledAt` |
-| `AddReadingHistory` | `ReadingHistory` table (what each signed-in reader opened, first and last time, read count) for recommendations |
+## 3. Data model
 
-### Tables (3NF)
+All schema changes are EF Core migrations in `DAL/EF/Migrations` (generated comments stripped). The design is in third normal form: lookups for roles, statuses, languages and report reasons, and join tables for many-to-many links.
 
-| Table | Primary key | Foreign keys | Unique / check constraints |
+### Tables
+
+| Table | Key | Foreign keys | Notes |
 |---|---|---|---|
-| `Roles` | `Id` | | `UX_Roles_RoleName` |
-| `Users` | `UserId` | `RoleId → Roles` | `UQ` on `Email` |
-| `ArticleStatuses` | `StatusId` | | `UX_ArticleStatuses_Name` |
-| `Languages` | `LanguageCode` (`en`, `bn`) | | |
-| `Categories` | `CategoryId` | | `UX_Categories_Name`, `UX_Categories_NameBn` (filtered), `UX_Categories_Slug` (filtered) |
-| `Articles` | `ArticleId` | `AuthorId → Users`, `CategoryId → Categories`, `StatusId → ArticleStatuses`, `LanguageCode → Languages`, `ReviewedById → Users` | `CK_Articles_ViewsCount` (`>= 0`) |
-| `Tags` | `TagId` | | `UX_Tags_Name`, `UX_Tags_NameBn` (filtered), `UX_Tags_Slug` (filtered) |
-| `ContentLabels` | `(ArticleId, TagId)` | `ArticleId → Articles` (cascade), `TagId → Tags` (cascade) | |
-| `Comments` | `CommentId` | `ArticleId → Articles` (cascade), `UserId → Users` | |
-| `UserTokens` | `TokenId` | `UserId → Users` (cascade) | `UX_UserTokens_TokenHash` |
-| `Bookmarks` | `(UserId, ArticleId)` | `UserId → Users` (cascade), `ArticleId → Articles` (cascade) | `IX_Bookmarks_ArticleId`, `IX_Bookmarks_UserId_CreatedAt` |
-| `ReadingHistory` | `(UserId, ArticleId)` | `UserId → Users` (cascade), `ArticleId → Articles` (cascade) | `CK_ReadingHistory_ReadCount` (`>= 1`) |
+| `Roles` | `Id` | | Seeded: Admin 1, Reader 2, Author 3 |
+| `Users` | `UserId` | `RoleId → Roles` | Unique email, PBKDF2 hash, avatar path, bio |
+| `ArticleStatuses` | `StatusId` | | Seeded: Draft 1, Pending 2, Published 3, Rejected 4, Scheduled 5 |
+| `Languages` | `LanguageCode` | | Seeded: `en`, `bn` |
+| `Categories` | `CategoryId` | | English and Bangla name and description, unique slug |
+| `Articles` | `ArticleId` | `AuthorId`, `ReviewedById → Users`; `CategoryId`, `StatusId`, `LanguageCode` | Slug, summary, Markdown content, views, breaking flag, schedule time, review note |
+| `Tags` | `TagId` | | English and Bangla name, unique slug |
+| `ContentLabels` | `(ArticleId, TagId)` | both cascade | Article ↔ tag |
+| `Comments` | `CommentId` | `ArticleId` (cascade), `UserId`, `ModeratedById → Users` | `IsHidden`, `ModeratedAt` |
+| `ReportReasons` | `ReasonId` | | Seeded: Spam, Abuse or harassment, Off topic, Misinformation, Other |
+| `CommentReports` | `(CommentId, UserId)` | `CommentId` (cascade), `UserId`, `ReasonId` | One report per reader per comment, optional note |
+| `Bookmarks` | `(UserId, ArticleId)` | both cascade | Saved stories |
+| `ReadingHistory` | `(UserId, ArticleId)` | both cascade | First and last read time, read count |
+| `UserTokens` | `TokenId` | `UserId` (cascade) | SHA-256 of the API token, client type, expiry, revocation |
+| `AuditLogs` | `AuditLogId` | `UserId → Users` (set null) | Action, entity, id, details, IP, time |
+| `Subscribers` | `SubscriberId` | `LanguageCode → Languages` | Unique email, confirm-token hash, unsubscribe token, confirmed, unsubscribed and last-sent times |
 
-Normalization changes:
+### Migrations
 
-- The redundant `Users.ConfPassword` column was removed. Password confirmation is a form concern only.
-- Article status moved to the `ArticleStatuses` lookup table instead of free text or flags.
-- Review data (`ReviewedById`, `ReviewedAt`, `ReviewNote`) is stored on the article, with a foreign key to the reviewer.
+`InitialSchema` → `NormalizeSchemaAndApprovalWorkflow` → `AddLanguages` → `AddUserTokens` → `AddTagTranslationsAndSlugs` → `AddUserAvatars` → `AddUserBio` → `AddBookmarks` → `AddScheduledPublishing` → `AddReadingHistory` → `AddCommentModeration` → `AddAuditLog` → `AddNewsletterSubscribers`.
 
-### Indexes
+### Indexes worth knowing
 
 | Index | Serves |
 |---|---|
-| `IX_Articles_LanguageCode_StatusId_PublishDate` (PublishDate desc) | Home page, search and RSS for each language |
-| `IX_Articles_StatusId_PublishDate` (PublishDate desc) | Sitemap and cross-language listings |
+| `IX_Articles_LanguageCode_StatusId_PublishDate` (date desc) | Home page, search, RSS per language |
 | `IX_Articles_CategoryId_StatusId_PublishDate` | Section pages |
 | `IX_Articles_IsBreakingNews_StatusId_PublishDate` | Breaking news and ticker |
-| `IX_Articles_AuthorId_StatusId` | "My articles" for authors |
-| `IX_Articles_ViewsCount` | Most viewed |
-| `IX_Articles_ReviewedById` | Reviewer foreign key |
-| `IX_Comments_ArticleId_CreatedDate` (desc) | Comments under an article |
-| `IX_Comments_UserId`, `IX_Users_Role`, `IX_ContentLabels_TagId` | Foreign key lookups |
-| `UX_UserTokens_TokenHash`, `IX_UserTokens_UserId_ExpiresAt` | Token lookup on every API call, revoke-all per user |
-| `IX_ReadingHistory_UserId_LastReadAt` (desc), `IX_ReadingHistory_ArticleId` | A reader's latest reads for recommendations and the history page |
+| `IX_Articles_StatusId_ScheduledAt` | Scheduled publishing |
+| `IX_Comments_ArticleId_IsHidden` | Visible comments under a story |
+| `IX_ReadingHistory_UserId_LastReadAt` (desc) | Recommendations and the history page |
+| `IX_AuditLogs_CreatedAt`, `IX_AuditLogs_EntityType_CreatedAt` | Audit log viewer and filters |
+| `UX_UserTokens_TokenHash` | Token lookup on every API call |
+| `UX_Subscribers_ConfirmTokenHash`, `UX_Subscribers_UnsubscribeToken` | Confirm and unsubscribe links |
 
-Duplicate indexes from the original database (`IX_Users_Email`, `IX_ContentLabels_ArticleId`, single-column article indexes) were dropped because a unique constraint, primary key or composite index already covers them.
-
-### Repositories and factory
+### Repositories
 
 | Piece | Role |
 |---|---|
-| `Interfaces/IRepository<T>` | Generic contract: `Get(id)`, `Get()`, `Create`, `Update`, `Delete`, `Count`, `SaveChanges` |
-| `Repos/Repository<T>` | Generic EF implementation; `Update` finds the row by its primary key and copies the new values |
-| `Interfaces/IArticleRepository`, `ICategoryRepository`, `ICommentRepository`, `IUserRepository`, `ITokenRepository`, `ITagRepository`, `IBookmarkRepository`, `IReadingHistoryRepository` | Entity-specific queries on top of the generic contract |
-| `Repos/ArticleRepo`, `CategoryRepo`, `CommentRepo`, `UserRepo`, `TokenRepo`, `TagRepo` | `internal` implementations deriving from `Repository<T>` |
-| `Repos/BookmarkRepo`, `ReadingHistoryRepo` | `internal` repositories for the composite-key join tables |
-| `DataAccessFactory` | The only public entry point: `GetArticleRepository()`, `GetCategoryRepository()`, `GetCommentRepository()`, `GetUserRepository()`, `GetTokenRepository()`, `GetRoleRepository()`, `GetTagRepository()`, `GetBookmarkRepository()`, `GetReadingHistoryRepository()` |
+| `IRepository<T>` / `Repository<T>` | Generic `Get(id)`, `Get()`, `Create`, `Update`, `Delete`, `Count`, `SaveChanges` |
+| `IArticleRepository`, `ICategoryRepository`, `ICommentRepository`, `IUserRepository`, `ITokenRepository`, `ITagRepository` | Entity queries on top of the generic contract |
+| `IBookmarkRepository`, `IReadingHistoryRepository`, `IAuditLogRepository`, `ISubscriberRepository` | Join tables and append-only tables |
+| `IDataAccessFactory` | The only public entry point: one `GetXRepository()` per repository, plus `CanConnect()` |
 
-Reads use `AsNoTracking`. Notable `ArticleRepo` queries:
+Reads use `AsNoTracking`. Public queries go through `ArticleRepo.Published()`, so drafts, pending, rejected and scheduled stories never leak.
 
-- `Search` keyword in title, summary or content and a date range (the `to` date includes the whole day), paged.
-- `GetTrending` score = views + 2 × comments, computed in SQL.
-- `GetRecommendationCandidates` published stories in one language that share a section, a tag or an author with the source (newest 60), plus the most viewed ones as a fallback, with their tags loaded; the scoring happens in BLL.
-- `GetByAuthor`, `GetByStatus`, `CountByStatus` editorial workflow.
-- `GetPublishedForSitemap`, `GetLatest` sitemap and RSS.
-- `IncrementViewCount` single `UPDATE` through `ExecuteUpdate`.
+## 4. Roles and the editorial workflow
 
-`ArticleRepo` also groups published articles by month and by day in SQL (`CountByMonth`, `CountByDay`), pages a date range (`GetByPeriod`) and finds stories published on the same day in earlier years (`GetOnThisDay`), used by the archive pages and the home page's **On this day** panel.
-
-`BLL/Services/AuthorService` combines `ArticleRepo.CountPublishedByAuthor` / `GetPublishedByAuthor` with the user repository; bylines and the `NewsArticle` JSON-LD link to the author page.
-
-`TagRepo` counts published articles per tag in SQL (`CountPublished`, `GetPopular`), pages the published articles of a tag (`GetArticles`) and replaces an article's tags in one save (`SetArticleTags`).
-
-## Business layer (BLL)
-
-| Folder / file | Contents |
+| Role | Can do |
 |---|---|
-| `Services/` | `ArticleService`, `CategoryService`, `CommentService`, `TagService`, `UserService`, `RoleService`, `AnalyticsService`, `AuthService`; each takes `DataAccessFactory` and `IMapper` |
-| `DTOs/` | Read DTOs, form DTOs (`ArticleFormDTO` prevents over-posting of author, views and status), `LoginDTO`, `RegisterDTO`, `AuthUserDTO`, `TokenDTO`, `PagedResultDTO<T>`, `ReviewDTO`, `CommentCreateDTO` |
-| `Mapping/MappingProfile.cs` | AutoMapper `Profile`, registered with `AddAutoMapper` and injected as `IMapper` |
-| `Services/MediaService.cs`, `Media/IFileStorage.cs` | Image upload rules and the storage abstraction (see Media uploads) |
-| `Security/PasswordHasher.cs` | PBKDF2-SHA256 (100,000 iterations, 16-byte salt), legacy MD5 verification with upgrade, token generation and SHA-256 token hashing, security stamp |
-| `Validations/UniqueEmail.cs` | Checks email uniqueness through `DataAccessFactory` |
-| `SlugHelper.cs` | URL slugs that keep Bangla and other Unicode letters |
-| `AppRoles.cs` | Role and article-status constants and display names |
+| **Admin** | Everything: publish directly, approve, reject or schedule submissions, manage users, sections, tags, comments and the newsletter, read the audit log |
+| **Author** | Write drafts, submit them, edit or delete their own unpublished articles |
+| **Reader** | Read, comment, report comments, save stories, keep a reading history (default for sign-ups) |
 
-`AuthService` handles sign-in (`Authenticate`, with automatic hash upgrade), `Register`, `ChangePassword`, `IssueToken`, `ValidateTokenAsync`, `LogoutAsync`, `RevokeAllAsync` and `PurgeExpiredTokens`.
+```
+Draft (1) ──submit──► Pending (2) ──approve──────────────► Published (3)
+   ▲                     │   └──approve with a time──► Scheduled (5) ──time reached / publish now──┘
+   └── edit / resubmit ── Rejected (4) ◄── reject with a note
+```
 
-On startup `ArticleService.EnsureSlugs()` and `CategoryService.EnsureSlugs()` fill missing slugs for existing rows, and `AuthService.PurgeExpiredTokens()` deletes tokens that expired or were revoked more than 30 days ago.
+- Nothing an author writes is public until an admin approves it.
+- Scheduling accepts times from one minute to one year ahead. `ScheduledPublisher` calls `ArticleService.PublishDue()` every 30 seconds.
+- Ownership rules live in `ArticleRules.CanEdit` and `CanView`. Non-public stories return 404 to everyone except the author and admins.
 
-## Recommendations
+## 5. Features
 
-`BLL/Services/RecommendationService` (behind `IRecommendationService`) ranks stories; the weights live in `BLL/Rules/RecommendationRules`.
+### Reading
+
+| Feature | Where | Notes |
+|---|---|---|
+| Home page | `/` | Lead story, latest, trending, popular topics, *On this day*, *Recommended for you*, newsletter sign-up |
+| Sections | `/category/{id}/{slug}?page=` | Paged, 13 per page, `rel=prev/next` |
+| Topics | `/tags`, `/tag/{id}/{slug}?page=` | Up to 8 topics per article |
+| Archive | `/archive`, `/archive/{yyyy}`, `/archive/{yyyy}/{MM}[/{DD}]` | Month tiles and a day calendar |
+| Authors | `/authors`, `/author/{id}/{slug}` | Picture, bio, paged stories, `ProfilePage` JSON-LD |
+| Search | `/search?keyword=&from=&to=` | Title, summary and text, date range |
+| Search suggestions | header and search page | Stories, topics, sections and authors as you type (see below) |
+| Saved stories | `/bookmarks` | Bookmark button on every card |
+| Reading history | `/history` | See, remove one or clear all |
+| Comments | article page | Readers report; admins hide, keep or delete |
+
+### Recommendations
+
+`BLL/Services/RecommendationService` scores candidates in the same language. The weights live in `RecommendationRules`.
 
 | Signal | Weight |
 |---|---|
-| Each shared topic tag | 3.0 |
-| Similar words in the headline and summary (Jaccard similarity of keywords; English and Bangla stop words removed; Unicode-normalized so Bangla works) | up to 6.0 |
+| Each shared topic | 3.0 |
+| Similar headline and summary words (Jaccard; English and Bangla stop words removed; Unicode-normalized) | up to 6.0 |
 | Same section | 2.0 |
 | Same author | 1.0 |
 | Freshness (decays over about 30 days) | up to 1.5 |
@@ -184,250 +181,203 @@ On startup `ArticleService.EnsureSlugs()` and `CategoryService.EnsureSlugs()` fi
 | Breaking news | +0.3 |
 | Already read by this reader | score × 0.25 |
 
-- **For an article** (`ForArticle`): candidates come from the same language only; the current story, unpublished and scheduled stories are never suggested. Each suggestion carries its strongest reason (`SharedTopic` with the tag, `SimilarStory`, `SameSection`, `SameAuthor`, `Popular`), shown as a chip such as "Same topic: Cricket".
-- **For a reader** (`ForReader`): a profile is built from the last 20 stories read, newer reads weighing more (`1 / (1 + 0.15 × position)`); tag, section and author affinities and the keywords of the five newest reads score unread stories in the current language.
-- **History**: signed-in readers' reads are stored in `ReadingHistory` (one row per story with a read count, capped at 200 stories per reader). For anonymous readers the last 20 stories are kept only in the server session (`NewsArchive/Personalization/SessionReadingList`).
-- **Article page**: an **Up next** card after the story, **More like this** (four cards with reasons), **Recommended for you** in the sidebar once the reader has read two stories, a reading progress bar, and a **Read next** pop-up that appears after 45% of the story and hides while the Up next card is on screen (dismissal is remembered for the visit).
-- **Home page**: **Recommended for you** (four cards) for readers with history. **History page** `/history`: last read time and read count per story, remove one or clear all.
+- **For an article** (`ForArticle`): never the current story or an unpublished one. Each result carries its strongest reason (`SharedTopic` with the tag, `SimilarStory`, `SameSection`, `SameAuthor`, `Popular`), shown as a chip.
+- **For a reader** (`ForReader`): a profile from the last 20 reads, newer reads weighing more (`1 / (1 + 0.15 × position)`).
+- History: signed-in reads go to `ReadingHistory` (capped at 200 stories per reader). Anonymous visitors' last 20 stories live only in the server session (`Personalization/SessionReadingList`).
+- Article page: **Up next** card, **More like this** (four cards), **Recommended for you** in the sidebar after two reads, a reading progress bar, and a **Read next** pop-up after 45% of the story that hides while *Up next* is on screen.
 
-## Sections (categories)
+### Search suggestions
 
-Sections are not fixed. Admins can add, rename and delete any number of sections from **Account → Sections**:
+`GET /api/search/suggest?q=&lang=` through `ISearchService`: up to 8 stories, 3 topics, 2 sections and 2 authors (authors only if they have published stories). Queries are trimmed to 2-60 characters, and `%` and `_` are matched literally. The dropdown is an accessible combobox: arrow keys, Enter, Escape, matched text highlighted.
 
-- Each section has an English name and an optional Bangla name and description; the Bangla site falls back to the English name.
-- Names must be unique; slugs are generated automatically and made unique with a numeric suffix.
-- Deleting a section that still has articles requires choosing a target section; the articles are moved in the same transaction (`CategoryRepo.DeleteMovingArticles`).
-- The navigation shows the first six sections and puts the rest under **More**.
+### Comment moderation
 
-## Tags (topics)
+- Readers report a comment with a reason and an optional note (300 characters). They cannot report their own comment or report one twice.
+- The third report hides the comment automatically until an admin reviews it.
+- `/Admin/Comments` has two tabs, **Reported** and **Hidden**. **Keep** shows the comment again and clears its reports; **Hide** removes it from readers; **Delete** removes it permanently.
+- Hidden comments are excluded from counts, trending and the API. Admins see them on the article with a label.
 
-- Admins manage tags at **Account → Tags** (`/tags` shows the management table to admins): English name, optional Bangla name, automatic unique slug.
-- Authors and admins pick up to 8 tags per article in the article form (`TagService.MaxTagsPerArticle`, enforced in BLL and by the form).
-- Article pages show the tags as links and add them as `keywords` in the `NewsArticle` JSON-LD.
-- The home page sidebar lists the 12 most used topics in the current language; tag pages are paged, have `CollectionPage` JSON-LD, `rel=prev/next` and are listed in the sitemap.
-- Deleting a tag only removes the link from articles (cascade on `ContentLabels`).
+### Newsletter
 
-## Media uploads
+- Double opt-in: the footer and home page form sends a confirmation link valid for 48 hours. Only the SHA-256 of the confirm token is stored. The response is the same whether or not the address is known.
+- Requests for the same address within 2 minutes don't send a second email.
+- Every email has an unsubscribe link and `List-Unsubscribe` headers. The unsubscribe page asks for confirmation, so link scanners can't unsubscribe anyone; one-click `POST` also works.
+- `/Admin/Newsletter` shows counts per edition, previews the English and Bangla digests (stories from the past 7 days, up to 6) and sends them. Every send is audited.
+
+### Audit log
+
+`IAuditService.Record` is called by the services after each successful action, so the website and the API log the same way. `/Admin/Audit` filters by type (Articles, Comments, Users, Sections, Topics, Newsletter, Security) and by person; `GET /api/audit` returns the same data.
+
+| Type | Actions |
+|---|---|
+| Article | Published, approved, scheduled, rejected (with note), published early, unscheduled, published on schedule, edited by an admin, deleted by an admin |
+| Comment | Hidden, auto-hidden after reports, kept, removed by someone other than the writer |
+| User | Created, updated, role changed (from → to), deleted |
+| Section / Tag | Created, updated, deleted (articles moved to …) |
+| Newsletter | Digest sent (edition, stories, recipients), subscriber removed |
+| Security | Signed in, failed sign-in (unknown emails masked), account created, password changed, password change refused, reset code requested, signed out everywhere |
+
+Passwords and codes are never written to the log. Entries are kept for 365 days.
+
+### Writing
+
+- Markdown with a toolbar and a live preview (`Content/ArticleRenderer`, Markdig). Raw HTML is disabled; only `http`, `https`, `mailto`, `#` and site paths are allowed as links, and only site or `https` images. Paths starting with `//` or `/\` and anything containing a backslash are rejected. External links get `rel="nofollow noopener noreferrer"`; headings are shifted down one level.
+- Picture upload: JPEG, PNG, WebP or GIF, detected from the file's first bytes. Limits: 5 MB for articles, 2 MB for profile pictures. Files get random names under `wwwroot/uploads`.
+
+## 6. Security
 
 | Concern | Implementation |
 |---|---|
-| Layering | `BLL/Services/MediaService` holds the rules and talks to `BLL/Media/IFileStorage`; the UI implements it in `NewsArchive/Media/WebRootFileStorage` (files under `wwwroot/uploads`). BLL never sees `IFormFile` or HTTP types |
-| Accepted files | JPEG, PNG, WebP and GIF detected from the file's first bytes (the name and the browser's content type are ignored); SVG and everything else is rejected |
-| Size limits | Article pictures 5 MB, profile pictures 2 MB, enforced while reading the stream and by `RequestSizeLimit` / `RequestFormLimits` |
-| File names | Random GUID plus the extension of the detected type: `/uploads/articles/{yyyy}/{MM}/{guid}.jpg`, `/uploads/avatars/{guid}.png` |
-| Path safety | `WebRootFileStorage` resolves every path with `Path.GetFullPath` and refuses anything outside `wwwroot/uploads`; `MediaService.DeleteIfUploaded` only deletes `/uploads/...` paths |
-| Clean-up | Replacing or removing a picture, deleting an article, or a failed save deletes the uploaded file |
-| Article form | Upload a picture, keep or remove the current one, or type an existing site path or `https://` address |
-| Profile pictures | Upload and remove on the profile page (`Avatar/Upload`, `Avatar/Remove`); shown in the top bar, the byline and next to comments, with an initial when there is none. The sign-in cookie picks up a new name or picture on the next request |
-| Serving | Static files with `X-Content-Type-Options: nosniff`; `wwwroot/uploads/` is ignored by git |
+| Passwords | PBKDF2-SHA256, 100,000 iterations, random salt, constant-time compare. Legacy MD5 hashes are accepted once and upgraded. Policy: 8+ characters with a letter and a number |
+| Website sign-in | Cookie with claims (`NameIdentifier`, `Name`, `Email`, `Role`, `RoleId`, `SecurityStamp`, avatar), HttpOnly, SameSite=Lax, Secure outside Development, 8 h sliding. `CookieSessionValidator` re-checks every request: a deleted account, changed role or changed password signs the cookie out |
+| Sign-out | `POST` with an antiforgery token; `GET /Auth/Logout` only shows a confirmation page |
+| API tokens | 256-bit random. Only the SHA-256 is stored, with expiry (`Api:TokenLifetimeHours`) and revocation. Sent as `Bearer` or as the HttpOnly `AuthToken` cookie (SameSite=Strict, path `/api`). Changing a password revokes every token |
+| Brute force | 5 failed sign-ins lock the account for 15 minutes (website and API). Unknown emails cost the same time as known ones |
+| Rate limits (per IP per minute) | Sign-in, sign-up and reset 20; comments 6; reports 10; newsletter 5; whole API 120 |
+| Password change | Requires the current password, which is throttled and audited. Right after an emailed-code reset, the verified code counts instead for 10 minutes |
+| Password reset | 6-digit code from a cryptographic RNG, stored as a hash in `PasswordResetStore`. Valid 10 minutes, single use, 5 attempts. At most 3 codes per account per hour, and a new code doesn't reset the attempt count. Same answer whether the account exists or not; sent through `IEmailSender` |
+| Authorization | `[CustomAuthorize(roles)]` for MVC (redirect to sign-in or 403 page), `[ApiAuthorize(roles)]` for the API (401/403 `ProblemDetails`), ownership checks in services |
+| CSRF | `AutoValidateAntiforgeryToken` on every MVC POST, antiforgery cookie SameSite=Strict. The API accepts JSON only and never reads the MVC cookie |
+| XSS | Razor encoding, safe Markdown renderer, JSON-LD serialized with the default encoder, image paths limited to site paths or `https://` |
+| Headers | CSP (`script-src 'self'`, no inline scripts), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `no-store` on account and API responses, no `Server` header, HSTS outside Development |
+| Redirects | `returnUrl` is followed only when `Url.IsLocalUrl` accepts it |
+| Proxies | Forwarded headers trusted only from loopback or `Hosting:KnownProxies` |
+| Privacy | Masked emails in logs, privacy page explains reading history and the newsletter in both languages |
 
-## Presentation layer (NewsArchive)
+## 7. REST API
 
-### Public URLs
+Controllers in `Controllers/Api` inherit `ApiControllerBase` (`[ApiController]`, JSON only, CORS policy, `ProblemDetails` for every error). Swagger UI is at `/swagger` in Development, or anywhere when `Api:SwaggerEnabled` is `true`.
 
-| URL | Action | Notes |
+| Method and route | Access | Result |
 |---|---|---|
-| `/` , `/?page=n` | `Article/Index` | Lead story, latest, trending sidebar |
-| `/search?keyword=&from=&to=&page=` | `Article/Index` | `noindex`; `/?keyword=` redirects here (301) |
-| `/news/{id}/{slug}` | `Article/Details` | Canonical article URL; `/Article/Details/{id}` and wrong slugs redirect (301) |
-| `/category/{id}/{slug}` | `Category/ArticlesByCategory` | `/Category/ArticlesByCategory/{id}` redirects (301) |
-| `/Category` | `Category/Index` | All sections |
-| `/archive` | `Archive/Index` | Every year with month tiles and story counts in the current language |
-| `/archive/{year}` | `Archive/Year` | Twelve month tiles for one year |
-| `/archive/{year}/{MM}`, `/archive/{year}/{MM}/{DD}?page=` | `Archive/Period` | Paged stories of a month or day with a calendar; unpadded numbers redirect (301); empty periods are `noindex` |
-| `/authors` | `Author/Index` | Everyone with at least one published story, with picture, role and count |
-| `/author/{id}/{slug}?page=` | `Author/Profile` | Bio, picture, paged stories, `ProfilePage` + `Person` JSON-LD; the slug comes from the name and wrong slugs redirect (301); people without published stories get 404 |
-| `/tags` | `Tag/Index` | Topics with article counts in the current language (management table for admins) |
-| `/tag/{id}/{slug}?page=` | `Tag/Articles` | Paged published stories of a topic; wrong or missing slug redirects (301) |
-| `/trending`, `/breaking-news` | `Article/TrendingNews`, `Article/BreakingNews` | |
-| `/about`, `/contact`, `/editorial-policy`, `/privacy`, `/terms` | `Pages/*` | |
-| `/error/{code}` | `Pages/Error` | Status code pages (404, 500) |
-| `/robots.txt`, `/sitemap.xml`, `/news-sitemap.xml`, `/rss.xml` | `Seo/*` | |
+| `POST /api/auth/login?webClient=` | Public, rate limited | 200 token (or HttpOnly cookie when `webClient=true`) / 401 / 429 |
+| `POST /api/auth/register` | Public, rate limited | 201 / 409 |
+| `GET /api/auth/me`, `PUT`/`DELETE /api/auth/me/avatar` | Token | 200 / 204 |
+| `POST /api/auth/logout`, `/logout-all` | Token | 204 |
+| `GET /api/articles?q=&from=&to=&lang=&page=&pageSize=` | Public | Paged list |
+| `GET /api/articles/{id}` | Public (unpublished: author and admins) | 200 / 404 |
+| `GET /api/articles/breaking`, `/trending`, `/{id}/related` | Public | 200 |
+| `GET /api/articles/{id}/recommendations?count=` | Public (a token lowers stories already read) | List with `reason`, `reasonTag`, `score` |
+| `GET /api/articles/mine` | Author, Admin | 200 |
+| `GET /api/articles/pending`, `/scheduled` | Admin | 200 |
+| `POST /api/articles?submit=`, `PUT /api/articles/{id}?submit=`, `DELETE /api/articles/{id}` | Author (own, unpublished), Admin | 201 / 204 / 403 / 404 |
+| `POST /api/articles/{id}/submit` | Author | 204 / 409 |
+| `POST /api/articles/{id}/approve` (`{ "publishAt": ... }`), `/reject`, `/publish-now` | Admin | 204 / 409 |
+| `GET`/`POST /api/articles/{id}/comments` | Public / token, rate limited | 200 / 201 |
+| `GET /api/comments/report-reasons` | Public | 200 |
+| `POST /api/comments/{id}/report` | Token, rate limited | 202 `{ hidden }` / 400 / 403 / 404 / 409 |
+| `DELETE /api/comments/{id}` | Writer or Admin | 204 / 403 |
+| `GET /api/comments/reported`, `/hidden`; `POST /api/comments/{id}/hide`, `/keep` | Admin | 200 / 204 |
+| `GET /api/categories`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 |
+| `POST`/`PUT`/`DELETE /api/categories` | Admin | 201 / 204 / 409 |
+| `GET /api/tags?lang=`, `/{id}`, `/{id}/articles` ; `POST`/`PUT`/`DELETE` | Public / Admin | 200 / 201 / 204 |
+| `GET /api/authors?lang=`, `/{id}`, `/{id}/articles` | Public | 200 / 404 |
+| `GET /api/archive?lang=`, `/{year}/{month}?day=`, `/{year}/{month}/days` | Public | 200 / 404 |
+| `GET /api/search/suggest?q=&lang=&count=` | Public | `{ query, searchUrl, items[] }` |
+| `GET`/`POST`/`DELETE /api/bookmarks[/{articleId}]` | Token, own list | 200 / 204 / 404 |
+| `GET /api/recommendations?lang=&count=` | Token | Personal recommendations |
+| `GET /api/history`, `POST`/`DELETE /api/history/{articleId}`, `DELETE /api/history` | Token, own history | 200 / 204 / 404 |
+| `GET /api/audit?type=&user=&page=&pageSize=` | Admin | Paged audit entries |
+| `POST /api/media/images` (multipart `file`) | Author, Admin | 201 `{ path }` |
 
-### Authenticated URLs
+## 8. Presentation layer
+
+### Website URLs (signed in)
 
 | Controller | Actions | Access |
 |---|---|---|
-| Article | `Create`, `Edit/{id}`, `Delete/{id}` | Admin, Author (authors: own unpublished articles only) |
+| Article | `Create`, `Edit/{id}`, `Delete/{id}`, `Preview` | Admin, Author (own unpublished) |
 | Article | `MyArticles`, `Submit/{id}` | Author |
-| Article | `AddComment` | Any signed-in user, published articles only |
-| Comment | `Delete` | Comment owner or Admin |
-| Admin | `Index` (dashboard), `PendingArticles`, `Approve/{id}`, `Reject/{id}` | Admin |
-| Admin | `AllUser`, `Create`, `Edit/{id}`, `Delete/{id}`, `Profile`, `ChangePassword` | Admin |
-| Category | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
-| Tag | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
+| Article, Comment | `AddComment`, `Comment/Delete`, `Comment/Report` | Signed in |
+| Admin | `Index`, `PendingArticles`, `Approve`, `Reject`, `PublishNow`, `Unschedule` | Admin |
+| Admin | `Comments`, `HideComment`, `KeepComment`, `DeleteComment` | Admin |
+| Admin | `Newsletter`, `SendDigest`, `RemoveSubscriber`, `Audit` | Admin |
+| Admin | `AllUser`, `Create`, `Edit/{id}`, `Delete/{id}`, `Profile`, `ChangePassword` | Admin (cannot change their own role or delete themselves) |
+| Category, Tag | `Create`, `Edit/{id}`, `Delete/{id}` | Admin |
 | Member | `Profile`, `ChangePassword` | Reader, Author |
-| Avatar | `Upload`, `Remove` (POST) | Any signed-in user, own picture only |
-| Bookmark | `/bookmarks` (saved stories, paged), `POST /bookmarks/toggle` (JSON for the page script, redirect without JavaScript) | Any signed-in user; published articles only, up to 500 per user |
-| History | `/history` (reading history, paged, with recommendations), `POST /history/remove`, `POST /history/clear` | Any signed-in user, own history only |
+| Avatar | `Upload`, `Remove` | Signed in, own picture |
+| Bookmark, History | `/bookmarks`, `/bookmarks/toggle`, `/history`, `/history/remove`, `/history/clear` | Signed in, own data |
 | Auth | `Login`, `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
+| Newsletter | `/newsletter/subscribe`, `/newsletter/confirm`, `/newsletter/unsubscribe` | Public |
 
-Access is declared with `[CustomAuthorize(roles...)]` (`Filters/CustomAuthorize.cs`, an `IAuthorizationFilter`). Anonymous users are sent to `/Auth/Login?returnUrl=...`; signed-in users without the role are sent to `/Auth/AccessDenied` (HTTP 403).
+All MVC controllers except `Seo` and `Pages` inherit `AppController`, which exposes `CurrentUserId`, `CurrentRoleId`, `CurrentEmail`, `CurrentLanguage`, `SignInUserAsync`, `SetArticleLookups` and `Flash`. Flash messages store the English key and the layout translates it.
 
-All MVC controllers except `Seo` and `Pages` inherit `Controllers/AppController.cs`, which reads `CurrentUserId`, `CurrentRoleId` and `CurrentEmail` from the authentication claims and exposes `SignInUserAsync`, `Flash` and `SetArticleLookups`.
+### Views
 
-### REST API
+- `_Layout`, `_Navigation` (top bar, masthead, search with suggestions, section menu, ticker), `_Footer` (sections, links, newsletter form).
+- Story partials: `_StoryLead`, `_StoryCard`, `_StoryCompact`, built from `_StoryMedia`, `_StoryKicker`, `_StoryMeta`.
+- Recommendation partials: `_UpNext`, `_RecCard`, `_RecCompact`, `_RecReason`. Other partials: `_NewsletterForm`, `_SaveButton`, `_Avatar`, `_Globe`, `_ChangePasswordForm`.
+- `wwwroot/js/site.js` (no inline scripts) provides:
+  - Theme switcher and password eye button.
+  - Tag limit and upload size check in the article form.
+  - Bookmarks, newsletter form and search suggestions.
+  - Markdown toolbar and preview.
+  - Reading progress and the Read next pop-up.
+  - Confirmation dialogs, tilt cards, scroll reveal and service worker registration.
 
-API controllers live in `Controllers/Api`, inherit `ApiControllerBase` (`[ApiController]`, `ControllerBase`, JSON only, CORS policy, antiforgery not required because the API never reads the MVC cookie) and return `ProblemDetails` for every error.
+### Email
 
-| Method and route | Access | Success |
-|---|---|---|
-| `POST /api/auth/login?webClient=false` | Public, rate limited | 200 with `token`, `expiresAt`, `user` |
-| `POST /api/auth/login?webClient=true` | Public, rate limited | 200; token is set in the `AuthToken` cookie (HttpOnly, SameSite=Strict, Secure on HTTPS, path `/api`) and not returned in the body |
-| `POST /api/auth/register` | Public, rate limited | 201 (new Reader) |
-| `GET /api/auth/me` | Any token | 200 |
-| `PUT /api/auth/me/avatar` (multipart `file`), `DELETE /api/auth/me/avatar` | Any token | 200 / 204 |
-| `POST /api/media/images` (multipart `file`) | Admin, Author | 201 with `{ path }` to use as `imagePath` |
-| `POST /api/auth/logout` | Any token | 204, token revoked |
-| `POST /api/auth/logout-all` | Any token | 204, every token of the user revoked |
-| `GET /api/articles?q=&from=&to=&lang=&page=&pageSize=` | Public | 200 `PagedResultDTO<ArticleDTO>` (page size 1-50) |
-| `GET /api/articles/{id}` | Public; unpublished only for its author and admins | 200 / 404 |
-| `GET /api/articles/breaking`, `/trending`, `/{id}/related?count=` | Public | 200 |
-| `GET /api/articles/{id}/recommendations?count=` | Public (with a token, stories the reader has read rank lower) | 200 list of `RecommendationDTO` (`article`, `reason`, `reasonTag`, `score`) / 404 |
-| `GET /api/recommendations?lang=&count=` | Any token | 200, personal recommendations from the reader's history |
-| `GET /api/history?page=&pageSize=`, `POST /api/history/{articleId}`, `DELETE /api/history/{articleId}`, `DELETE /api/history` | Any token, own history only | 200 / 204 / 404 |
-| `GET /api/articles/mine` | Author, Admin | 200 |
-| `GET /api/articles/pending` | Admin | 200 |
-| `POST /api/articles?submit=` | Admin, Author | 201 with `Location` |
-| `PUT /api/articles/{id}?submit=` | Owner (unpublished) or Admin | 204 / 403 / 404 |
-| `DELETE /api/articles/{id}` | Owner (unpublished) or Admin | 204 / 403 / 404 |
-| `POST /api/articles/{id}/submit` | Author (owner) | 204 / 409 |
-| `POST /api/articles/{id}/approve` (optional body `{ "publishAt": "..." }`), `/reject` | Admin | 204 / 409 |
-| `GET /api/articles/scheduled`, `POST /api/articles/{id}/publish-now` | Admin | 200 / 204 / 409 |
-| `GET /api/articles/{id}/comments` | Public | 200 |
-| `POST /api/articles/{id}/comments` | Any token, rate limited | 201 |
-| `DELETE /api/comments/{id}` | Comment owner or Admin | 204 / 403 |
-| `GET /api/categories`, `/{id}`, `/{id}/articles?lang=` | Public | 200 |
-| `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}?moveArticlesTo=` | Admin | 201 / 204 / 409 |
-| `GET /api/tags?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 |
-| `GET /api/authors?lang=`, `/{id}`, `/{id}/articles?lang=&page=&pageSize=` | Public | 200 / 404 |
-| `GET /api/bookmarks?page=&pageSize=`, `POST /api/bookmarks/{articleId}`, `DELETE /api/bookmarks/{articleId}` | Any token, own list only | 200 / 204 / 400 / 404 |
-| `GET /api/archive?lang=`, `/api/archive/{year}/{month}?day=&lang=&page=&pageSize=`, `/api/archive/{year}/{month}/days` | Public | 200 / 404 for impossible dates |
-| `POST /api/tags`, `PUT /api/tags/{id}`, `DELETE /api/tags/{id}` | Admin | 201 / 204 / 409 |
+`MailComposer` builds the confirmation, digest and reset-code emails in English or Bangla, as plain text plus HTML with absolute links. `OutboxEmailSender` logs every email (address masked) and in Development writes it to `App_Data/outbox`. `SmtpEmailSender` is used automatically when `Email:Smtp:Host` is set.
 
-Article `POST` and `PUT` accept `tagIds` in the body; `GET /api/articles/{id}` returns the article's `tags`.
-
-Token authentication is declared with `[ApiAuthorize(roles...)]` (`Filters/ApiAuthorize.cs`, a `TypeFilterAttribute`) which runs `Filters/TokenAuthorizationFilter.cs` (`IAsyncAuthorizationFilter`). The filter reads `Authorization: Bearer {token}` or the `AuthToken` cookie, validates it through `AuthService`, and returns 401 (missing, unknown, expired or revoked token) or 403 (wrong role).
-
-Swagger UI is served at `/swagger` in Development, or anywhere when `Api:SwaggerEnabled` is `true`; use **Authorize** with the token from `/api/auth/login`.
-
-### Views and design
-
-- `Views/Shared/_Layout.cshtml` page shell with skip link, flash messages, header and footer partials.
-- `_Navigation.cshtml` top bar, masthead with search, sticky section navigation, role menus, breaking-news ticker.
-- `_Footer.cshtml` brand, sections, explore links, company and policy links, RSS.
-- Story partials: `_StoryLead`, `_StoryCard`, `_StoryCompact`, built from `_StoryMedia`, `_StoryKicker`, `_StoryMeta`; recommendation partials `_UpNext`, `_RecCard`, `_RecCompact` and `_RecReason`.
-- The article form has a Markdown toolbar (heading, bold, italic, quote, lists, link) and a **Preview** tab that renders through `POST /Article/Preview` (Admin, Author, antiforgery) with the same renderer as the article page. Plain-text articles keep rendering one paragraph per blank line.
-- `wwwroot/js/site.js` adds a show/hide button to every password field (localized label from `data-show-password` / `data-hide-password` on `<body>`, `aria-pressed`, the field is masked again on submit) and limits the tag picker to 8 choices.
-- Design tokens and components in `wwwroot/css/site.css` (Source Serif 4 and Inter, with Noto Bengali fallbacks).
-- Brand assets in `wwwroot/images/brand/` (1200×630 share image, icons) and `wwwroot/site.webmanifest`.
-
-## Languages (English and Bangla)
+## 9. Languages, theme and design
 
 | Concern | Implementation |
 |---|---|
-| UI text | `IStringLocalizer<SharedResource>` injected as `L` in every view; English text is the key, Bangla lives in `Resources/SharedResource.bn.resx` |
-| Validation and labels | DataAnnotations messages and `[Display]` names are localized through the same resource |
-| Long pages | Culture-specific views (`About.bn.cshtml`, `Privacy.bn.cshtml`, ...) through view localization |
-| Choosing a language | `?lang=bn` / `?lang=en` (query string provider), remembered in the culture cookie; header switcher keeps the current page |
-| Content | Every article has a `LanguageCode`; listings show the current language, article pages always render in the article's own language with a matching `lang` attribute |
-| SEO | `hreflang` alternates (en, bn, x-default) on listing pages, `og:locale` per language, sitemap entries for both languages, `/rss.xml?lang=bn` |
-| Encoding | `WebEncoderOptions` allow all Unicode ranges so Bangla text is output directly instead of as numeric entities |
+| UI text | `IStringLocalizer<SharedResource>` as `L` in every view; English is the key, Bangla is in `Resources/SharedResource.bn.resx` (580+ entries) |
+| Long pages | Culture-specific views (`About.bn.cshtml`, `Privacy.bn.cshtml`, …) |
+| Switching | `?lang=bn` / `?lang=en`, remembered in the culture cookie |
+| Content | Each article has a language. Listings, recommendations and suggestions show the current language; article pages use the article's own `lang` |
+| Theme | Classic newspaper look: white masthead, ink `#121212`, red `#c8102e`; dark mode `#121212` with `#ff4d5e`. Light, dark and system modes, applied before paint by `theme-init.js` |
+| 3D layer | Rotating CSS meridian globe, tilt cards with glare, glass sticky navigation, scroll reveal. Everything stops under `prefers-reduced-motion` |
+| Pictures | `wwwroot/images/articles`: AI-generated photographic scenes, fictional with no real people, text or logos, 1200×675. `wwwroot/images/avatars`: AI-generated portraits of the fictional sample users, 320×320 |
+| Responsive | Checked without horizontal scrolling from 320 to 1920 px; tap targets at least 24 px |
 
-## Theme
-
-Light, dark and system themes use Bootstrap 5.3 `data-bs-theme`. `wwwroot/js/theme-init.js`, loaded first in `<head>`, applies the saved choice before the page paints (an external file so the Content Security Policy can forbid inline scripts), `wwwroot/js/site.js` handles the switcher in the top bar and follows the operating system when **System** is selected. Colour tokens for both themes are defined in `wwwroot/css/site.css`.
-
-## 3D design layer
-
-Pure CSS and a few lines of JavaScript; no WebGL library and no inline scripts, so the Content Security Policy stays strict.
-
-| Piece | Where |
-|---|---|
-| Depth tokens `--depth-1` to `--depth-4`, glare and ring colours for light and dark | `wwwroot/css/site.css` (`:root` and `[data-bs-theme="dark"]`) |
-| Rotating 3D meridian globe (six meridians, three parallels, orbiting satellite, `transform-style: preserve-3d`) | `Views/Shared/_Globe.cshtml`; masthead background, side panel of the information pages, 404/500 and 403 pages |
-| Tilt cards that follow the mouse with a moving glare and the picture and headline lifted on separate depth planes | `[data-tilt]` on `_StoryCard`, `_StoryLead` (gentler) and section cards; `site.js` `attachTilt` (requestAnimationFrame, mouse only) |
-| Glass sticky navigation (`backdrop-filter`, solid fallback), lifted compact stories, 3D topic chips, raised buttons | `site.css` |
-| Scroll reveal for cards and panels below the fold (opacity and transform only, no layout shift) | `site.js` with `IntersectionObserver` |
-| Accessibility | Everything stops under `prefers-reduced-motion`; touch devices get depth without tilt; the globe is `aria-hidden` and hidden in print |
-
-## Brand
-
-| Asset | Path |
-|---|---|
-| Logo mark | `wwwroot/images/brand/logo-mark-ink.svg` (black, light masthead), `logo-mark-light.svg` (white, dark masthead and footer), `logo-mark.svg` (original gold, used for icons and the share image) |
-| Share image 1200×630 | `wwwroot/images/brand/og-default.png` |
-| Icons | `wwwroot/favicon.ico`, `wwwroot/images/brand/{favicon-32,apple-touch-icon,icon-192,icon-512}.png` |
-| Theme | **Classic newspaper**: light uses white masthead, paper `#fbfaf7`, ink `#121212`, red accent `#c8102e`, black top bar and footer; dark uses `#121212` with red `#ff4d5e`. Tokens are at the top of `wwwroot/css/site.css`; the default mode follows the visitor's system setting |
-| Article pictures | `wwwroot/images/articles`: AI-generated photographic pictures of fictional scenes (no real people, text or logos), 1200×675 JPEG |
-| Profile pictures | `wwwroot/images/avatars`: AI-generated portraits of the fictional sample users and a desk emblem for the editorial account, 320×320 PNG |
-
-## SEO
+## 10. SEO
 
 | Concern | Implementation |
 |---|---|
-| Title, description, canonical, robots | `Views/Shared/_SeoHead.cshtml`, driven by `ViewData.Meta()` (`Seo/PageMeta.cs`) |
-| Social cards (LinkedIn, Facebook, X) | Open Graph and Twitter Card tags; article image or `og-default.png` (1200×630) |
-| Structured data | JSON-LD `NewsMediaOrganization`, `WebSite` + `SearchAction` on every page; `NewsArticle`, `BreadcrumbList`, `CollectionPage`, `ItemList` where relevant |
-| URLs | Keyword slugs, 301 redirects from legacy URLs, `rel=prev/next` on paged lists |
-| Crawling | `robots.txt`, XML sitemap with image entries, Google News sitemap (last 48 hours), RSS 2.0 |
-| Headings | Exactly one `h1` per page, sections use `h2`, cards `h3` |
-| Absolute URLs | `Seo/SeoUrls.cs`; uses `Site:BaseUrl` when set, otherwise the request host (forwarded headers supported) |
+| Meta | Title, description, canonical, robots via `ViewData.Meta()` and `_SeoHead` |
+| Social | Open Graph and Twitter cards, 1200×630 default image |
+| Structured data | `NewsMediaOrganization`, `WebSite` + `SearchAction`, `NewsArticle`, `BreadcrumbList`, `CollectionPage`, `ItemList`, `ProfilePage` |
+| URLs | Keyword slugs (Bangla kept), 301 from old URLs and wrong slugs, `rel=prev/next` on paged lists |
+| Crawling | `robots.txt`, XML sitemap with images for both languages, Google News sitemap (48 h), RSS 2.0 per language, all dates in invariant culture |
+| Private pages | `noindex` on account, admin, history, newsletter and offline pages |
 
-Site identity is configured in the `Site` section of `appsettings.json` (`SiteOptions`).
+## 11. Performance and offline support
 
-## Cross-cutting concerns
+- **Data cache** (`IAppCache`, in memory):
+  - Sections are cached for 30 minutes. They are read by the menu, the footer and every story list.
+  - Trending stories, popular topics and section counts are cached for 2 minutes.
+  - Any publish, edit, delete, schedule or moderation clears the affected region at once.
+  - Whole pages are deliberately not cached, because each page carries per-visitor antiforgery tokens.
+- **Queries**: paging, counting and grouping run in SQL, and the sections page counts in one grouped query.
+- **Static files**:
+  - Versioned CSS and JS (`?v=`) are `immutable` for a year.
+  - Pictures under `/images` and `/uploads` are cached for a day.
+  - `sw.js` is `no-cache`.
+  - Responses are compressed over HTTPS.
+- **PWA**:
+  - `site.webmanifest`, plus `wwwroot/sw.js`, which precaches the offline page, icons and core CSS and JS.
+  - Static assets are served stale-while-revalidate.
+  - A failed page load falls back to the bilingual `offline.html`.
+  - The API, admin, account, history, bookmark and newsletter paths are never cached.
 
-| Concern | Current implementation |
+## 12. Testing and tooling
+
+| Tool | What |
 |---|---|
-| MVC authentication | Cookie authentication (`Meridian.Auth`, HttpOnly, SameSite=Lax, Secure outside Development, 8 h sliding) with claims `NameIdentifier`, `Name`, `Email`, `Role`, `RoleId`, `SecurityStamp`; the session also stores `UserId`, `RoleId`, `Email`, `Name`. Logout signs out and clears the session |
-| Session validation | Every request re-checks the cookie against the database: a deleted user, a changed role or a changed password (security stamp) signs the cookie out immediately |
-| API authentication | Random 256-bit tokens; only the SHA-256 hash is stored in `UserTokens`, with client type, expiry (`Api:TokenLifetimeHours`, default 12) and revocation. Changing a password revokes every token of that user |
-| Authorization | `[CustomAuthorize]` for MVC, `[ApiAuthorize]` for the API, plus ownership checks in `ArticleService.CanEdit` / `CanView` and comment ownership checks |
-| Password storage | PBKDF2-SHA256, 100,000 iterations, random salt, constant-time comparison. Legacy MD5 hashes are verified once and upgraded on the next successful sign-in |
-| Password policy | At least 8 characters with at least one letter and one number |
-| Brute force | Per-account lockout after 5 failed sign-ins for 15 minutes (`Auth/LoginThrottle.cs`, MVC and API); per-IP rate limits: sign-in, sign-up and reset 20/min, comments 6/min, whole API 120/min; unknown emails cost the same time as known ones |
-| Password reset | 6-digit OTP from a cryptographic RNG, valid 5 minutes, single use, 5 attempts, same response whether or not the email exists; logged only in Development |
-| CSRF | `AutoValidateAntiforgeryToken` on every MVC POST (antiforgery cookie SameSite=Strict); API cookie is SameSite=Strict and the API only accepts JSON bodies |
-| XSS | Razor encoding everywhere, article content rendered by `Content/ArticleRenderer` (Markdig with raw HTML disabled; only `http`, `https`, `mailto`, `#` and site-relative links, only site or `https` images, external links get `rel="nofollow noopener noreferrer"`, headings shifted to h2-h6), JSON-LD serialized with the default JavaScript encoder, image paths limited to site paths or `https://` |
-| Open redirect | `returnUrl` is only followed when `Url.IsLocalUrl` accepts it |
-| Security headers | `Content-Security-Policy` (scripts from self only, no objects, frame-ancestors self), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cache-Control: no-store` on account and API responses, no `Server` header; HSTS outside Development |
-| Proxies | Forwarded headers are only trusted from loopback or from addresses listed in `Hosting:KnownProxies`, so clients cannot fake their IP to dodge rate limits |
-| CORS | Only origins listed in `Api:AllowedOrigins` |
-| Errors | MVC: `/error/500` and `/error/{code}` pages. API: JSON `ProblemDetails` for exceptions and status codes |
-| Compression | Response compression enabled for HTTPS |
-| Configuration | `ConnectionStrings:DbConn` (override with `ConnectionStrings__DbConn`), `Site:*`, `Api:*`, `Hosting:KnownProxies`, `Database:MigrateOnStartup` |
-| Startup | `BusinessLayerServices.InitializeBusinessLayer` applies migrations (Development or `Database:MigrateOnStartup`), fills missing slugs and purges old tokens; a database failure is logged with the setting to check |
-| Health | `/health` runs `Health/DatabaseHealthCheck` through `SystemService.IsDatabaseReachable` (`DataAccessFactory.CanConnect`) |
-| Packages | EF Core 10.0.14, Swashbuckle 10.3.1, `System.Security.Cryptography.Pkcs` 10.0.14 pinned in DAL to replace the vulnerable transitive 9.0.x from SqlClient. AutoMapper 14.0.0 is kept for the course pattern; advisory GHSA-rvv3-g6hj-g44x (deep recursion) is suppressed in `BLL.csproj` / `NewsArchive.csproj` because every map is flat and capped with `MaxDepth(3)` |
-| Tooling | `global.json` (SDK 10.0, latest feature band), `.vscode` launch, tasks and recommended extensions, `.github/workflows/build.yml` CI |
-| Code style | No code comments; names must explain intent |
-| Responsive layout | Verified without horizontal overflow at 320, 375, 414, 768, 1024, 1366 and 1920 px in Chrome and Edge |
+| `NewsArchive.Tests` (xUnit, 71 tests) | Rules (articles, slugs, passwords, recommendations, moderation, search, newsletter, audit) and services (comments, newsletter, recommendations, audit) with DispatchProxy-based fakes, so no database is needed |
+| `.github/workflows/build.yml` | On every push and PR to `develop`/`main`: restore, Release build, unit tests, vulnerable package report |
+| `.vscode/` | Launch configuration and `build`, `watch`, `test` and `database update` tasks |
+| `global.json` | .NET 10 SDK, latest feature band |
+| `/health` | Database reachability check |
 
-## Known limitations
+Packages: EF Core 10.0.14, Swashbuckle 10.3.1, Markdig 1.5.0. AutoMapper 14.0.0 is kept for the course pattern; advisory GHSA-rvv3-g6hj-g44x is suppressed because every map is flat and capped with `MaxDepth(3)`.
 
-- Uploaded pictures are stored as sent (type and size checked); they are not resized or re-encoded, and they live on the web server's disk, so `wwwroot/uploads` must be backed up and shared if the site runs on several servers.
-- The password reset code is not emailed yet; an email sender will be plugged in later.
-- Login lockout counters live in memory, so they reset when the app restarts and are per server.
+Code style: no code comments; names explain intent; culture-invariant formatting for machine output; compiled logging (`LoggerMessage`); repositories are `sealed`.
 
-## Roadmap
+## 13. Known limitations
 
-| Phase | Focus | Status |
-|---|---|---|
-| 1 | Foundation: `.gitignore`, remove duplicates, SQL-side queries, migrations, error pages | Done |
-| 1b | 3NF schema, roles (Admin/Author/Reader), approval workflow, SEO, new design | Done |
-| 1c | English + Bangla site, light/dark/system theme, flexible sections, brand, bilingual sample data | Done |
-| 2 | Course-aligned architecture: repository interfaces, generic repository, `DataAccessFactory`, AutoMapper profile via DI, cookie authentication with claims, PBKDF2 password hashing | Done |
-| 3 | REST API (`/api/...`) with `[ApiController]`, DTOs, status codes, token authentication (HttpOnly cookie and Bearer), Swagger, security hardening | Done |
-| 4 | Tags and topic pages | Done |
-| 4b | Show/hide password, image upload for articles and profile pictures | Done |
-| 4c | Date archive with calendar and "On this day" | Done |
-| 4d | Author pages with bios | Done |
-| 4e | Bookmarks ("read later") | Done |
-| 4f | Safe Markdown formatting with toolbar and live preview | Done |
-| 4g | Scheduled publishing | Done |
-| 4h | Dependency injection through interfaces, no service locator, container validation | Done |
-| 4j | Recommendations (Up next, More like this, Recommended for you, reading history) | Done |
-| 4i | rich formatting, scheduling, autosuggest, moderation, newsletter, audit log, caching, PWA, tests | Planned |
-| 5 | Bangla + English localization, full-text search, bookmarks, newsletter | Planned |
-| 6 | Tests, CI, health checks, Docker | Planned |
+- Uploaded pictures are stored as sent (type and size checked, not resized) on the web server's disk, so `wwwroot/uploads` must be backed up and shared if several servers run the site.
+- Sign-in lockouts, reset codes and the data cache live in memory, so they reset when the app restarts and are per server.
+- Email goes to the log and the Development outbox until SMTP settings are added.
