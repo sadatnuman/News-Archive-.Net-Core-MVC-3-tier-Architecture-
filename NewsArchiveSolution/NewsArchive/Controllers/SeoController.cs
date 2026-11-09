@@ -18,18 +18,20 @@ namespace NewsArchive.Controllers
 
         private readonly IStringLocalizer<SharedResource> L;
         private readonly IArticleService articleService;
+        private readonly IArticleArchive archive;
         private readonly ICategoryService categoryService;
         private readonly ITagService tagService;
         private readonly IAuthorService authorService;
         private readonly SeoUrls urls;
         private readonly SiteOptions site;
 
-        public SeoController(IArticleService articleService, ICategoryService categoryService, ITagService tagService, IAuthorService authorService, SeoUrls urls, IOptions<SiteOptions> site, IStringLocalizer<SharedResource> localizer)
+        public SeoController(IArticleService articleService, IArticleArchive archive, ICategoryService categoryService, ITagService tagService, IAuthorService authorService, SeoUrls urls, IOptions<SiteOptions> site, IStringLocalizer<SharedResource> localizer)
         {
             L = localizer;
             this.authorService = authorService;
             this.tagService = tagService;
             this.articleService = articleService;
+            this.archive = archive;
             this.categoryService = categoryService;
             this.urls = urls;
             this.site = site.Value;
@@ -93,7 +95,7 @@ namespace NewsArchive.Controllers
                 AddUrl(SeoUrls.Page("/authors", lang), null, "weekly", "0.4");
                 foreach (var a in authorService.GetAuthors(lang))
                     AddUrl(SeoUrls.Author(a.UserId, a.Name, lang), null, "weekly", "0.5");
-                var months = articleService.GetArchiveMonths(lang);
+                var months = archive.GetArchiveMonths(lang);
                 foreach (var year in months.Select(m => m.Year).Distinct())
                     AddUrl(SeoUrls.Archive(year, language: lang), null, "monthly", "0.4");
                 foreach (var m in months)

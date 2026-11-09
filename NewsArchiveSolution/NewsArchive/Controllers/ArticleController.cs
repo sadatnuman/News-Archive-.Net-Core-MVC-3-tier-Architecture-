@@ -249,7 +249,8 @@ namespace NewsArchive.Controllers
             var uploaded = ModelState.IsValid ? ApplyImage(form, imageFile, removeImage) : null;
             if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
-                if (articleService.Update(id, form, userId.Value, roleId.Value, submitAction == "submit"))
+                var result = articleService.Update(id, form, userId.Value, roleId.Value, submitAction == "submit");
+                if (result == ChangeResult.Done)
                 {
                     if (previousImage != form.ImagePath)
                         mediaService.DeleteIfUploaded(previousImage);
@@ -261,7 +262,7 @@ namespace NewsArchive.Controllers
                     Flash("success", submitAction == "submit" ? "Changes sent to the admin for approval." : "Draft saved.");
                     return RedirectToAction("MyArticles");
                 }
-                ModelState.AddModelError(string.Empty, L["You cannot edit this article."]);
+                ModelState.AddModelError(string.Empty, L[result == ChangeResult.Conflict ? ArticleMessages.ChangedElsewhere : "You cannot edit this article."]);
             }
 
             mediaService.DeleteIfUploaded(uploaded);

@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000" font-family="Segoe UI, Arial, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555555"/></marker></defs>
+<rect width="1500" height="1000" fill="#ffffff"/>
+<text x="30" y="40" font-size="24" font-weight="700" fill="#222">The Meridian Newsfolio — C4 Level 2: Containers</text>
+<text x="30" y="66" font-size="15" fill="#555">The separately running parts inside the system boundary and the technology each one uses.</text>
+<rect x="30" y="100" width="230" height="110" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="145.0" y="141.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Font and icon CDN</text>
+<text x="145.0" y="160.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System]</text>
+<text x="145.0" y="179.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Google Fonts, jsDelivr</text>
+<circle cx="470.0" cy="106" r="26" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<rect x="330" y="126" width="280" height="86" rx="10" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="470.0" y="155.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Reader / Author / Admin</text>
+<text x="470.0" y="174.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Person]</text>
+<text x="470.0" y="193.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Uses the site in a web browser</text>
+<rect x="690" y="100" width="260" height="110" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="820.0" y="141.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">API client</text>
+<text x="820.0" y="160.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System]</text>
+<text x="820.0" y="179.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Bearer-token REST calls</text>
+<rect x="1030" y="100" width="260" height="110" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="1160.0" y="141.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Search engines and</text>
+<text x="1160.0" y="160.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">feed readers</text>
+<text x="1160.0" y="179.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External Systems]</text>
+<rect x="60" y="280" width="1140" height="640" rx="6" fill="none" stroke="#444" stroke-width="2" stroke-dasharray="10 6"/>
+<text x="74" y="906" font-size="15" font-weight="700" fill="#333" text-anchor="start">The Meridian Newsfolio [Software System]</text>
+<rect x="90" y="360" width="270" height="150" rx="10" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="225.0" y="402.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Browser scripts</text>
+<text x="225.0" y="421.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Container: JavaScript +</text>
+<text x="225.0" y="440.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">service worker, runs in</text>
+<text x="225.0" y="459.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">the browser]</text>
+<text x="225.0" y="478.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Theme, suggestions, preview</text>
+<rect x="540" y="340" width="400" height="190" rx="10" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="740.0" y="392.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Web application</text>
+<text x="740.0" y="411.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Container: ASP.NET Core 10</text>
+<text x="740.0" y="430.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">MVC + Web API on Kestrel]</text>
+<text x="740.0" y="449.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">UI, BLL and DAL in one process;</text>
+<text x="740.0" y="468.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Razor pages, JSON API, Swagger,</text>
+<text x="740.0" y="487.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">background publisher and digest</text>
+<path d="M560,716 L560,854 A180.0,16 0 0 0 920,854 L920,716 A180.0,16 0 0 0 560,716 Z" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<ellipse cx="740.0" cy="716" rx="180.0" ry="16" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="740.0" y="759.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Database</text>
+<text x="740.0" y="778.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Container: SQL Server,</text>
+<text x="740.0" y="797.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">EF Core migrations]</text>
+<text x="740.0" y="816.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Articles, users, comments,</text>
+<text x="740.0" y="835.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">word index, audit log</text>
+<path d="M110,726 L110,844 A130.0,16 0 0 0 370,844 L370,726 A130.0,16 0 0 0 110,726 Z" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<ellipse cx="240.0" cy="726" rx="130.0" ry="16" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="240.0" y="778.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Uploaded pictures</text>
+<text x="240.0" y="797.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Container: file system,</text>
+<text x="240.0" y="816.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">wwwroot/uploads]</text>
+<path d="M990,726 L990,844 A95.0,16 0 0 0 1180,844 L1180,726 A95.0,16 0 0 0 990,726 Z" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<ellipse cx="1085.0" cy="726" rx="95.0" ry="16" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="1085.0" y="768.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Mail outbox</text>
+<text x="1085.0" y="787.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Container: file</text>
+<text x="1085.0" y="806.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">system, App_Data,</text>
+<text x="1085.0" y="825.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Development only]</text>
+<rect x="1250" y="480" width="230" height="120" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="1365.0" y="526.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">SMTP mail provider</text>
+<text x="1365.0" y="545.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System,</text>
+<text x="1365.0" y="564.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">optional]</text>
+<line x1="470" y1="212" x2="640" y2="340" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="470" y="296" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Visits pages,</text>
+<text x="470" y="313" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">posts forms</text>
+<text x="470" y="330" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS]</text>
+<line x1="820" y1="210" x2="820" y2="340" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="895" y="232" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Calls REST API</text>
+<text x="895" y="249" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS/JSON,</text>
+<text x="895" y="266" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">bearer token]</text>
+<line x1="1130" y1="210" x2="920" y2="340" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1190" y="232" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Reads sitemap,</text>
+<text x="1190" y="249" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">RSS, pages</text>
+<text x="1190" y="266" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS/XML]</text>
+<line x1="540" y1="400" x2="360" y2="400" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="450" y="378" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Delivers HTML,</text>
+<text x="450" y="395" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">CSS, JS [HTTPS]</text>
+<line x1="360" y1="470" x2="540" y2="470" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="450" y="500" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">JSON fetch calls</text>
+<text x="450" y="517" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS, antiforgery]</text>
+<line x1="160" y1="360" x2="150" y2="210" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)" stroke-dasharray="5 5"/>
+<text x="210" y="300" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Loads fonts,</text>
+<text x="210" y="317" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">icons [HTTPS]</text>
+<line x1="740" y1="530" x2="740" y2="700" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="820" y="600" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Reads and writes</text>
+<text x="820" y="617" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[EF Core 10,</text>
+<text x="820" y="634" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">TDS over TCP 1433]</text>
+<line x1="580" y1="530" x2="300" y2="710" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="390" y="610" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Saves and deletes</text>
+<text x="390" y="627" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">pictures [file I/O]</text>
+<line x1="900" y1="530" x2="1060" y2="710" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1050" y="610" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Writes email copies</text>
+<text x="1050" y="627" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[file I/O]</text>
+<line x1="940" y1="430" x2="1250" y2="530" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1095" y="398" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Sends email when</text>
+<text x="1095" y="415" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">configured</text>
+<text x="1095" y="432" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[SMTP over TLS]</text>
+<text x="30" y="970" font-size="14" font-weight="700" fill="#333">Key</text>
+<rect x="80" y="956" width="28" height="18" rx="4" fill="#08427B"/>
+<text x="116" y="970" font-size="13" fill="#333">Person</text>
+<rect x="169.2" y="956" width="28" height="18" rx="4" fill="#438DD5"/>
+<text x="205.2" y="970" font-size="13" fill="#333">Container</text>
+<rect x="280.0" y="956" width="28" height="18" rx="4" fill="#8A8A8A"/>
+<text x="316.0" y="970" font-size="13" fill="#333">External system</text>
+<rect x="434.0" y="956" width="28" height="18" fill="none" stroke="#444" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="470.0" y="970" font-size="13" fill="#333">System boundary</text>
+<line x1="588.0" y1="965" x2="616.0" y2="965" stroke="#555555" stroke-width="1.8" stroke-dasharray="5 5"/>
+<text x="624.0" y="970" font-size="13" fill="#333">Call made by the browser</text>
+</svg>

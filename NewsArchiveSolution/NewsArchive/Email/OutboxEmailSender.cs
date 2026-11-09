@@ -35,7 +35,8 @@ namespace NewsArchive.Email
 
         public async Task DeliverAsync(EmailMessage message, CancellationToken cancellationToken)
         {
-            if (folder == null) return;
+            if (folder == null)
+                throw new InvalidOperationException("No email transport is configured. Set Email:Smtp:Host to send mail outside Development.");
 
             Directory.CreateDirectory(folder);
             var name = $"{DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture)}-{Safe(message.Category ?? "mail")}-{Guid.NewGuid():N}.txt";

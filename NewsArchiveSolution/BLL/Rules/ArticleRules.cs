@@ -20,6 +20,11 @@ namespace BLL
             return roleId == AppRoles.Author && userId == article.AuthorId;
         }
 
+        public static string Version(int statusId, DateTime? updatedAt, DateTime createdAt)
+        {
+            return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{statusId}-{(updatedAt ?? createdAt).Ticks}");
+        }
+
         public static bool IsFutureSchedule(DateTime? publishAt, DateTime now)
         {
             return publishAt.HasValue && publishAt.Value > now.AddMinutes(1) && publishAt.Value <= now.Add(MaxScheduleAhead);

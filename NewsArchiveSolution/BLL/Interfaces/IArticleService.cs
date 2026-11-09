@@ -10,21 +10,21 @@ namespace BLL.Interfaces
 
         int Create(ArticleFormDTO form, int authorId, int roleId, bool submitForReview);
 
-        bool Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview);
+        ChangeResult Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview);
 
         bool Submit(int articleId, int authorId);
 
-        bool Approve(int articleId, int adminId, DateTime? publishAt = null);
+        ChangeResult Approve(int articleId, int adminId, DateTime? publishAt = null);
 
-        bool PublishNow(int articleId);
+        ChangeResult PublishNow(int articleId);
 
-        bool Unschedule(int articleId);
+        ChangeResult Unschedule(int articleId);
 
         int PublishDue();
 
         List<ArticleDTO> GetScheduled();
 
-        bool Reject(int articleId, int adminId, string? note);
+        ChangeResult Reject(int articleId, int adminId, string? note);
 
         bool Delete(int articleId, int userId, int roleId);
 
@@ -41,12 +41,6 @@ namespace BLL.Interfaces
         ArticleDTO? GetWithDetails(int id);
 
         List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
-
-        List<ArticleDTO> GetArchive(int year, int? month, int? day, string? language, int page, int pageSize, out int total);
-
-        List<ArchiveMonthDTO> GetArchiveMonths(string? language = null);
-
-        Dictionary<int, int> GetArchiveDayCounts(int year, int month, string? language = null);
 
         List<ArticleDTO> GetOnThisDay(DateTime today, int count, string? language = null);
 

@@ -130,6 +130,7 @@ namespace NewsArchive.Controllers.Api
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Update(int id, [FromBody] ArticleFormDTO form, [FromQuery] bool submit = false)
         {
             var article = articleService.Get(id);
@@ -145,9 +146,12 @@ namespace NewsArchive.Controllers.Api
                 return ValidationProblem(ModelState);
             }
 
-            return articleService.Update(id, form, user.UserId, user.RoleId, submit)
-                ? NoContent()
-                : Problem(statusCode: StatusCodes.Status400BadRequest, title: "The article could not be saved.");
+            return articleService.Update(id, form, user.UserId, user.RoleId, submit) switch
+            {
+                ChangeResult.Done => NoContent(),
+                ChangeResult.Conflict => Problem(statusCode: StatusCodes.Status409Conflict, title: ArticleMessages.ChangedElsewhere),
+                _ => Problem(statusCode: StatusCodes.Status400BadRequest, title: "The article could not be saved.")
+            };
         }
 
         [HttpDelete("{id:int}")]
@@ -195,9 +199,7 @@ namespace NewsArchive.Controllers.Api
             if (articleService.Get(id) == null) return NotFound();
             var user = await RequireApiUserAsync();
 
-            return articleService.Approve(id, user.UserId, approve?.PublishAt)
-                ? NoContent()
-                : Problem(statusCode: StatusCodes.Status409Conflict, title: "Only pending articles can be approved.");
+            return Decided(articleService.Approve(id, user.UserId, approve?.PublishAt), "Only pending articles can be approved.");
         }
 
         [HttpGet("scheduled")]
@@ -215,9 +217,7 @@ namespace NewsArchive.Controllers.Api
         public IActionResult PublishNow(int id)
         {
             if (articleService.Get(id) == null) return NotFound();
-            return articleService.PublishNow(id)
-                ? NoContent()
-                : Problem(statusCode: StatusCodes.Status409Conflict, title: "Only scheduled articles can be published early.");
+            return Decided(articleService.PublishNow(id), "Only scheduled articles can be published early.");
         }
 
         [HttpPost("{id:int}/reject")]
@@ -229,10 +229,15 @@ namespace NewsArchive.Controllers.Api
             if (articleService.Get(id) == null) return NotFound();
             var user = await RequireApiUserAsync();
 
-            return articleService.Reject(id, user.UserId, review?.Note)
-                ? NoContent()
-                : Problem(statusCode: StatusCodes.Status409Conflict, title: "Only pending articles can be rejected.");
+            return Decided(articleService.Reject(id, user.UserId, review?.Note), "Only pending articles can be rejected.");
         }
+
+        private IActionResult Decided(ChangeResult result, string notAllowed) => result switch
+        {
+            ChangeResult.Done => NoContent(),
+            ChangeResult.Conflict => Problem(statusCode: StatusCodes.Status409Conflict, title: ArticleMessages.DecidedElsewhere),
+            _ => Problem(statusCode: StatusCodes.Status409Conflict, title: notAllowed)
+        };
 
         [HttpGet("{id:int}/comments")]
         [ProducesResponseType(typeof(List<CommentDTO>), StatusCodes.Status200OK)]

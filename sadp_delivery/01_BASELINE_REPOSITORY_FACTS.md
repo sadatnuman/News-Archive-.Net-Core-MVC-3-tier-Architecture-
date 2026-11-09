@@ -10,6 +10,7 @@
 | Baseline branch and HEAD | `develop` at `c9f08a3a54b9b300a52298f1f8a6cc5478e7c3a3` |
 | Baseline working tree | clean (`git status --short` printed nothing) |
 | Work branch | `sadp/midterm-readiness`, created from `develop` without switching away from or resetting anything |
+| Revision 2 branch | `sadp/review-corrections`, created from `main@484deb3` (revision 1 merged by the user via PR #9); local only |
 | SDK | .NET SDK 10.0.403 (`global.json` allows the latest 10.0 feature band) |
 | Machine | Windows 11 Home, AMD Ryzen 5 7520U (8 logical CPUs), 13.8 GB RAM, SQL Server 2025 Express (17.0.1000.7, full-text search not installed) |
 

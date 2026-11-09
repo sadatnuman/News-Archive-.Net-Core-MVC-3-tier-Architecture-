@@ -8,18 +8,18 @@ namespace NewsArchive.Controllers.Api
     [Route("api/archive")]
     public class ArchiveApiController : ApiControllerBase
     {
-        private readonly IArticleService articleService;
+        private readonly IArticleArchive archive;
 
-        public ArchiveApiController(IArticleService articleService)
+        public ArchiveApiController(IArticleArchive archive)
         {
-            this.articleService = articleService;
+            this.archive = archive;
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(List<ArchiveMonthDTO>), StatusCodes.Status200OK)]
         public IActionResult Months([FromQuery] string? lang)
         {
-            return Ok(articleService.GetArchiveMonths(ParseLanguage(lang)));
+            return Ok(archive.GetArchiveMonths(ParseLanguage(lang)));
         }
 
         [HttpGet("{year:int}/{month:int}")]
@@ -31,7 +31,7 @@ namespace NewsArchive.Controllers.Api
 
             page = Math.Max(page, 1);
             pageSize = Math.Clamp(pageSize, 1, 50);
-            var items = articleService.GetArchive(year, month, day, ParseLanguage(lang), page, pageSize, out var total);
+            var items = archive.GetArchive(year, month, day, ParseLanguage(lang), page, pageSize, out var total);
             return Ok(new PagedResultDTO<ArticleDTO> { Items = items, Page = page, PageSize = pageSize, Total = total });
         }
 
@@ -40,7 +40,7 @@ namespace NewsArchive.Controllers.Api
         public IActionResult Days(int year, int month, [FromQuery] string? lang)
         {
             if (!ArticleRules.IsValidArchiveDate(year, month)) return NotFound();
-            return Ok(articleService.GetArchiveDayCounts(year, month, ParseLanguage(lang)));
+            return Ok(archive.GetArchiveDayCounts(year, month, ParseLanguage(lang)));
         }
     }
 }

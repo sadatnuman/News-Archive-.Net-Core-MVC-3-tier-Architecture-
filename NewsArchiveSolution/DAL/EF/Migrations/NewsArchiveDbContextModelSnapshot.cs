@@ -113,6 +113,7 @@ namespace DAL.EF.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("UpdatedAt")
+                        .IsConcurrencyToken()
                         .HasColumnType("datetime");
 
                     b.Property<int>("ViewsCount")

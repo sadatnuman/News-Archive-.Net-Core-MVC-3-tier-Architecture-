@@ -60,7 +60,7 @@ NewsArchive  ──►  BLL  ──►  DAL  ──►  SQL Server
 | Layer | Registered in | What |
 |---|---|---|
 | DAL | `DataLayerServices.AddDataLayer` | `NewsArchiveDbContext`, `IDataAccessFactory` → `DataAccessFactory` (scoped) |
-| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile and 18 scoped services: `IArticleService`, `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService`, `IRecommendationService`, `ISearchService`, `IAuditService`, `INewsletterService` |
+| BLL | `BusinessLayerServices.AddBusinessLayer` | AutoMapper profile and 18 scoped services: `IArticleService`, `IArticleArchive` (the 3 archive reads, also served by `ArticleService`), `ICategoryService`, `ICommentService`, `ITagService`, `IUserService`, `IRoleService`, `IAnalyticsService`, `IAuthService`, `IMediaService`, `ISystemService`, `IAuthorService`, `IBookmarkService`, `IArticleLookupService`, `IRecommendationService`, `ISearchService`, `IAuditService`, `INewsletterService` |
 | UI | `Program.cs` | The four contracts above, `LoginThrottle`, `PasswordResetStore`, `PasswordChanger`, `MailComposer`, `CookieSessionValidator`, `SeoUrls`, the `ScheduledPublisher` hosted service, rate limiting, health checks, Swagger |
 
 - `ValidateOnBuild` and `ValidateScopes` are on, so a missing registration or captive dependency stops the app at startup.
@@ -105,7 +105,7 @@ All schema changes are EF Core migrations in `DAL/EF/Migrations` (generated comm
 
 ### Migrations
 
-`InitialSchema` → `NormalizeSchemaAndApprovalWorkflow` → `AddLanguages` → `AddUserTokens` → `AddTagTranslationsAndSlugs` → `AddUserAvatars` → `AddUserBio` → `AddBookmarks` → `AddScheduledPublishing` → `AddReadingHistory` → `AddCommentModeration` → `AddAuditLog` → `AddNewsletterSubscribers` → `AddArticleWords` → `ArticleStatusConcurrencyToken` (no schema change; it records the concurrency token in the model snapshot).
+`InitialSchema` → `NormalizeSchemaAndApprovalWorkflow` → `AddLanguages` → `AddUserTokens` → `AddTagTranslationsAndSlugs` → `AddUserAvatars` → `AddUserBio` → `AddBookmarks` → `AddScheduledPublishing` → `AddReadingHistory` → `AddCommentModeration` → `AddAuditLog` → `AddNewsletterSubscribers` → `AddArticleWords` → `ArticleStatusConcurrencyToken` → `ArticleEditConcurrencyToken` (neither changes the schema; they record the concurrency tokens on `StatusId` and `UpdatedAt` in the model snapshot).
 
 ### Indexes worth knowing
 
@@ -223,7 +223,8 @@ Passwords and codes are never written to the log. Entries are kept for 365 days.
 ### Writing
 
 - New articles are put together by `BLL/Builders/ArticleBuilder` (Builder pattern). The service calls `WrittenBy`, `WithText`, `InSection`, `InLanguage`, `WithImage`, then `SubmittedForReview()` or `ApprovedBy(admin, publishAt)`. `Build()` refuses an article with no author, section or text, or breaking news without an approval. It decides Draft, Pending, Published or Scheduled in one place.
-- Review decisions cannot overwrite each other. `Articles.StatusId` is an EF Core concurrency token, so every update checks that the status is still the one that was loaded. If two admins approve and reject the same story at once, the second save matches no row, `Repository.Update` returns `false`, and the API answers 409.
+- Review decisions and edits cannot overwrite each other. `Articles.StatusId` and `Articles.UpdatedAt` are EF Core concurrency tokens, so every update checks that both still hold the values that were loaded. If two admins approve and reject the same story at once, the second save matches no row and the service returns `ChangeResult.Conflict`.
+- The edit form and the API carry a version (`StatusId` + `UpdatedAt`, see `ArticleRules.Version`). A save from a form opened before someone else saved is refused before anything is written. MVC shows "Someone else changed this article…"; the API answers 409 with the same text. Decisions that lose a race say "Another editor acted on this story…", while an ordinary wrong state (for example rejecting a published story) keeps its own message.
 - Markdown with a toolbar and a live preview (`Content/ArticleRenderer`, Markdig). Raw HTML is disabled; only `http`, `https`, `mailto`, `#` and site paths are allowed as links, and only site or `https` images. Paths starting with `//` or `/\` and anything containing a backslash are rejected. External links get `rel="nofollow noopener noreferrer"`; headings are shifted down one level.
 - Picture upload: JPEG, PNG, WebP or GIF, detected from the file's first bytes. Limits: 5 MB for articles, 2 MB for profile pictures. Files get random names under `wwwroot/uploads`.
 
@@ -320,7 +321,7 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 
 ### Email
 
-`MailComposer` builds the confirmation, digest and reset-code emails in English or Bangla, as plain text plus HTML with absolute links. Sending uses the Factory Method pattern. The abstract creator `EmailSender` checks the address, asks its factory method `CreateTransport()` for a fresh `IMailTransport`, sends, logs the masked address and turns any delivery error into `false`. `SmtpEmailSender` creates an `SmtpTransport` (a new `SmtpClient` per message). `OutboxEmailSender` creates an `OutboxTransport`, which writes to `App_Data/outbox` in Development and does nothing elsewhere. `Program.cs` picks the SMTP sender when `Email:Smtp:Host` is set. A new channel is a new creator and transport, with no change to the newsletter or the controllers.
+`MailComposer` builds the confirmation, digest and reset-code emails in English or Bangla, as plain text plus HTML with absolute links. Sending uses the Factory Method pattern. The abstract creator `EmailSender` checks the address, asks its factory method `CreateTransport()` for a fresh `IMailTransport`, sends, logs the masked address and turns any delivery error into `false`. `SmtpEmailSender` creates an `SmtpTransport` (a new `SmtpClient` per message). `OutboxEmailSender` creates an `OutboxTransport`, which writes to `App_Data/outbox` in Development. Outside Development it refuses ("No email transport is configured"), so `SendAsync` returns `false` and logs an error instead of claiming the mail was sent. `Program.cs` picks the SMTP sender when `Email:Smtp:Host` is set. A new channel is a new creator and transport, with no change to the newsletter or the controllers.
 
 ## 9. Languages, theme and design
 
@@ -375,7 +376,7 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 
 | Tool | What |
 |---|---|
-| `NewsArchive.Tests` (xUnit, 108 tests) | Unit tests with DispatchProxy-based fakes and no database: rules (articles, slugs, passwords, recommendations, moderation, search words, newsletter, audit), services (comments, newsletter, recommendations, audit) security classes (sign-in lockout, reset codes, password change, Markdown links, no demo logins in the base settings) and patterns (`ArticleBuilder` rules, the `EmailSender` factory method and one contract shared by every sender). Integration tests (`Integration/`) start the whole app with `WebApplicationFactory` against a separate `NewsArchiveTestDB`: sign-in redirect, antiforgery, security headers, API roles, account lockout, word search in English and Bangla, and script-free Markdown pages, the author → admin approval flow, two reviewers racing on one story, the single shared lockout and reset stores, and repositories from one factory sharing one unit of work. Each test client gets its own IP address through a test-only startup filter, so the per-IP rate limits behave as in production |
+| `NewsArchive.Tests` (xUnit, 116 tests) | Unit tests with DispatchProxy-based fakes and no database: rules (articles, slugs, passwords, recommendations, moderation, search words, newsletter, audit), services (comments, newsletter, recommendations, audit) security classes (sign-in lockout, reset codes, password change, Markdown links, no demo logins in the base settings) and patterns (`ArticleBuilder` rules, the `EmailSender` factory method and one contract shared by every sender). Integration tests (`Integration/`) start the whole app with `WebApplicationFactory` against a separate `NewsArchiveTestDB`: sign-in redirect, antiforgery, security headers, API roles, account lockout, word search in English and Bangla, and script-free Markdown pages, the author → admin approval flow, two reviewers racing on one story, a decision that loses a race, stale edit forms, two saves in flight, the archive pages served by a 3-method `IArticleArchive` stub, a withdrawn story disappearing from every public read, the single shared lockout and reset stores, and repositories from one factory sharing one unit of work. Unit tests also cover the cache version keys and a depth limit on every AutoMapper map. Each test client gets its own IP address through a test-only startup filter, so the per-IP rate limits behave as in production |
 | `.github/workflows/build.yml` | On every push and PR to `develop`/`main`: restore, Release build, all tests against a SQL Server 2022 service container, vulnerable package report |
 | `.vscode/` | Launch configuration and `build`, `watch`, `test` and `database update` tasks |
 | `global.json` | .NET 10 SDK, latest feature band |
@@ -389,4 +390,5 @@ Code style: no code comments; names explain intent; culture-invariant formatting
 
 - Uploaded pictures are stored as sent (type and size checked, not resized) on the web server's disk, so `wwwroot/uploads` must be backed up and shared if several servers run the site.
 - Sign-in lockouts, reset codes and the data cache live in memory, so they reset when the app restarts and are per server.
-- Email goes to the log and the Development outbox until SMTP settings are added.
+- Email goes to the Development outbox until SMTP settings are added; outside Development, sending without SMTP settings fails and is logged.
+- RSS and sitemaps send `Cache-Control` for 15 and 60 minutes, so a proxy may keep showing a withdrawn story's title for that long (the story page itself answers 404).

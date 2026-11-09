@@ -14,6 +14,7 @@ namespace BLL
             services.AddAutoMapper(typeof(MappingProfile));
 
             services.AddScoped<IArticleService, ArticleService>();
+            services.AddScoped<IArticleArchive, ArticleService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<ICommentService, CommentService>();
             services.AddScoped<ITagService, TagService>();

@@ -8,10 +8,10 @@ P2 p2: "the group owns the system (§1, 2, 4, 5, 7, 8); each member owns a featu
 
 | Member (ID — Name) | Owns feature / module | NFA (§3) | SOLID (§6) | Creational pattern (§9) |
 |---|---|---|---|---|
-| M1: TBD — TBD | Editorial workflow: write, submit, review, schedule (FR-1, 2, 3) | Reliability: a review decision is applied exactly once | SRP: builder vs service vs rules | **Builder**: `ArticleBuilder` |
+| M1: TBD — TBD | Editorial workflow: write, submit, review, schedule, edit (FR-1, 2, 3) | Reliability: no lost review decision, no lost edit | SRP: builder vs service vs rules | **Builder**: `ArticleBuilder` |
 | M2: TBD — TBD | Accounts and security: register, sign-in, lockout, password reset, roles, API tokens (FR-8, 12) | Security: brute force and CSRF limits | DIP: `PasswordChanger` → `IAuthService` | **Singleton** (DI-managed single instance): `LoginThrottle`, `PasswordResetStore` |
 | M3: TBD — TBD | Newsletter and email: subscribe, confirm, digest, email delivery (FR-7) | Availability: mail failures never break a page | OCP: new mail channel = new class | **Factory Method**: `EmailSender.CreateTransport()` |
-| M4: TBD — TBD | Discovery: search, archive, recommendations, reading history (FR-4, 5, 9) | Performance: search p95 target | ISP: narrow repository contracts | **Abstract Factory**: `IDataAccessFactory` repository family |
+| M4: TBD — TBD | Discovery: search, date archive, recommendations, reading history (FR-4, 5, 9) | Performance: search p95 target | ISP: `IArticleArchive` (3 members) for the archive clients | **Abstract Factory**: `IDataAccessFactory` repository family |
 
 ### Other team sizes
 
@@ -28,13 +28,18 @@ P2 p2: "the group owns the system (§1, 2, 4, 5, 7, 8); each member owns a featu
 ### M1: Editorial workflow
 
 - **§3 Reliability.**
-  - Target: when two reviewers act on the same pending story, exactly one decision is stored. A scheduled story goes live exactly once, within 60 s of its time (the job runs every 30 s).
+  - Targets:
+    - When two reviewers act on the same pending story, exactly one decision is stored, and the other reviewer is told "Another editor acted on this story".
+    - An edit saved from an out-of-date form never overwrites a newer edit.
+    - A scheduled story goes live exactly once, within 60 s of its time (the job runs every 30 s).
   - Tactics:
-    - Optimistic concurrency token on `Articles.StatusId` (`DAL/EF/NewsArchiveDbContext.cs:91`; conflict is caught at `DAL/Repos/Repository.cs:47`).
+    - Optimistic concurrency tokens on `Articles.StatusId` and `Articles.UpdatedAt` (`DAL/EF/NewsArchiveDbContext.cs:91–92`; a conflict is caught at `DAL/Repos/Repository.cs:47`).
+    - A version in the edit form, checked in `ArticleService.Update` (`BLL/Services/ArticleService.cs:89`).
+    - `ChangeResult.Conflict`, so a race gets its own message.
     - Atomic `UPDATE … WHERE StatusId=Scheduled AND ScheduledAt<=now` (`DAL/Repos/ArticleRepo.cs:259`).
   - Proof:
-    - `AppTests.Two_reviewers_cannot_both_decide_the_same_article`.
-    - Smoke: a second decision gets 409.
+    - `AppTests`: `Two_reviewers_cannot_both_decide_…`, `A_decision_racing_another_editor_…`, `An_edit_from_a_stale_form_…`, `Two_saves_in_flight_…`.
+    - Smoke: a stale API edit gets 409, and a stale MVC form shows the conflict message.
     - Smoke: the scheduled story went live after 85 s, with the publish time set 75 s ahead.
 - **§6 SRP.** `ArticleBuilder` (construction and invariants), `ArticleService` (workflow, audit, cache) and `ArticleRules` (policy) each have one reason to change.
 - **§9 Builder.** Participants:
@@ -61,7 +66,8 @@ P2 p2: "the group owns the system (§1, 2, 4, 5, 7, 8); each member owns a featu
   - The single instance is guaranteed by the DI container lifetime (`Program.cs:52`, `:118`). It is not built with a private constructor and a static `GetInstance()`.
   - W3 s11 calls this the "modern fix: a DI-scoped singleton — singleton behaviour WITH testability"; W3 s31 says "Singleton (or a DI-scoped singleton)".
   - Test: `AppTests.Lockout_and_reset_stores_are_one_instance_for_the_whole_app` (`Assert.Same` across two scopes).
-  - **Viva risk:** be ready to explain the three classic parts (W3 s8) and why they were not hand-written: global state, cannot be mocked, violates DIP.
+  - **Viva answer (keep this):** "The intent of Singleton is one instance for the whole app. We kept that intent, and a test proves it with `Assert.Same`. We moved the guarantee from the class to the DI container: the classic private constructor, static field and `GetInstance()` (W3 s8) would give a global access point, which cannot be mocked and breaks DIP. The lecture calls our form a DI-scoped singleton (W3 s11, s31). Microsoft's DI guide says the same: singleton services instead of global state." The side-by-side table is in `07`.
+  - **Weakness to admit if asked:** the container guarantees one instance only for objects taken from the container. Code could still call `new LoginThrottle(...)`; only the unit tests do that, which is the testability benefit.
 
 ### M3: Newsletter and email
 
@@ -83,13 +89,18 @@ P2 p2: "the group owns the system (§1, 2, 4, 5, 7, 8); each member owns a featu
 
 - **§3 Performance.**
   - Target: search page p95 ≤ 1 s with 20 concurrent users, and ≤ 200 ms for a single user, on one server. This follows the SmartLib style in P1 p2.
-  - Measured on this laptop (Release build, 28 sample stories, loopback):
-    - One user: p95 = 51.2 ms.
-    - 20 concurrent users: p95 = 621.9 ms, 44.7 requests per second.
-    - **Both targets met.**
-  - Finding: latency grows about 12× under concurrency. The likely cause is synchronous EF Core calls holding thread-pool threads; that is a hypothesis to test next (`15`).
+  - Measured on this laptop (Release build, **5,024 published stories**, 915,558 word-index rows, loopback; details in `08`):
+    - One user: p50 = 47.1 ms, p95 = 72.2 ms, p99 = 80.3 ms.
+    - 20 concurrent users: p50 = 446.7 ms, p95 = 672.5 ms, p99 = 779.5 ms, 43.0 requests per second, 0 errors.
+    - **Both targets met on this machine.**
+  - Finding: latency grows about 9× under concurrency. The likely cause is synchronous EF Core calls blocking thread-pool threads; that is a hypothesis to test next (`15` R-3).
   - Tactics: word index `ArticleWords` (`DAL/Repos/ArticleRepo.cs:101`); list projection without the article body (`ArticleRepo.cs:20`); 2-minute cache of recommendation lists (`BLL/Services/RecommendationService.cs:89`).
-- **§6 ISP.** `RecommendationService` uses only `IArticleRepository` and `IReadingHistoryRepository` (`RecommendationService.cs:17`), not a fat data interface. **Honest caveat:** it receives them through `IDataAccessFactory`, which could hand out all 11 repositories (smell recorded in `03`).
+- **§6 ISP.**
+  - The archive pages, the archive API and the sitemap need only 3 operations: month list, day counts, stories in a period.
+  - They now depend on `IArticleArchive` (`BLL/Interfaces/IArticleArchive.cs`), which has exactly those 3 members. Before, they depended on the 29-member `IArticleService`; it now has 26.
+  - Proof: `AppTests.Archive_pages_depend_only_on_the_narrow_archive_contract` registers a 3-method stub, and `/archive` and `/api/archive` are served from it. No method of the editorial interface was needed.
+  - Why ISP and not "narrow repositories": the repositories are created by the Abstract Factory, which hands out all 11. The new interface is a client-specific contract in the BLL, which is what ISP asks for (W1 s19–20).
+  - Caveat to admit: `IArticleService` is still large for the editorial pages (`15` R-6).
 - **§9 Abstract Factory.** Participants, matching W3 s20–22:
   - Abstract factory: `IDataAccessFactory` (`DAL/Interfaces/IDataAccessFactory.cs:5`).
   - Concrete factories:
@@ -111,9 +122,9 @@ P2 p2: "the group owns the system (§1, 2, 4, 5, 7, 8); each member owns a featu
 | Q1 Architecture vs design | Architecture: modular monolith, SQL Server with EF Core, cookie + opaque-token auth, three-layer split. Design: Builder for articles, factory method for mail, word-index tokenizer, a 2-minute cache TTL. Test: what does it cost to reverse, and how far does the change reach (W1 s5–6)? |
 | Q2 Style | Layered (UI → BLL → DAL, enforced at compile time) plus MVC inside the UI plus client–server (browser and API clients → one ASP.NET Core server → SQL Server). A modular monolith, because of team size, under 10k users and one deployment (W2 s29–30). |
 | Q3 NFA | Each member's row above: a number, a tactic and a test. |
-| Q4 C4 | The L1 context diagram goes in the report: people and external systems around one box. L2 (in `09`) shows the single web app container plus SQL Server. |
+| Q4 C4 | The L1 context diagram (`09_C4_AND_4PLUS1/c4_level1_context.png`) goes in the report: people and external systems around one box. L2 (`c4_level2_containers.png`) shows the web application, browser scripts, database and two file stores inside the boundary. |
 | Q5 4+1 | See §5 of the draft; every view comes from the real code and the real `Program.cs`. |
-| Q6 SOLID | Each member's row; LSP is covered by a contract test. |
+| Q6 SOLID | Each member's row: SRP (M1), DIP (M2), OCP (M3), ISP with `IArticleArchive` (M4). LSP is also covered by a contract test. |
 | Q7 CAP | Today: one SQL Server node, so there is no partition (ACID is not CAP). Planned rule for replicas: review decisions CP, reading AP. |
 | Q8 Migration | The newsletter/notification service is extracted first; full plan in §8. |
 | Q9 Creational | Builder (M1), Singleton via DI (M2), Factory Method (M3), Abstract Factory (M4). |

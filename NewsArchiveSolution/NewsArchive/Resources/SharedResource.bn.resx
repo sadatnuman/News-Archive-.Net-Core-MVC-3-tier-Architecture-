@@ -1770,4 +1770,10 @@
   <data name="{0}: {1} stories" xml:space="preserve">
     <value>{0}: {1}টি সংবাদ</value>
   </data>
+  <data name="Someone else changed this article after you opened it. Your changes were not saved. Reload the page to see the latest version." xml:space="preserve">
+    <value>আপনি খোলার পর অন্য কেউ এই লেখাটি বদলেছেন। আপনার পরিবর্তন সংরক্ষণ হয়নি। সর্বশেষ সংস্করণ দেখতে পাতাটি আবার লোড করুন।</value>
+  </data>
+  <data name="Another editor acted on this story at the same moment. Your decision was not saved. Reload the queue to see its current state." xml:space="preserve">
+    <value>ঠিক একই সময়ে অন্য একজন সম্পাদক এই খবরের সিদ্ধান্ত নিয়েছেন। আপনার সিদ্ধান্ত সংরক্ষণ হয়নি। বর্তমান অবস্থা দেখতে তালিকাটি আবার লোড করুন।</value>
+  </data>
 </root>

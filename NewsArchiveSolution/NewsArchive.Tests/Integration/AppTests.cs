@@ -2,10 +2,14 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using BLL;
+using BLL.DTOs;
 using BLL.Email;
+using BLL.Interfaces;
 using DAL.EF;
 using DAL.Interfaces;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using NewsArchive.Auth;
 using NewsArchive.Email;
@@ -201,7 +205,134 @@ namespace NewsArchive.Tests.Integration
             Assert.Equal(HttpStatusCode.Forbidden, (await author.PostAsJsonAsync($"/api/articles/{id}/approve", new { })).StatusCode);
             Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync($"/api/articles/{id}/approve", new { })).StatusCode);
             Assert.Equal(HttpStatusCode.OK, (await Client().GetAsync($"/api/articles/{id}")).StatusCode);
-            Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsJsonAsync($"/api/articles/{id}/reject", new { note = "late" })).StatusCode);
+            var late = await admin.PostAsJsonAsync($"/api/articles/{id}/reject", new { note = "late" });
+            Assert.Equal(HttpStatusCode.Conflict, late.StatusCode);
+            Assert.Contains("Only pending articles can be rejected.", await late.Content.ReadAsStringAsync());
+        }
+
+        [Fact]
+        public async Task A_decision_racing_another_editor_reports_a_conflict_not_a_wrong_state()
+        {
+            var admin = await SignedIn(roleId: 1);
+            var author = await SignedIn(roleId: 3);
+            var id = await WriteStory(author, await CreateSection(admin), "A story two editors open at the same time.", submit: true);
+
+            using var first = factory.Services.CreateScope();
+            using var second = factory.Services.CreateScope();
+            second.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository().Get(id);
+
+            Assert.Equal(ChangeResult.Done, first.ServiceProvider.GetRequiredService<IArticleService>().Approve(id, 1));
+            Assert.Equal(ChangeResult.Conflict, second.ServiceProvider.GetRequiredService<IArticleService>().Reject(id, 1, "too late"));
+
+            using var check = factory.Services.CreateScope();
+            var stored = check.ServiceProvider.GetRequiredService<IArticleService>().Get(id)!;
+            Assert.Equal(ArticleStatus.Published, stored.StatusId);
+            Assert.Null(stored.ReviewNote);
+        }
+
+        private static async Task<HttpResponseMessage> Edit(HttpClient editor, JsonElement story, string title, string? version) =>
+            await editor.PutAsJsonAsync($"/api/articles/{story.GetProperty("articleId").GetInt32()}", new
+            {
+                title,
+                summary = story.GetProperty("summary").GetString(),
+                content = story.GetProperty("content").GetString(),
+                categoryId = story.GetProperty("categoryId").GetInt32(),
+                languageCode = "en",
+                version
+            });
+
+        [Fact]
+        public async Task An_edit_from_a_stale_form_never_overwrites_a_newer_edit()
+        {
+            var first = await SignedIn(roleId: 1);
+            var second = await SignedIn(roleId: 1);
+            var id = await PublishStory(first, "The original text that two editors open together.");
+            async Task<JsonElement> Load() => JsonDocument.Parse(await Client().GetStringAsync($"/api/articles/{id}")).RootElement.Clone();
+
+            var firstForm = await Load();
+            var secondForm = await Load();
+            var version = firstForm.GetProperty("version").GetString();
+            Assert.Equal(version, secondForm.GetProperty("version").GetString());
+
+            Assert.Equal(HttpStatusCode.NoContent, (await Edit(first, firstForm, "First editor's headline", version)).StatusCode);
+            var stale = await Edit(second, secondForm, "Second editor's headline", version);
+            Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+            Assert.Contains("Someone else changed this article", await stale.Content.ReadAsStringAsync());
+            Assert.Equal(HttpStatusCode.Conflict, (await Edit(second, secondForm, "Edit without a version", null)).StatusCode);
+
+            var current = await Load();
+            Assert.Equal("First editor's headline", current.GetProperty("title").GetString());
+            Assert.NotEqual(version, current.GetProperty("version").GetString());
+            Assert.Equal(HttpStatusCode.NoContent, (await Edit(second, current, "Second editor after reloading", current.GetProperty("version").GetString())).StatusCode);
+        }
+
+        [Fact]
+        public async Task Two_saves_in_flight_from_the_same_version_cannot_both_win()
+        {
+            var admin = await SignedIn(roleId: 1);
+            var id = await PublishStory(admin, "A story saved twice at the same moment.");
+
+            using var first = factory.Services.CreateScope();
+            using var second = factory.Services.CreateScope();
+            var firstRepo = first.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository();
+            var secondRepo = second.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository();
+            var a = firstRepo.Get(id)!;
+            var b = secondRepo.Get(id)!;
+            a.Title = "Saved first";
+            a.UpdatedAt = DateTime.Now;
+            b.Title = "Saved second";
+            b.UpdatedAt = DateTime.Now.AddSeconds(1);
+
+            Assert.True(firstRepo.Update(a));
+            Assert.False(secondRepo.Update(b));
+
+            using var check = factory.Services.CreateScope();
+            Assert.Equal("Saved first", check.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository().Get(id)!.Title);
+        }
+
+        private sealed class OneMonthArchive : IArticleArchive
+        {
+            public List<ArticleDTO> GetArchive(int year, int? month, int? day, string? language, int page, int pageSize, out int total)
+            {
+                total = 0;
+                return new List<ArticleDTO>();
+            }
+
+            public List<ArchiveMonthDTO> GetArchiveMonths(string? language = null) =>
+                new() { new ArchiveMonthDTO { Year = 2001, Month = 2, Count = 4273 } };
+
+            public Dictionary<int, int> GetArchiveDayCounts(int year, int month, string? language = null) => new();
+        }
+
+        [Fact]
+        public async Task Archive_pages_depend_only_on_the_narrow_archive_contract()
+        {
+            using var app = factory.WithWebHostBuilder(b => b.ConfigureTestServices(s => s.AddScoped<IArticleArchive, OneMonthArchive>()));
+            var client = app.CreateClient();
+
+            Assert.Contains("\"count\":4273", await client.GetStringAsync("/api/archive"));
+            Assert.Contains("2001", await client.GetStringAsync("/archive"));
+        }
+
+        [Fact]
+        public async Task A_withdrawn_story_disappears_from_every_public_read_at_once()
+        {
+            var admin = await SignedIn(roleId: 1);
+            var token = "wd" + Guid.NewGuid().ToString("N")[..10];
+            var id = await PublishStory(admin, $"A story about the {token} bridge that will be withdrawn.");
+            var reader = Client();
+            Assert.Equal(HttpStatusCode.OK, (await reader.GetAsync($"/news/{id}")).StatusCode);
+            Assert.Contains($"\"articleId\":{id},", await reader.GetStringAsync("/api/articles?lang=en&q=" + token));
+            Assert.Contains($"\"articleId\":{id},", await reader.GetStringAsync("/api/articles?lang=en&pageSize=50"));
+
+            Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/articles/{id}")).StatusCode);
+
+            Assert.Equal(HttpStatusCode.NotFound, (await reader.GetAsync($"/news/{id}")).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await reader.GetAsync($"/api/articles/{id}")).StatusCode);
+            Assert.DoesNotContain($"\"articleId\":{id},", await reader.GetStringAsync("/api/articles?lang=en&q=" + token));
+            Assert.DoesNotContain($"\"articleId\":{id},", await reader.GetStringAsync("/api/articles?lang=en&pageSize=50"));
+            Assert.DoesNotContain($"\"articleId\":{id},", await reader.GetStringAsync("/api/articles/trending?lang=en&count=50"));
+            Assert.DoesNotContain(token, await reader.GetStringAsync("/rss.xml"));
         }
 
         [Fact]
