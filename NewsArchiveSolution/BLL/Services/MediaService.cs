@@ -1,19 +1,31 @@
+using System.Text.RegularExpressions;
 using BLL.DTOs;
 using BLL.Interfaces;
 using BLL.Media;
+using DAL.Interfaces;
 
 namespace BLL.Services
 {
-    public class MediaService : IMediaService
+    public partial class MediaService : IMediaService
     {
         private const int MinImageBytes = 64;
 
         private readonly IFileStorage storage;
+        private readonly IArticleRepository articleRepo;
+        private readonly IUserRepository userRepo;
 
-        public MediaService(IFileStorage storage)
+        public MediaService(IFileStorage storage, IDataAccessFactory factory)
         {
             this.storage = storage;
+            articleRepo = factory.GetArticleRepository();
+            userRepo = factory.GetUserRepository();
         }
+
+        [GeneratedRegex(@"^/uploads/articles/[0-9]{4}/[0-9]{2}/[0-9a-f]{32}\.(jpg|png|gif|webp)$", RegexOptions.CultureInvariant)]
+        private static partial Regex ArticleImagePath();
+
+        [GeneratedRegex(@"^/uploads/avatars/[0-9a-f]{32}\.(jpg|png|gif|webp)$", RegexOptions.CultureInvariant)]
+        private static partial Regex AvatarPath();
 
         public MediaUploadResultDTO SaveArticleImage(Stream content, long length)
         {
@@ -26,17 +38,18 @@ namespace BLL.Services
             return Save(content, length, MediaLimits.MaxAvatarBytes, "uploads/avatars");
         }
 
-        public bool IsUploaded(string? path)
+        public bool DeleteArticleImageIfUnused(string? path)
         {
-            return !string.IsNullOrWhiteSpace(path)
-                && path.StartsWith(MediaLimits.UploadPrefix, StringComparison.OrdinalIgnoreCase)
-                && !path.Contains("..", StringComparison.Ordinal);
+            if (path == null || !ArticleImagePath().IsMatch(path)) return false;
+            if (articleRepo.UsesImage(path) || userRepo.UsesAvatar(path)) return false;
+            return storage.Delete(path.TrimStart('/'));
         }
 
-        public void DeleteIfUploaded(string? path)
+        public bool DeleteAvatarIfUnused(string? path)
         {
-            if (IsUploaded(path))
-                storage.Delete(path!.TrimStart('/'));
+            if (path == null || !AvatarPath().IsMatch(path)) return false;
+            if (userRepo.UsesAvatar(path) || articleRepo.UsesImage(path)) return false;
+            return storage.Delete(path.TrimStart('/'));
         }
 
         private MediaUploadResultDTO Save(Stream content, long length, long maxBytes, string folder)

@@ -46,11 +46,6 @@ namespace BLL.Services
 
             if (existing != null && existing.ConfirmedAt != null && existing.UnsubscribedAt == null)
             {
-                if (existing.LanguageCode != lang)
-                {
-                    existing.LanguageCode = lang;
-                    repo.Save(existing);
-                }
                 result.Status = SubscribeStatus.AlreadySubscribed;
                 return result;
             }

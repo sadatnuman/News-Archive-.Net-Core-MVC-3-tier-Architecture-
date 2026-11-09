@@ -16,17 +16,42 @@ namespace DAL.Repos
             return db.Users.AsNoTracking().FirstOrDefault(u => u.UserId == id);
         }
 
+        public override bool Create(User entity)
+        {
+            try
+            {
+                return base.Create(entity);
+            }
+            catch (DbUpdateException ex) when (DbErrors.IsDuplicateKey(ex))
+            {
+                db.ChangeTracker.Clear();
+                return false;
+            }
+        }
+
         public override bool Delete(int id)
         {
-            var existing = db.Users.Find(id);
-            if (existing == null) return false;
-            if (db.Articles.Any(a => a.AuthorId == id || a.ReviewedById == id)) return false;
+            using var transaction = db.Database.BeginTransaction();
+            try
+            {
+                var existing = db.Users.Find(id);
+                if (existing == null) return false;
+                if (db.Articles.Any(a => a.AuthorId == id || a.ReviewedById == id)) return false;
 
-            db.CommentReports.Where(r => r.UserId == id).ExecuteDelete();
-            db.Comments.Where(c => c.ModeratedById == id).ExecuteUpdate(s => s.SetProperty(c => c.ModeratedById, (int?)null));
-            db.Comments.Where(c => c.UserId == id).ExecuteDelete();
-            db.Users.Remove(existing);
-            return db.SaveChanges() > 0;
+                db.CommentReports.Where(r => r.UserId == id).ExecuteDelete();
+                db.Comments.Where(c => c.ModeratedById == id).ExecuteUpdate(s => s.SetProperty(c => c.ModeratedById, (int?)null));
+                db.Comments.Where(c => c.UserId == id).ExecuteDelete();
+                db.Users.Remove(existing);
+                db.SaveChanges();
+                transaction.Commit();
+                return true;
+            }
+            catch (DbUpdateException ex) when (DbErrors.IsMissingReference(ex))
+            {
+                transaction.Rollback();
+                db.ChangeTracker.Clear();
+                return false;
+            }
         }
 
         public bool UpdatePasswordHash(int userId, string passwordHash)
@@ -34,6 +59,11 @@ namespace DAL.Repos
             return db.Users
                 .Where(u => u.UserId == userId)
                 .ExecuteUpdate(s => s.SetProperty(u => u.PasswordHash, passwordHash)) > 0;
+        }
+
+        public bool UsesAvatar(string avatarPath)
+        {
+            return db.Users.Any(u => u.AvatarPath == avatarPath);
         }
 
         public bool UpdateAvatar(int userId, string? avatarPath)

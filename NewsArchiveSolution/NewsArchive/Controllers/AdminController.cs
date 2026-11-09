@@ -158,6 +158,12 @@ namespace NewsArchive.Controllers
         [HttpPost]
         public IActionResult SendDigest(string language)
         {
+            if (!digestSender.CanSend)
+            {
+                Flash("warning", "Email delivery is turned off on this server, so no digest was sent.");
+                return RedirectToAction("Newsletter");
+            }
+
             var digest = newsletterService.BuildDigest(language);
             if (digest.Stories.Count == 0)
             {

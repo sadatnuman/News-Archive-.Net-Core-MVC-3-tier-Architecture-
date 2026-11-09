@@ -17,6 +17,8 @@ namespace NewsArchive.Email
             this.logger = logger;
         }
 
+        public bool IsEnabled => true;
+
         protected abstract IMailTransport CreateTransport();
 
         public async Task<bool> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)

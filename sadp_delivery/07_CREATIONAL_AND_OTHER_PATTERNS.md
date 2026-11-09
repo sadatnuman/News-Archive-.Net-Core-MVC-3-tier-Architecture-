@@ -4,7 +4,7 @@
 - its GoF participants exist in the code, with a file and line; and
 - a test exercises it.
 
-Using a framework feature does not count as implementing a GoF pattern. A class name does not count either. Paths are relative to `NewsArchiveSolution/` on branch `sadp/review-corrections`.
+Using a framework feature does not count as implementing a GoF pattern. A class name does not count either. Paths are relative to `NewsArchiveSolution/` on branch `sadp/final-hardening`.
 
 ## Creational patterns (midterm §9, W3)
 
@@ -21,10 +21,10 @@ Using a framework feature does not count as implementing a GoF pattern. A class 
 
 | Item | Detail |
 |---|---|
-| Participants | **Creator** `EmailSender` (`NewsArchive/Email/EmailSender.cs:11`), whose business logic is in `SendAsync` (`:22`). **Factory method** `CreateTransport()` (`:20`). **Concrete creators** `SmtpEmailSender`, `OutboxEmailSender`. **Product** `IMailTransport`. **Concrete products** `SmtpTransport`, `OutboxTransport`. Configuration picks the creator in `Program.cs:111–114`. |
+| Participants | **Creator** `EmailSender` (`NewsArchive/Email/EmailSender.cs`), whose business logic is in `SendAsync`. **Factory method** `CreateTransport()`. **Concrete creators** `OutboxEmailSender` (registered in Development) and `SmtpEmailSender` (kept dormant: never registered, ADR-007). **Product** `IMailTransport`. **Concrete products** `OutboxTransport`, `SmtpTransport`. Outside Development, `Program.cs:111-115` registers `DisabledEmailSender`, a plain `IEmailSender` that is **not** part of the pattern: it creates no product. |
 | Motivation | The two senders used to duplicate their logging and failure handling. A new channel should not touch existing code (OCP). |
-| Change in this revision | Outside Development with no SMTP host, `OutboxTransport` now throws "No email transport is configured" (`OutboxEmailSender.cs:39`). `SendAsync` turns that into `false`, so the sender no longer claims a mail was sent when nothing left the server. |
-| Tests | `Patterns/EmailSenderTests.cs` (5), including a contract test across two creators, and the Production-without-SMTP case |
+| Change in the final hardening | Real email is out of scope (owner's decision). Development uses the outbox creator; every other environment uses `DisabledEmailSender` (no transport, no per-mail log). The SMTP creator stays as the second concrete creator for the pattern and is covered only by non-network tests. |
+| Tests | `Patterns/EmailSenderTests.cs` (5), including a contract test across two creators; `HardeningTests.Outside_development_mail_is_disabled…` (2,000 sends, no SMTP socket) |
 | Drawbacks | Four small types instead of two. |
 
 ### Abstract Factory: present, verified
@@ -56,7 +56,7 @@ Using a framework feature does not count as implementing a GoF pattern. A class 
 | Can a test replace it? | Hard: the static access point is hard-wired | Easy: register a different instance |
 | Coupling | Every caller depends on the concrete class (it violates DIP) | Callers depend on what is injected; the lifetime is chosen in one place (`Program.cs`) |
 | Thread safety of creation | Must be hand-written (lock or `Lazy<T>`) | Handled by the container |
-| Weakness | Global state | Nothing stops someone writing `new LoginThrottle()` by hand; the guarantee holds only for instances taken from the container. In this code base the class is never created with `new` outside the container. |
+| Weakness | Global state | Nothing stops someone writing `new LoginThrottle()` by hand; the guarantee holds only for instances taken from the container. In this code base only the unit tests create it with `new`, which is exactly the testability benefit. |
 
 What to say in the viva: "The intent of Singleton is one instance with a well-known way to reach it. We kept the intent (one instance, proved by `Assert.Same`) but moved the guarantee from the class to the container. That removes the global access point the lecture warns about (W3 s11), so the class stays testable and DIP holds."
 

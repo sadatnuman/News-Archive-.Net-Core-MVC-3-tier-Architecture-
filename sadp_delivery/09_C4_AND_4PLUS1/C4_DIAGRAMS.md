@@ -29,13 +29,13 @@ The Mermaid sources below match the images. They are kept as text so the diagram
 | System boundary shown | The system is one box | Dashed boundary around 5 containers |
 | Element types labelled | Person / Software System / External System | Person / Container / External System |
 | Technology shown | Only on arrows (L1 has no technology inside the system) | On every container and on every arrow |
-| Arrows labelled with intent and protocol | Yes (7) | Yes (10) |
+| Arrows labelled with intent and protocol | Yes (6) | Yes (9) |
 | Key | Yes | Yes |
 
 **Corrections made in this revision:**
 - **Level 2, browser scripts.** This container is now *delivered by* the web application. Before, it was drawn as if it were deployed on its own. It is a real container because its code runs in a different place: the reader's browser, including the service worker.
 - **Level 2, CDN.** The font and icon CDN was added, because the browser scripts call it.
-- **Level 2, SMTP arrow.** It now says "when configured". Without an SMTP host, nothing is sent outside Development (`OutboxEmailSender` reports a failure).
+- **SMTP removed (final hardening).** The app never connects to a mail provider (ADR-007), so the SMTP external system and its arrow were removed from L1 and L2. A note on each figure says that real email is not implemented and that Development writes to a private outbox.
 - **Level 3.** The auth filters are drawn as running *before* the controllers. Before, they were drawn as something the controllers call. Every arrow now has a label.
 - **Not containers:** UI, BLL and DAL are three assemblies loaded into one process. The MVC site and the REST API are the same deployable. So they are one container, and the layers appear only at Level 3.
 
@@ -43,7 +43,7 @@ The Mermaid sources below match the images. They are kept as text so the diagram
 
 **Why this view (two lines for midterm §4):**
 - It shows the whole Newsfolio as one box, with every kind of user and every outside system it depends on. Anyone can read it in a minute [6], [9, L2].
-- It fixes the system boundary before any technology talk. That matters here, because three roles share one system and email is the only outside service our server calls.
+- It fixes the system boundary before any technology talk. That matters here, because three roles share one system and our server calls no outside service: fonts load in the browser, and real email is not implemented.
 
 ```mermaid
 flowchart LR
@@ -52,7 +52,6 @@ flowchart LR
     admin([Admin<br/>Person: reviews, schedules, moderates,<br/>sends the digest])
     apiclient[API client<br/>External system: app or script using the REST API]
     system[["The Meridian Newsfolio<br/>Software system: bilingual EN/BN news archive<br/>with editorial review, word search, recommendations,<br/>comment moderation and newsletter"]]
-    smtp[SMTP mail provider<br/>External system, optional]
     crawlers[Search engines and feed readers<br/>External systems]
     cdn[Font and icon CDN<br/>External system: Google Fonts, jsDelivr]
 
@@ -61,7 +60,6 @@ flowchart LR
     admin -- "Reviews, schedules, moderates<br/>[HTTPS, web browser]" --> system
     apiclient -- "Calls JSON endpoints<br/>[HTTPS/JSON, bearer token]" --> system
     crawlers -- "Fetch pages, sitemap, RSS<br/>[HTTPS, XML]" --> system
-    system -- "Sends emails<br/>[SMTP over TLS]" --> smtp
     reader -. "Browser loads fonts and icons<br/>[HTTPS]" .-> cdn
 ```
 
@@ -75,13 +73,12 @@ flowchart TB
     apiclient[API client<br/>External system]
     crawlers[Search engines and feed readers<br/>External systems]
     cdn[Font and icon CDN<br/>External system]
-    smtp[SMTP mail provider<br/>External system, optional]
     subgraph newsfolio[The Meridian Newsfolio: software system boundary]
         browser["Browser scripts<br/>[Container: JavaScript + service worker, runs in the browser]<br/>theme, search suggestions, Markdown preview, offline page"]
         web["Web application<br/>[Container: ASP.NET Core 10 MVC + Web API on Kestrel]<br/>UI, BLL and DAL in one process; Razor pages, JSON API, Swagger,<br/>background publisher and digest sender"]
         db[("Database<br/>[Container: SQL Server, EF Core migrations]<br/>articles, users, comments, word index, audit log")]
         files[("Uploaded pictures<br/>[Container: file system, wwwroot/uploads]")]
-        outbox[("Mail outbox<br/>[Container: file system, App_Data/outbox, Development only]")]
+        outbox[("Mail outbox<br/>[Container: private file folder, App_Data/outbox, Development only]")]
     end
 
     people -- "Visits pages, posts forms<br/>[HTTPS]" --> web
@@ -93,7 +90,6 @@ flowchart TB
     web -- "Reads and writes<br/>[EF Core 10, TDS over TCP 1433]" --> db
     web -- "Saves and deletes pictures<br/>[file I/O]" --> files
     web -- "Writes email copies<br/>[file I/O]" --> outbox
-    web -- "Sends email when configured<br/>[SMTP over TLS]" --> smtp
 ```
 
 ## Level 3: Components inside the web application (Week 12 checkpoint)
@@ -105,8 +101,8 @@ flowchart TB
         mvc["MVC controllers<br/>[Component: 16 controllers + AppController base]<br/>Article, Admin, Auth, Archive, Newsletter…"]
         api["API controllers<br/>[Component: 12 controllers + ApiControllerBase, /api]"]
         svc["Business services<br/>[Component: BLL, 17 services + rules]<br/>ArticleService + ArticleBuilder, RecommendationService, NewsletterService…"]
-        jobs["Background jobs<br/>[Component: .NET hosted services]<br/>ScheduledPublisher (every 30 s), DigestSender (queue)"]
-        mail["Email delivery<br/>[Component: Factory Method]<br/>EmailSender → SMTP or outbox transport, MailComposer (EN/BN)"]
+        jobs["Background jobs<br/>[Component: .NET hosted services]<br/>ScheduledPublisher (every 30 s), MaintenanceJob (every 24 h), DigestSender (queue)"]
+        mail["Email delivery<br/>[Component: Factory Method]<br/>Development: OutboxEmailSender; elsewhere: DisabledEmailSender; SmtpEmailSender dormant; MailComposer (EN/BN)"]
         infra["Infrastructure adapters<br/>[Component]<br/>MemoryAppCache, WebRootFileStorage, HttpActorContext"]
         dal["Data access<br/>[Component: DAL, EF Core 10]<br/>IDataAccessFactory → 11 repositories, NewsArchiveDbContext"]
     end

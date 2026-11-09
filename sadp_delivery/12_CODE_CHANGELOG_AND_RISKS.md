@@ -1,8 +1,19 @@
 # 12 · Code Changelog and Risks
 
+## Revision 3: `sadp/final-hardening` (from `main@12d1893`)
+
+The full file list, commits, rollback and risks are in `FINAL_CHANGELOG.md`; findings and tests are in `SECURITY_REVIEW_FINDINGS_AND_FIXES.md`.
+
+**Summary:**
+- P0 cross-user picture deletion and P0 parallel lockout bypass: fixed.
+- P1 missing section, user delete, duplicate registration and API `version`: fixed.
+- Email disabled outside Development (ADR-007).
+- Seven P2 items fixed.
+- 137 tests; smoke 45/45; no new migration.
+
 ## Revision 2: `sadp/review-corrections` (from `main@484deb3`)
 
-**State.** Committed locally on `sadp/review-corrections`. **Not pushed, not merged.** The exact commit SHA is in `SADP_HANDOFF_FOR_CHATGPT.md`.
+**State.** Pushed by the user and merged into `main` as `12d1893` (pull request #10).
 
 | # | Review point → problem | Design choice | Files | Tests | Result | Trade-off / rollback |
 |---|---|---|---|---|---|---|

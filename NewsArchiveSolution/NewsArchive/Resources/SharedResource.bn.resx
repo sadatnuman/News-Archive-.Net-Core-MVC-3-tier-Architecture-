@@ -1776,4 +1776,10 @@
   <data name="Another editor acted on this story at the same moment. Your decision was not saved. Reload the queue to see its current state." xml:space="preserve">
     <value>ঠিক একই সময়ে অন্য একজন সম্পাদক এই খবরের সিদ্ধান্ত নিয়েছেন। আপনার সিদ্ধান্ত সংরক্ষণ হয়নি। বর্তমান অবস্থা দেখতে তালিকাটি আবার লোড করুন।</value>
   </data>
+  <data name="This section no longer exists. Choose another section; your text has been kept." xml:space="preserve">
+    <value>এই বিভাগটি আর নেই। অন্য একটি বিভাগ বেছে নিন; আপনার লেখা রাখা আছে।</value>
+  </data>
+  <data name="Email delivery is turned off on this server, so no digest was sent." xml:space="preserve">
+    <value>এই সার্ভারে ইমেইল পাঠানো বন্ধ আছে, তাই কোনো ডাইজেস্ট পাঠানো হয়নি।</value>
+  </data>
 </root>

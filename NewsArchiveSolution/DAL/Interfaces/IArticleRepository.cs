@@ -12,6 +12,8 @@ namespace DAL.Interfaces
 
         bool IsPublished(int articleId);
 
+        bool UsesImage(string imagePath);
+
         void ReplaceWords(int articleId, IEnumerable<string> words);
 
         List<Article> GetUnindexed(int count);
@@ -49,7 +51,7 @@ namespace DAL.Interfaces
 
         List<Article> GetByStatus(int statusId);
 
-        List<Article> GetPublishedForSitemap();
+        List<Article> GetPublishedForSitemap(DateTime? since, int max);
 
         List<Article> GetWithoutSlug();
 

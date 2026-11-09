@@ -40,6 +40,16 @@ namespace NewsArchive.Tests.Integration
             };
         }
 
+        public static object? Scalar(string sql, params (string Name, object Value)[] parameters)
+        {
+            using var connection = new SqlConnection(Connection);
+            connection.Open();
+            using var command = new SqlCommand(sql, connection);
+            foreach (var (name, value) in parameters)
+                command.Parameters.AddWithValue(name, value);
+            return command.ExecuteScalar();
+        }
+
         public static void Execute(string sql, params (string Name, object Value)[] parameters)
         {
             using var connection = new SqlConnection(Connection);

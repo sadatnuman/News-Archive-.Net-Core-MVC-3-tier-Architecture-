@@ -11,8 +11,6 @@ namespace NewsArchive.Email
         public string OutboxFolder { get; set; } = "App_Data/outbox";
 
         public SmtpOptions Smtp { get; set; } = new();
-
-        public bool UseSmtp => !string.IsNullOrWhiteSpace(Smtp.Host);
     }
 
     public class SmtpOptions

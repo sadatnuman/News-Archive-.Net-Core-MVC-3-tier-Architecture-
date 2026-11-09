@@ -98,13 +98,12 @@ def context():
     s.box(30, 380, 250, 120, EXTERNAL, ["Font and icon CDN", "[External System]", "Google Fonts, jsDelivr", "(Bootstrap Icons)"])
     s.box(1120, 380, 250, 120, EXTERNAL, ["Search engines and", "feed readers", "[External Systems]", "crawl pages, sitemap, RSS"])
     s.box(110, 680, 300, 120, EXTERNAL, ["API client", "[External System]", "App or script using the", "token-protected REST API"])
-    s.box(990, 680, 300, 120, EXTERNAL, ["SMTP mail provider", "[External System, optional]", "Delivers confirmation, digest", "and reset-code emails"])
+    s.text(1000, 700, ["No email provider is connected.", "Real email is not implemented;", "Development writes mails to a", "private local outbox file."], size=15, color="#333", anchor="start")
     s.arrow(300, 255, 560, 360, ["Reads and searches news,", "comments, subscribes", "[HTTPS, web browser]"], lx=540, ly=268)
     s.arrow(700, 255, 700, 360, ["Writes and submits stories", "[HTTPS, web browser]"], lx=805, ly=300)
     s.arrow(1100, 255, 840, 360, ["Reviews, schedules,", "moderates", "[HTTPS, web browser]"], lx=1135, ly=300)
     s.arrow(1120, 440, 950, 440, ["Fetch pages,", "sitemap, RSS", "[HTTPS, XML]"], lx=1035, ly=470)
     s.arrow(330, 680, 520, 530, ["Calls JSON endpoints", "[HTTPS/JSON, bearer token]"], lx=280, ly=600)
-    s.arrow(880, 530, 1080, 680, ["Sends emails", "[SMTP over TLS]"], lx=1110, ly=600)
     s.arrow(200, 255, 155, 380, ["Browser loads", "fonts and icons", "[HTTPS]"], lx=110, ly=300, dotted=True)
     s.legend(870, [(PERSON, "Person", "box"), (SYSTEM, "System in scope", "box"), (EXTERNAL, "External system", "box"),
                    (None, "Call made by the browser, not the server", "dotted")])
@@ -126,8 +125,8 @@ def containers():
     s.cylinder(560, 700, 360, 170, CONTAINER, ["Database", "[Container: SQL Server,", "EF Core migrations]",
                                                "Articles, users, comments,", "word index, audit log"])
     s.cylinder(110, 710, 260, 150, CONTAINER, ["Uploaded pictures", "[Container: file system,", "wwwroot/uploads]"])
-    s.cylinder(990, 710, 190, 150, CONTAINER, ["Mail outbox", "[Container: file", "system, App_Data,", "Development only]"])
-    s.box(1250, 480, 230, 120, EXTERNAL, ["SMTP mail provider", "[External System,", "optional]"])
+    s.cylinder(990, 710, 190, 150, CONTAINER, ["Mail outbox", "[Container: private", "file folder, App_Data,", "Development only]"])
+    s.text(1225, 470, ["No email provider:", "real email is not", "implemented. Mail is", "only written to the", "Development outbox."], size=14, color="#333", anchor="start")
     s.arrow(470, 212, 640, 340, ["Visits pages,", "posts forms", "[HTTPS]"], lx=470, ly=296)
     s.arrow(820, 210, 820, 340, ["Calls REST API", "[HTTPS/JSON,", "bearer token]"], lx=895, ly=232)
     s.arrow(1130, 210, 920, 340, ["Reads sitemap,", "RSS, pages", "[HTTPS/XML]"], lx=1190, ly=232)
@@ -137,7 +136,6 @@ def containers():
     s.arrow(740, 530, 740, 700, ["Reads and writes", "[EF Core 10,", "TDS over TCP 1433]"], lx=820, ly=600)
     s.arrow(580, 530, 300, 710, ["Saves and deletes", "pictures [file I/O]"], lx=390, ly=610)
     s.arrow(900, 530, 1060, 710, ["Writes email copies", "[file I/O]"], lx=1050, ly=610)
-    s.arrow(940, 430, 1250, 530, ["Sends email when", "configured", "[SMTP over TLS]"], lx=1095, ly=398)
     s.legend(970, [(PERSON, "Person", "box"), (CONTAINER, "Container", "box"), (EXTERNAL, "External system", "box"),
                    (None, "System boundary", "dash"), (None, "Call made by the browser", "dotted")])
     return s.save("c4_level2_containers.svg")

@@ -36,17 +36,17 @@ There is no Week 7 deck: W6 s24 says it is the mid-term examination.
 | W4 | Adapter / Facade / Proxy / Decorator / Composite | DOCUMENTED (see `07`) | Adapter-like transports; Facade proposed; Composite N/A | — |
 | W5 | Strategy / Observer / Command / Template Method / State | DOCUMENTED (see `07`) | State and Strategy proposed with triggers | — |
 | W6 s5–10 | Monolith pain points, decomposition | DOCUMENTED | Midterm §8 | — |
-| W6 s11–19 | API Gateway, EDA, Circuit Breaker, Saga | N/A today | One deployable and no remote business dependency except SMTP (optional, already contained by `EmailSender`) | — |
+| W6 s11–19 | API Gateway, EDA, Circuit Breaker, Saga | N/A today | One deployable and no remote business dependency at all (real email is not implemented; ADR-007) | — |
 | W8 s6–8 | Vertical vs horizontal scaling | DOCUMENTED | `08` Scalability: scale-out is blocked by in-memory state | — |
 | W8 s11–13 | Sharding, consistent hashing | N/A | 28–10,000 stories fit one database; sharding needs a measured need | — |
-| W8 s15–17 | Retry, timeout, bulkhead, fallback | PARTIAL | SMTP timeout 5–120 s (`SmtpEmailSender.cs`); background queue; no retry (a retried digest could double-send) | EmailSenderTests |
+| W8 s15–17 | Retry, timeout, bulkhead, fallback | PARTIAL | Fallback: mail is disabled outside Development and returns `false` without a log storm; background queue for digests; no retry (a retried digest could double-send); the dormant SMTP transport has a 5–120 s timeout | EmailSenderTests, HardeningTests |
 | W8 s18–20 | Load balancing | N/A until 2 instances exist | Round robin would do for these short stateless requests, after ADR-005 | — |
 | W8 s21–23 | ATAM | DOCUMENTED | `08` mini-ATAM | — |
 | W9 s5–6 | p50 / p95 / p99 | MEASURED | Search benchmark with 5,024 stories (`08`, `11`); script `tools/smoke/smoke.py` | Re-runnable |
 | W9 s7–10 | Cache-aside with TTL | VERIFIED | `IAppCache.GetOrCreate` with 30 min / 2 min TTLs and region invalidation (`NewsArchive/Caching/MemoryAppCache.cs:7`); no write-through or read-through | — |
 | W9 s11–14 | Zero Trust, JWT / OAuth2 / API key | VERIFIED (accurately named) | Every request is authenticated per endpoint. **The API uses opaque 256-bit random tokens stored as SHA-256 hashes, not JWT.** No OAuth2 or OIDC. | AppTests roles |
 | W9 s16–19 | Observability | PARTIAL | Compiled structured logging (`LoggerMessage`), masked emails, `ProblemDetails` with a trace id; no metrics or tracing pipeline | — |
-| W9 s20–23 | ADRs | IMPLEMENTED (documents) | `10_ADRS/` (Week 9 milestone, post-midterm) | — |
+| W9 s20–23 | ADRs | IMPLEMENTED (documents) | `10_ADRS/`: ADR-001…008 (ADR-007 offline email, ADR-008 lockout reservation; ADR-005 still Proposed) | — |
 | W10 s5–11 | Decentralized / blockchain | N/A | The newsroom is the single trusted owner, with no distrusting parties sharing a ledger. The audit log is append-only (W10 s11: "a normal append-only audit log … gives most of the benefit"). Hash-chaining the audit log is a possible future step; it would still **not** be a blockchain. | — |
 | W10 s13–20 | IoT, MQTT, edge | N/A | No devices or telemetry in a news archive | — |
 | W11 | Agents, RAG, multi-agent | N/A now, future option | Need: a possible "ask the archive" Q&A. Benefit: grounded answers with citations. Cost: an LLM API budget plus a vector store. Risk: hallucinated news and PII. **Verdict: not built.** Recommendations stay deterministic and are **not** AI. | — |

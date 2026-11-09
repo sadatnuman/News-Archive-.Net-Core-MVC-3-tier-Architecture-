@@ -29,11 +29,24 @@
 | 7. Documents and handoff | Done | 04, 05, 07, 08, 09, 11, 12, 13, 15, draft, handoff |
 | 8. Commit | Done | Local commit on `sadp/review-corrections` only |
 
+## Revision 3 (final hardening) phases
+
+| Phase | Status | Notes |
+|---|---|---|
+| 0. Baseline | Done | `main@12d1893`; build 0/0; 116/116 |
+| 1. P0 picture deletion | Done | Canonical paths + reference check; isolated web-root tests; mutation-checked |
+| 2. P0 lockout race | Done | `LoginThrottle.Attempt`; unit and HTTP concurrency tests; mutation-checked |
+| 3–6. P1 section, user delete, registration, API version | Done | DAL error classification (`DbErrors`), transaction, 400 contract |
+| 7. P2 + offline email | Done | DisabledEmailSender, maintenance job, sitemap query, auto-hide, delete race, newsletter language, feed cache |
+| 8–9. Academic docs | Done | Draft, traceability, applicability matrix, ADR-007/008, diagrams without SMTP |
+| 10. Gates | Done | 137/137; smoke 45/45; EF no pending changes; diff check clean |
+| 11. Commit | Done | Local commits on `sadp/final-hardening` only; not pushed |
+
 ## Continuation instruction
 
 If anything must be redone:
 
-1. Check out `sadp/review-corrections`.
+1. Check out `sadp/final-hardening`.
 2. Read `15_REMAINING_ACTIONS_P0_P1_P2.md` and run its follow-up prompt.
 3. Never touch `NewsArchiveDB`. Use `NewsArchiveTestDB` and `NewsArchiveSmokeDB` only.
 4. Do not push.

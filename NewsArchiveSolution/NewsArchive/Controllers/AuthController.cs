@@ -49,21 +49,19 @@ namespace NewsArchive.Controllers
             ViewBag.ReturnUrl = returnUrl;
             if (!ModelState.IsValid) return View(model);
 
-            if (throttle.IsLocked(model.Email))
+            AuthUserDTO? user = null;
+            var outcome = throttle.Attempt(model.Email, () => (user = authService.Authenticate(model.Email, model.Password)) != null);
+            if (outcome == LoginThrottle.Outcome.Locked)
             {
                 Flash("danger", "Too many failed attempts. Try again in 15 minutes.");
                 return View(model);
             }
-
-            var user = authService.Authenticate(model.Email, model.Password);
             if (user == null)
             {
-                throttle.RecordFailure(model.Email);
                 Flash("danger", "Invalid username/email or password");
                 return View(model);
             }
 
-            throttle.Reset(model.Email);
             await SignInUserAsync(user);
             return RedirectToLocal(returnUrl);
         }

@@ -69,6 +69,16 @@ namespace NewsArchive.Tests.Services
         }
 
         [Fact]
+        public void Knowing_an_email_is_not_enough_to_change_its_digest_language()
+        {
+            var service = Service();
+            service.Confirm(service.Subscribe("reader@example.com", "en").ConfirmToken!);
+
+            Assert.Equal(SubscribeStatus.AlreadySubscribed, service.Subscribe("reader@example.com", "bn").Status);
+            Assert.Equal("en", store[0].LanguageCode);
+        }
+
+        [Fact]
         public void Old_confirmation_links_expire()
         {
             var service = Service();

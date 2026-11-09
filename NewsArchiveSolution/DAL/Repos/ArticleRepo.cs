@@ -11,6 +11,32 @@ namespace DAL.Repos
         {
         }
 
+        public override bool Create(Article entity)
+        {
+            try
+            {
+                return base.Create(entity);
+            }
+            catch (DbUpdateException ex) when (DbErrors.IsMissingReference(ex))
+            {
+                db.ChangeTracker.Clear();
+                return false;
+            }
+        }
+
+        public override bool Update(Article entity)
+        {
+            try
+            {
+                return base.Update(entity);
+            }
+            catch (DbUpdateException ex) when (DbErrors.IsMissingReference(ex))
+            {
+                db.ChangeTracker.Clear();
+                return false;
+            }
+        }
+
         private IQueryable<Article> Published(string? language = null)
         {
             var query = db.Articles.AsNoTracking().Where(a => a.StatusId == ArticleStatusIds.Published);
@@ -78,6 +104,11 @@ namespace DAL.Repos
         public bool IsPublished(int articleId)
         {
             return db.Articles.Any(a => a.ArticleId == articleId && a.StatusId == ArticleStatusIds.Published);
+        }
+
+        public bool UsesImage(string imagePath)
+        {
+            return db.Articles.Any(a => a.ImagePath == imagePath);
         }
 
         public void ReplaceWords(int articleId, IEnumerable<string> words)
@@ -274,9 +305,12 @@ namespace DAL.Repos
                 .ToList();
         }
 
-        public List<Article> GetPublishedForSitemap()
+        public List<Article> GetPublishedForSitemap(DateTime? since, int max)
         {
-            return Cards(Published().OrderByDescending(a => a.PublishDate))
+            var query = Published();
+            if (since.HasValue)
+                query = query.Where(a => a.PublishDate >= since.Value);
+            return Cards(query.OrderByDescending(a => a.PublishDate).Take(max))
                 .ToList();
         }
 

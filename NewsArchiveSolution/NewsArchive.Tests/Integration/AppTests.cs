@@ -258,7 +258,7 @@ namespace NewsArchive.Tests.Integration
             var stale = await Edit(second, secondForm, "Second editor's headline", version);
             Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
             Assert.Contains("Someone else changed this article", await stale.Content.ReadAsStringAsync());
-            Assert.Equal(HttpStatusCode.Conflict, (await Edit(second, secondForm, "Edit without a version", null)).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Edit(second, secondForm, "Edit without a version", null)).StatusCode);
 
             var current = await Load();
             Assert.Equal("First editor's headline", current.GetProperty("title").GetString());

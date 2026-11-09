@@ -30,11 +30,51 @@ namespace NewsArchive.Tests.Security
             var http = Http("10.0.0.1");
             var throttle = new LoginThrottle(Cache(), http);
             for (var i = 0; i < LoginThrottle.MaxFailures; i++)
-                throttle.RecordFailure(" Admin@Site.test");
+                Assert.Equal(LoginThrottle.Outcome.Failed, throttle.Attempt(" Admin@Site.test", () => false));
 
             Assert.True(throttle.IsLocked("admin@site.test"));
+            Assert.Equal(LoginThrottle.Outcome.Locked, throttle.Attempt("admin@site.test", () => true));
             http.HttpContext!.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.2");
             Assert.False(throttle.IsLocked("admin@site.test"));
+        }
+
+        [Fact]
+        public async Task Twenty_simultaneous_wrong_passwords_get_at_most_five_checks()
+        {
+            var throttle = new LoginThrottle(Cache(), Http("10.0.0.9"));
+            using var gate = new ManualResetEventSlim(false);
+            var checks = 0;
+
+            var attempts = Enumerable.Range(0, 20).Select(_ => Task.Run(() => throttle.Attempt("victim@site.test", () =>
+            {
+                Interlocked.Increment(ref checks);
+                gate.Wait(TimeSpan.FromSeconds(10));
+                return false;
+            }))).ToArray();
+            while (Volatile.Read(ref checks) < LoginThrottle.MaxFailures && attempts.Count(t => t.IsCompleted) < 20 - LoginThrottle.MaxFailures)
+                await Task.Delay(10);
+            await Task.Delay(100);
+            gate.Set();
+            var outcomes = await Task.WhenAll(attempts);
+
+            Assert.Equal(LoginThrottle.MaxFailures, checks);
+            Assert.Equal(LoginThrottle.MaxFailures, outcomes.Count(o => o == LoginThrottle.Outcome.Failed));
+            Assert.Equal(20 - LoginThrottle.MaxFailures, outcomes.Count(o => o == LoginThrottle.Outcome.Locked));
+            Assert.Equal(LoginThrottle.Outcome.Locked, throttle.Attempt("victim@site.test", () => true));
+        }
+
+        [Fact]
+        public void A_correct_password_clears_earlier_failures_and_a_crash_does_not_count()
+        {
+            var throttle = new LoginThrottle(Cache(), Http("10.0.0.3"));
+            for (var i = 0; i < LoginThrottle.MaxFailures - 1; i++)
+                throttle.Attempt("reader@site.test", () => false);
+
+            Assert.Equal(LoginThrottle.Outcome.Succeeded, throttle.Attempt("reader@site.test", () => true));
+            Assert.Throws<InvalidOperationException>(() => throttle.Attempt("reader@site.test", () => throw new InvalidOperationException()));
+            for (var i = 0; i < LoginThrottle.MaxFailures - 1; i++)
+                Assert.Equal(LoginThrottle.Outcome.Failed, throttle.Attempt("reader@site.test", () => false));
+            Assert.False(throttle.IsLocked("reader@site.test"));
         }
 
         [Fact]

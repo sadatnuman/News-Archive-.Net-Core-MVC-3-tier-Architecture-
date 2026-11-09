@@ -13,7 +13,7 @@
 | 2 Problem & motivation | The real problem and why it needs a deliberate architecture | Problem: small newsrooms publish bilingual news without review, history or search; publishing an unreviewed story is a legal and trust risk. Architecture is needed for review integrity, Bangla search, and growth. | DRAFT TEXT BELOW |
 | 3 Scope, actors, stakeholders | In / out of scope; actors; stakeholders | In: FR-1…12. Out: payments, mobile apps, live video, AI, multi-tenant. Actors: Reader, Author, Admin, API client, Scheduler. Stakeholders: editors-in-chief, advertisers (future), subscribers, the course instructor, hosting operator. | READY |
 | 4 FRs ★ | ≥ 6, each with ID, actor, priority, testable | 12 FRs in `02` | READY |
-| 5 NFRs ★★ | All six, measurable | `08` table: each with a number, a tactic, evidence and a status (VERIFIED / MEASURED / TARGET / NOT VERIFIED). Performance now measured with 5,024 stories. | READY |
+| 5 NFRs ★★ | All six, measurable | `08` table: each with a number, a tactic, evidence and a status (VERIFIED / MEASURED / TARGET / NOT VERIFIED). Performance measured with 5,024 stories. Scalability's ≥ 40 req/s goal was missed in the final run (38.9) and is reported as such. Availability is measured as offline failure isolation; real email is out of scope. | READY |
 | 6 Architecture vs design | Hard to reverse vs cheap | Midterm draft §1 | READY |
 | 7 Style & justification | Layered / MVC / client–server; monolith vs SOA; what was rejected | Midterm draft §2 | READY |
 | 8 One diagram | C4 L1/L2 or 4+1 logical | **Rendered** `09_C4_AND_4PLUS1/c4_level2_containers.png` (L2; L1 goes to the midterm) | READY |

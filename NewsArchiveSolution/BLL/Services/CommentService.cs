@@ -32,11 +32,6 @@ namespace BLL.Services
 
         private static string Excerpt(string text) => text.Length > 120 ? text[..120] + "…" : text;
 
-        public List<CommentDTO> Get()
-        {
-            return mapper.Map<List<CommentDTO>>(repo.Get());
-        }
-
         public CommentDTO? Get(int id)
         {
             var data = repo.Get(id);
@@ -54,11 +49,6 @@ namespace BLL.Services
             if (!repo.Create(converted)) return false;
             c.CommentId = converted.CommentId;
             return true;
-        }
-
-        public bool Update(CommentDTO c)
-        {
-            return repo.Update(mapper.Map<Comment>(c));
         }
 
         public bool Delete(int id)
@@ -99,7 +89,7 @@ namespace BLL.Services
             var reports = repo.CountReports(commentId);
             if (ModerationRules.ShouldAutoHide(reports))
             {
-                repo.SetHidden(commentId, true, null, SiteClock.Now);
+                if (!repo.HideIfVisible(commentId, SiteClock.Now)) return ReportResult.AutoHidden;
                 cache.Invalidate(CacheRegions.Content);
                 audit.Record(AuditActions.CommentAutoHidden, AuditEntities.Comment, commentId, $"{reports} reports; {Excerpt(comment.Text)}");
                 return ReportResult.AutoHidden;

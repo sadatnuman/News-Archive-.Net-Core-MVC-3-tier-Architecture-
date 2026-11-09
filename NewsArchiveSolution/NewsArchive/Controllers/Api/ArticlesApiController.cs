@@ -130,7 +130,10 @@ namespace NewsArchive.Controllers.Api
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        [EndpointSummary("Edit an article")]
+        [EndpointDescription("Send the full article plus the \"version\" value from GET /api/articles/{id}. A missing or malformed version gives 400; a version that is no longer current (someone saved or decided the story after you loaded it) gives 409, and you should load the article again.")]
         public async Task<IActionResult> Update(int id, [FromBody] ArticleFormDTO form, [FromQuery] bool submit = false)
         {
             var article = articleService.Get(id);
@@ -139,6 +142,12 @@ namespace NewsArchive.Controllers.Api
             var user = await RequireApiUserAsync();
             if (!ArticleRules.CanEdit(article.AuthorId, article.StatusId, user.UserId, user.RoleId))
                 return Forbidden("You cannot edit this article.");
+
+            if (!ArticleRules.IsWellFormedVersion(form.Version))
+            {
+                ModelState.AddModelError("version", ArticleMessages.VersionRequired);
+                return ValidationProblem(ModelState);
+            }
 
             if (categoryService.Get(form.CategoryId) == null)
             {
@@ -171,7 +180,7 @@ namespace NewsArchive.Controllers.Api
             if (!articleService.Delete(id, user.UserId, user.RoleId))
                 return Problem(statusCode: StatusCodes.Status409Conflict, title: "The article could not be deleted.");
 
-            mediaService.DeleteIfUploaded(article.ImagePath);
+            mediaService.DeleteArticleImageIfUnused(article.ImagePath);
             return NoContent();
         }
 

@@ -57,7 +57,15 @@ namespace DAL.Repos
             if (existing == null) return false;
 
             set.Remove(existing);
-            return db.SaveChanges() > 0;
+            try
+            {
+                return db.SaveChanges() > 0;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                db.ChangeTracker.Clear();
+                return false;
+            }
         }
 
         public virtual int Count()

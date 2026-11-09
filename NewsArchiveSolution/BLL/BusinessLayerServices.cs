@@ -45,6 +45,11 @@ namespace BLL
             provider.GetRequiredService<IArticleService>().EnsureSlugs();
             provider.GetRequiredService<ICategoryService>().EnsureSlugs();
             provider.GetRequiredService<ITagService>().EnsureSlugs();
+            provider.PurgeExpiredData();
+        }
+
+        public static void PurgeExpiredData(this IServiceProvider provider)
+        {
             provider.GetRequiredService<IAuthService>().PurgeExpiredTokens();
             provider.GetRequiredService<IAuditService>().PurgeOld();
             provider.GetRequiredService<INewsletterService>().PurgeStale();

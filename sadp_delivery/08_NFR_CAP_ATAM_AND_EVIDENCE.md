@@ -19,11 +19,11 @@
 | Attribute | Measurable target | Tactics in the design | Evidence | Status |
 |---|---|---|---|---|
 | Reliability | (a) A review decision is stored exactly once, and the losing editor is told so. (b) An edit from an out-of-date form never overwrites a newer edit. (c) A scheduled story goes live within 60 s of its time, exactly once. (d) No subscriber gets two digests within 6 days. | `StatusId` and `UpdatedAt` concurrency tokens; form version check; `ChangeResult.Conflict` → 409 with its own message; atomic `PublishDue`; digest gap filter plus a per-edition queue guard. | Tests: `Two_reviewers_cannot_both_decide_…`, `A_decision_racing_another_editor_…`, `An_edit_from_a_stale_form_…`, `Two_saves_in_flight_…`, `NewsletterServiceTests.Digest_skips…`. Smoke: API 409 and MVC conflict page; scheduled story live after 85 s. | (a), (b), (d) VERIFIED. (c) MEASURED (one run). |
-| Security | 0 unpublished stories visible to the public. Admin-only actions answer 403 to other roles. 5 failed sign-ins per email+IP lock that pair for 15 min. PBKDF2 with 100k iterations. Every form POST needs an antiforgery token. Every AutoMapper map has a depth limit. | Role filters, `ArticleRules.CanView`, `LoginThrottle`, `PasswordResetStore`, CSP, rate limits, HttpOnly cookies, API tokens stored as SHA-256 hashes, `MaxDepth(3)` on every map. | `SecurityTests` (8), `MappingDepthTests` (1), `AppTests` (roles, lockout, antiforgery, headers, hidden pending story); smoke 302/401/403/404. | VERIFIED |
-| Availability | (a) A mail outage, a bad address or missing mail settings never fail a page, and never report a mail as sent when it was not. (b) 99.5 % monthly uptime. | Error containment in `EmailSender.SendAsync`; Production without SMTP returns `false`; digest in the background; `/health` with a database check. | `EmailSenderTests` (5); smoke `/health` 200. | (a) VERIFIED. (b) NOT VERIFIED: no deployment, and one instance is a single point of failure. |
-| Performance | Search page p95 ≤ 200 ms for one user and ≤ 1 s with 20 concurrent users, on one server, with ≥ 5,000 stories. | `ArticleWords` index (prefix `LIKE` uses an index seek); list projection without the article body; caches (sections 30 min, listings 2 min). | Benchmark below. | MEASURED: one user p95 = 72.2 ms; 20 users p95 = 672.5 ms. Both targets met on this machine. |
-| Scalability | (a) 1 instance serves 20 concurrent readers with 0 errors at ≥ 40 req/s on the search page. (b) 2+ instances after in-memory state moves to a shared store. | Pages hold no state except: session, cache, lockouts, reset codes, digest queue. | Benchmark: 43.0 req/s, 0 errors, 20 clients, 5,024 published stories. | (a) MEASURED. (b) TARGET, blocked by in-memory state (`15` R-1, ADR-005). |
-| Maintainability | 0 reverse layer dependencies. A new email channel or a new article-creation rule changes ≤ 2 files. All tests run on every push. | Compiler-enforced layers; Builder; Factory Method; BLL-owned interfaces; `IArticleArchive` for the archive clients. | Build; grep checks in `03`; 116 tests pass locally; CI runs on push and pull request to `develop`/`main`. | VERIFIED |
+| Security | 0 unpublished stories visible to the public. Admin-only actions answer 403 to other roles. At most 5 password checks per email+IP per 15 min, even under parallel requests. No user can delete another user's uploaded picture. PBKDF2 with 100k iterations. Every form POST needs an antiforgery token. Every AutoMapper map has a depth limit. | Role filters, `ArticleRules.CanView`, `LoginThrottle.Attempt` (slot reserved before the check), canonical-path + reference-checked picture deletion, `PasswordResetStore`, CSP, rate limits, HttpOnly cookies, API tokens stored as SHA-256 hashes, `MaxDepth(3)` on every map. | `SecurityTests` (10), `MappingDepthTests` (1), `HardeningTests` (parallel lockout, picture paths), `AppTests` (roles, antiforgery, headers, hidden pending story); smoke 302/401/403/404. | VERIFIED |
+| Availability | (a) A failing transport, a bad address or disabled email never fail a page, never report a mail as sent when it was not, and never flood the log (2,000 disabled sends → 0 warnings). (b) 99.5 % monthly uptime. | Error containment in `EmailSender.SendAsync`; `DisabledEmailSender` outside Development (ADR-007; real email is not implemented); digest in the background; `/health` with a database check. | `EmailSenderTests` (5); `HardeningTests.Outside_development_mail_is_disabled…`; smoke `/health` 200. | (a) VERIFIED. (b) NOT VERIFIED: no deployment, and one instance is a single point of failure. |
+| Performance | Search page p95 ≤ 200 ms for one user and ≤ 1 s with 20 concurrent users, on one server, with ≥ 5,000 stories. | `ArticleWords` index (prefix `LIKE` uses an index seek); list projection without the article body; caches (sections 30 min, listings 2 min). | Benchmark below. | MEASURED (final run): one user p95 = 66.9 ms; 20 users p95 = 784.2 ms. Both targets met on this machine. |
+| Scalability | (a) 1 instance serves 20 concurrent readers with 0 errors at ≥ 40 req/s on the search page. (b) 2+ instances after in-memory state moves to a shared store. | Pages hold no state except: session, cache, lockouts, reset codes, digest queue. | Benchmark: 0 errors with 20 clients and 5,024 published stories; throughput 43.0, 40.8 and 38.9 req/s in three runs. | (a) MEASURED, **not met in the final run** (38.9 < 40 req/s); 0 errors met. (b) TARGET, blocked by in-memory state (`15` R-1, ADR-005). |
+| Maintainability | 0 reverse layer dependencies. A new email channel or a new article-creation rule changes ≤ 2 files. All tests run on every push. | Compiler-enforced layers; Builder; Factory Method; BLL-owned interfaces; `IArticleArchive` for the archive clients. | Build; grep checks in `03`; 137 tests pass locally; CI runs on push and pull request to `develop`/`main`. | VERIFIED |
 
 ## Search benchmark (5,000+ stories)
 
@@ -50,20 +50,24 @@
 - Warm-up: 20 requests.
 - Then 400 sequential requests, then 800 requests from 20 threads.
 
-**Results (one run):**
+**Results (final run on `sadp/final-hardening`; also in `TEST_MATRIX_AND_COMMANDS.md`):**
 
 | Mode | n | p50 | p95 | p99 | Throughput | Errors |
 |---|---|---|---|---|---|---|
-| Sequential | 400 | 47.1 ms | 72.2 ms | 80.3 ms | 20.9 req/s | 0 |
-| 20 concurrent | 800 | 446.7 ms | 672.5 ms | 779.5 ms | 43.0 req/s | 0 |
+| Sequential | 400 | 46.7 ms | 66.9 ms | 71.0 ms | 21.0 req/s | 0 |
+| 20 concurrent | 800 | 476.8 ms | 784.2 ms | 1,028.0 ms | 38.9 req/s | 0 |
+| News sitemap (SQL-filtered, 2 days) | 50 | 56.2 ms | 80.5 ms | 81.2 ms | 17.6 req/s | 0 |
+| Main sitemap (≤ 45,000 stories) | 50 | 128.2 ms | 150.4 ms | 297.2 ms | 7.6 req/s | 0 |
+
+The earlier 5,000-story runs gave 20-client p95 = 672.5 ms / 43.0 req/s and 727.8 ms / 40.8 req/s, so the spread between runs is about ±10 %.
 
 **Compared with the earlier 31-story run (`11`):**
-- Sequential p95 rose from 51.2 ms to 72.2 ms.
-- Concurrent p95 rose from 621.9 ms to 672.5 ms.
+- Sequential p95 went from 51.2 ms to 66.9 ms.
+- Concurrent p95 went from 621.9 ms to 784.2 ms.
 - With about 160 times more stories, latency grew by a third or less. The word index is doing its job.
 
 **Limits of these numbers.**
-- One run; no variance analysis.
+- Three runs, no statistical variance analysis.
 - Client and server share the CPU.
 - The text is synthetic; real Bangla text may produce a different word distribution.
 - All generated stories carry the same publish day, which may make date ordering cheaper than in a real archive.
@@ -121,6 +125,6 @@
 | 3 Utility tree | Security (unreviewed news must never leak) > Reliability (no lost decision or edit) > Performance (search) > Availability > Scalability. |
 | 4 Sensitivity points | Listing-cache lifetime (2 min) against freshness; the cache is cleared on every change, so only multi-instance runs would feel it. Lockout window (15 min) against convenience. |
 | 4 Trade-off points | **In-memory state:** fast and simple, but blocks horizontal scaling and is lost on restart. **Background job inside the web process:** simple, but a crash stops scheduled publishing until restart. |
-| 5 Risks | R1 one app instance is a single point of failure. R2 in-memory stores prevent scale-out. R3 concurrent latency is about 9× the single-user latency (sync EF calls are the likely cause; within target). R4 RSS and sitemaps may be cached by others for up to 1 h. |
+| 5 Risks | R1 one app instance is a single point of failure. R2 in-memory stores prevent scale-out. R3 concurrent latency is about 10× the single-user latency (sync EF calls are the likely cause; within target). R4 RSS and sitemaps may be cached by others for up to 1 h. |
 | 5 Non-risks | Layer direction (compiler); double publication (atomic UPDATE); lost edits (version + token); SQL injection (parameterised EF). |
 | 6 Results | Before any production launch: move session, lockouts, reset codes and cache invalidation to a shared store (ADR-005); measure async EF against the 20-client benchmark. |

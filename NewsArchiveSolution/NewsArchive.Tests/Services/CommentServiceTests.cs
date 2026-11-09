@@ -13,6 +13,7 @@ namespace NewsArchive.Tests.Services
         private readonly RecordingAudit audit = new();
         private int reports;
         private bool added = true;
+        private int hideWins = 1;
 
         private CommentService Service(int? actor = 4)
         {
@@ -24,6 +25,7 @@ namespace NewsArchive.Tests.Services
                 .On("AddReport", _ => added)
                 .On("CountReports", _ => reports)
                 .On("SetHidden", _ => true)
+                .On("HideIfVisible", _ => hideWins-- > 0)
                 .On("ClearReports", _ => 2)
                 .On("Delete", _ => true);
             data.Articles.On("Get", a => (int)a[0]! == 1
@@ -76,10 +78,21 @@ namespace NewsArchive.Tests.Services
         {
             reports = 3;
             Assert.Equal(ReportResult.AutoHidden, Service().Report(10, 4, 2, null));
-            var hide = data.Comments.Calls.Single(c => c.Method == "SetHidden");
-            Assert.True((bool)hide.Args[1]!);
-            Assert.Null(hide.Args[2]);
+            Assert.Single(data.Comments.Calls, c => c.Method == "HideIfVisible");
             Assert.Contains(audit.Entries, e => e.Action == AuditActions.CommentAutoHidden && e.EntityId == 10);
+        }
+
+        [Fact]
+        public void Two_reports_that_both_reach_the_limit_hide_and_audit_only_once()
+        {
+            reports = 3;
+            var service = Service();
+            Assert.Equal(ReportResult.AutoHidden, service.Report(10, 4, 2, null));
+            reports = 4;
+            Assert.Equal(ReportResult.AutoHidden, service.Report(10, 6, 2, null));
+
+            Assert.Equal(2, data.Comments.CountOf("HideIfVisible"));
+            Assert.Single(audit.Entries, e => e.Action == AuditActions.CommentAutoHidden);
         }
 
         [Fact]
