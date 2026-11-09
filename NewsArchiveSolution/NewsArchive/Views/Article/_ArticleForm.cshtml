@@ -11,6 +11,10 @@
 
 <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.ArticleId : null)" method="post" enctype="multipart/form-data" class="editor-form">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Version" />
+    }
 
     @if (Model.StatusId == ArticleStatus.Rejected && !string.IsNullOrEmpty(Model.ReviewNote))
     {

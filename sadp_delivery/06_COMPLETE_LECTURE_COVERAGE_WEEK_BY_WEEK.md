@@ -7,6 +7,7 @@
 | VERIFIED | Already in the code, checked with evidence |
 | IMPLEMENTED | Built in this task |
 | DOCUMENTED | Written down as analysis or a proposal |
+| PLANNED / PROPOSED | Intended for a later milestone, with the trigger that would justify it; not in the code |
 | N/A | Not applicable, with the reason given |
 | NOT VERIFIED | Could not be checked |
 
@@ -19,14 +20,14 @@ There is no Week 7 deck: W6 s24 says it is the mid-term examination.
 | W1 s12–14 | SRP | VERIFIED + IMPLEMENTED | `ArticleBuilder` / `ArticleService` / `ArticleRules` | ArticleBuilderTests |
 | W1 s15–16 | OCP | IMPLEMENTED | `EmailSender` factory method | EmailSenderTests |
 | W1 s17–18 | LSP | VERIFIED by test | Every `IEmailSender` meets one contract; `FakeFactory` replaces `DataAccessFactory` | `Every_sender_honours_the_same_contract` |
-| W1 s19–20 | ISP | VERIFIED (one violation recorded) | Narrow repositories, `IAppCache`; `IArticleService` is fat | — |
+| W1 s19–20 | ISP | IMPLEMENTED (one smell remains) | `IArticleArchive` (3 members) is the only contract the archive pages, archive API and sitemap use; narrow repositories; `IAppCache`. `IArticleService` still has 26 members for the editorial pages. | `AppTests.Archive_pages_depend_only_on_the_narrow_archive_contract` |
 | W1 s21–25 | DIP | VERIFIED | Constructor injection; BLL-owned abstractions | SecurityTests (fake `IAuthService`) |
 | W1 s27–39 | Six quality attributes | DOCUMENTED + MEASURED | `08` | Benchmark, tests |
 | W1 s40–43 | CAP | DOCUMENTED | `08` (ACID vs CAP separated) | — |
 | W2 s6–10 | N-tier layered, downward only | VERIFIED | `03` §1; compile-time `PrivateAssets` | Build |
 | W2 s11–19 | MVC, fat controller, composition root | VERIFIED (two smells recorded) | `Program.cs`; `AdminController` has 12 dependencies | — |
 | W2 s13–14 | MVP / MVVM | N/A (theory) | Razor MVC website plus a small JS layer; no reason to rewrite as MVVM | — |
-| W2 s21–28 | C4 levels and notation | DOCUMENTED | `09_C4_AND_4PLUS1/C4_DIAGRAMS.md` (L1, L2, L3) | — |
+| W2 s21–28 | C4 levels and notation | DOCUMENTED + RENDERED | `09_C4_AND_4PLUS1/C4_DIAGRAMS.md` (L1, L2, L3 as Mermaid); L1 and L2 rendered to SVG/PNG by `render_c4.py` and reviewed against the notation rules | Checked by eye |
 | W2 s29–31 | Monolith vs SOA; migration phases | DOCUMENTED | Midterm draft §2 and §8 | — |
 | W3 s8–12 | Singleton | VERIFIED as a DI-scoped singleton | `Program.cs:52`, `:118` | Lockout_and_reset_stores… |
 | W3 s13–18 | Factory Method | IMPLEMENTED | `NewsArchive/Email/EmailSender.cs:20` | EmailSenderTests |
@@ -41,7 +42,7 @@ There is no Week 7 deck: W6 s24 says it is the mid-term examination.
 | W8 s15–17 | Retry, timeout, bulkhead, fallback | PARTIAL | SMTP timeout 5–120 s (`SmtpEmailSender.cs`); background queue; no retry (a retried digest could double-send) | EmailSenderTests |
 | W8 s18–20 | Load balancing | N/A until 2 instances exist | Round robin would do for these short stateless requests, after ADR-005 | — |
 | W8 s21–23 | ATAM | DOCUMENTED | `08` mini-ATAM | — |
-| W9 s5–6 | p50 / p95 / p99 | MEASURED | `11` benchmark | — |
+| W9 s5–6 | p50 / p95 / p99 | MEASURED | Search benchmark with 5,024 stories (`08`, `11`); script `tools/smoke/smoke.py` | Re-runnable |
 | W9 s7–10 | Cache-aside with TTL | VERIFIED | `IAppCache.GetOrCreate` with 30 min / 2 min TTLs and region invalidation (`NewsArchive/Caching/MemoryAppCache.cs:7`); no write-through or read-through | — |
 | W9 s11–14 | Zero Trust, JWT / OAuth2 / API key | VERIFIED (accurately named) | Every request is authenticated per endpoint. **The API uses opaque 256-bit random tokens stored as SHA-256 hashes, not JWT.** No OAuth2 or OIDC. | AppTests roles |
 | W9 s16–19 | Observability | PARTIAL | Compiled structured logging (`LoggerMessage`), masked emails, `ProblemDetails` with a trace id; no metrics or tracing pipeline | — |

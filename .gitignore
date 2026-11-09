@@ -40,3 +40,4 @@ NewsArchiveSolution/NewsArchive/App_Data/
 # OS
 Thumbs.db
 .DS_Store
+__pycache__/

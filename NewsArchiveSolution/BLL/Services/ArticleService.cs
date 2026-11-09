@@ -9,7 +9,7 @@ using AutoMapper;
 
 namespace BLL.Services
 {
-    public class ArticleService : IArticleService
+    public class ArticleService : IArticleService, IArticleArchive
     {
         private readonly IArticleRepository repo;
         private readonly ITagRepository tagRepo;
@@ -82,10 +82,11 @@ namespace BLL.Services
             return article.ArticleId;
         }
 
-        public bool Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview)
+        public ChangeResult Update(int articleId, ArticleFormDTO form, int editorId, int roleId, bool submitForReview)
         {
             var article = repo.Get(articleId);
-            if (article == null || !ArticleRules.CanEdit(article.AuthorId, article.StatusId, editorId, roleId)) return false;
+            if (article == null || !ArticleRules.CanEdit(article.AuthorId, article.StatusId, editorId, roleId)) return ChangeResult.NotAllowed;
+            if (form.Version != ArticleRules.Version(article.StatusId, article.UpdatedAt, article.CreatedAt)) return ChangeResult.Conflict;
 
             var isAdmin = roleId == AppRoles.Admin;
             var wasPublished = article.StatusId == ArticleStatus.Published;
@@ -111,13 +112,13 @@ namespace BLL.Services
                 article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
             }
 
-            if (!repo.Update(article)) return false;
+            if (!repo.Update(article)) return ChangeResult.Conflict;
             SaveTags(articleId, form.TagIds);
             Index(article);
             cache.Invalidate(CacheRegions.Content);
             if (isAdmin && (wasPublished || article.AuthorId != editorId))
                 Log(AuditActions.ArticleEdited, article, ArticleStatus.Name(article.StatusId), editorId);
-            return true;
+            return ChangeResult.Done;
         }
 
         public bool Submit(int articleId, int authorId)
@@ -147,46 +148,46 @@ namespace BLL.Services
             }
         }
 
-        public bool Approve(int articleId, int adminId, DateTime? publishAt = null)
+        public ChangeResult Approve(int articleId, int adminId, DateTime? publishAt = null)
         {
             var article = repo.Get(articleId);
-            if (article == null || article.StatusId != ArticleStatus.Pending) return false;
+            if (article == null || article.StatusId != ArticleStatus.Pending) return ChangeResult.NotAllowed;
 
             var now = SiteClock.Now;
             PublishOrSchedule(article, publishAt, now);
             article.ReviewedById = adminId;
             article.ReviewedAt = now;
             article.ReviewNote = null;
-            if (!repo.Update(article)) return false;
+            if (!repo.Update(article)) return ChangeResult.Conflict;
 
             if (article.StatusId == ArticleStatus.Scheduled)
                 Log(AuditActions.ArticleScheduled, article, "goes live " + When(article.PublishDate), adminId);
             else
                 Log(AuditActions.ArticleApproved, article, null, adminId);
-            return true;
+            return ChangeResult.Done;
         }
 
-        public bool PublishNow(int articleId)
+        public ChangeResult PublishNow(int articleId)
         {
             var article = repo.Get(articleId);
-            if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
+            if (article == null || article.StatusId != ArticleStatus.Scheduled) return ChangeResult.NotAllowed;
             PublishOrSchedule(article, null, SiteClock.Now);
-            if (!repo.Update(article)) return false;
+            if (!repo.Update(article)) return ChangeResult.Conflict;
 
             Log(AuditActions.ArticlePublishedEarly, article);
-            return true;
+            return ChangeResult.Done;
         }
 
-        public bool Unschedule(int articleId)
+        public ChangeResult Unschedule(int articleId)
         {
             var article = repo.Get(articleId);
-            if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
+            if (article == null || article.StatusId != ArticleStatus.Scheduled) return ChangeResult.NotAllowed;
             article.StatusId = ArticleStatus.Pending;
             article.ScheduledAt = null;
-            if (!repo.Update(article)) return false;
+            if (!repo.Update(article)) return ChangeResult.Conflict;
 
             Log(AuditActions.ArticleUnscheduled, article);
-            return true;
+            return ChangeResult.Done;
         }
 
         public int PublishDue()
@@ -205,20 +206,20 @@ namespace BLL.Services
             return mapper.Map<List<ArticleDTO>>(repo.GetByStatus(ArticleStatus.Scheduled).OrderBy(a => a.ScheduledAt));
         }
 
-        public bool Reject(int articleId, int adminId, string? note)
+        public ChangeResult Reject(int articleId, int adminId, string? note)
         {
             var article = repo.Get(articleId);
-            if (article == null || article.StatusId != ArticleStatus.Pending) return false;
+            if (article == null || article.StatusId != ArticleStatus.Pending) return ChangeResult.NotAllowed;
 
             article.StatusId = ArticleStatus.Rejected;
             article.ReviewedById = adminId;
             article.ReviewedAt = SiteClock.Now;
             var cleanNote = string.IsNullOrWhiteSpace(note) ? "No reason given." : note.Trim();
             article.ReviewNote = cleanNote.Length > 500 ? cleanNote[..500] : cleanNote;
-            if (!repo.Update(article)) return false;
+            if (!repo.Update(article)) return ChangeResult.Conflict;
 
             Log(AuditActions.ArticleRejected, article, article.ReviewNote, adminId);
-            return true;
+            return ChangeResult.Done;
         }
 
         public bool Delete(int articleId, int userId, int roleId)
@@ -253,6 +254,7 @@ namespace BLL.Services
                 StatusId = a.StatusId,
                 PublishAt = a.ScheduledAt,
                 ReviewNote = a.ReviewNote,
+                Version = ArticleRules.Version(a.StatusId, a.UpdatedAt, a.CreatedAt),
                 TagIds = tagRepo.GetForArticle(a.ArticleId).Select(t => t.TagId).ToList()
             };
         }

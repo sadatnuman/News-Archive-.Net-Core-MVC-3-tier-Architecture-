@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" font-family="Segoe UI, Arial, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555555"/></marker></defs>
+<rect width="1400" height="900" fill="#ffffff"/>
+<text x="30" y="40" font-size="24" font-weight="700" fill="#222">The Meridian Newsfolio — C4 Level 1: System Context</text>
+<text x="30" y="66" font-size="15" fill="#555">Who uses the system and which outside systems it depends on. Scope: the whole software system.</text>
+<circle cx="250.0" cy="121" r="26" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<rect x="120" y="141" width="260" height="104" rx="10" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="250.0" y="169.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Reader</text>
+<text x="250.0" y="188.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Person]</text>
+<text x="250.0" y="207.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Reads, searches, comments,</text>
+<text x="250.0" y="226.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">bookmarks, subscribes</text>
+<circle cx="700.0" cy="121" r="26" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<rect x="570" y="141" width="260" height="104" rx="10" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="700.0" y="169.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Author</text>
+<text x="700.0" y="188.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Person]</text>
+<text x="700.0" y="207.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Writes stories and submits</text>
+<text x="700.0" y="226.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">them for review</text>
+<circle cx="1150.0" cy="121" r="26" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<rect x="1020" y="141" width="260" height="104" rx="10" fill="#08427B" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="1150.0" y="169.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Admin</text>
+<text x="1150.0" y="188.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Person]</text>
+<text x="1150.0" y="207.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Reviews, schedules, moderates,</text>
+<text x="1150.0" y="226.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">sends the digest</text>
+<rect x="450" y="360" width="500" height="170" rx="10" fill="#1168BD" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="700.0" y="412.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">The Meridian Newsfolio</text>
+<text x="700.0" y="431.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Software System]</text>
+<text x="700.0" y="450.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Bilingual (English/Bangla) news archive with</text>
+<text x="700.0" y="469.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">editorial review, word search, recommendations,</text>
+<text x="700.0" y="488.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">comment moderation and a newsletter</text>
+<rect x="30" y="380" width="250" height="120" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="155.0" y="416.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Font and icon CDN</text>
+<text x="155.0" y="435.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System]</text>
+<text x="155.0" y="454.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Google Fonts, jsDelivr</text>
+<text x="155.0" y="473.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">(Bootstrap Icons)</text>
+<rect x="1120" y="380" width="250" height="120" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="1245.0" y="416.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Search engines and</text>
+<text x="1245.0" y="435.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">feed readers</text>
+<text x="1245.0" y="454.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External Systems]</text>
+<text x="1245.0" y="473.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">crawl pages, sitemap, RSS</text>
+<rect x="110" y="680" width="300" height="120" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="260.0" y="716.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">API client</text>
+<text x="260.0" y="735.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System]</text>
+<text x="260.0" y="754.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">App or script using the</text>
+<text x="260.0" y="773.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">token-protected REST API</text>
+<rect x="990" y="680" width="300" height="120" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
+<text x="1140.0" y="716.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">SMTP mail provider</text>
+<text x="1140.0" y="735.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System, optional]</text>
+<text x="1140.0" y="754.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Delivers confirmation, digest</text>
+<text x="1140.0" y="773.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">and reset-code emails</text>
+<line x1="300" y1="255" x2="560" y2="360" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="540" y="268" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Reads and searches news,</text>
+<text x="540" y="285" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">comments, subscribes</text>
+<text x="540" y="302" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS, web browser]</text>
+<line x1="700" y1="255" x2="700" y2="360" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="805" y="300" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Writes and submits stories</text>
+<text x="805" y="317" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS, web browser]</text>
+<line x1="1100" y1="255" x2="840" y2="360" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1135" y="300" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Reviews, schedules,</text>
+<text x="1135" y="317" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">moderates</text>
+<text x="1135" y="334" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS, web browser]</text>
+<line x1="1120" y1="440" x2="950" y2="440" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1035" y="470" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Fetch pages,</text>
+<text x="1035" y="487" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">sitemap, RSS</text>
+<text x="1035" y="504" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS, XML]</text>
+<line x1="330" y1="680" x2="520" y2="530" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="280" y="600" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Calls JSON endpoints</text>
+<text x="280" y="617" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS/JSON, bearer token]</text>
+<line x1="880" y1="530" x2="1080" y2="680" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1110" y="600" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Sends emails</text>
+<text x="1110" y="617" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[SMTP over TLS]</text>
+<line x1="200" y1="255" x2="155" y2="380" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)" stroke-dasharray="5 5"/>
+<text x="110" y="300" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Browser loads</text>
+<text x="110" y="317" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">fonts and icons</text>
+<text x="110" y="334" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS]</text>
+<text x="30" y="870" font-size="14" font-weight="700" fill="#333">Key</text>
+<rect x="80" y="856" width="28" height="18" rx="4" fill="#08427B"/>
+<text x="116" y="870" font-size="13" fill="#333">Person</text>
+<rect x="169.2" y="856" width="28" height="18" rx="4" fill="#1168BD"/>
+<text x="205.2" y="870" font-size="13" fill="#333">System in scope</text>
+<rect x="323.2" y="856" width="28" height="18" rx="4" fill="#8A8A8A"/>
+<text x="359.2" y="870" font-size="13" fill="#333">External system</text>
+<line x1="477.2" y1="865" x2="505.2" y2="865" stroke="#555555" stroke-width="1.8" stroke-dasharray="5 5"/>
+<text x="513.2" y="870" font-size="13" fill="#333">Call made by the browser, not the server</text>
+</svg>

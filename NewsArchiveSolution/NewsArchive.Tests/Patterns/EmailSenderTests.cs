@@ -108,14 +108,14 @@ namespace NewsArchive.Tests.Patterns
         }
 
         [Fact]
-        public async Task Development_outbox_writes_the_message_and_production_writes_nothing()
+        public async Task Development_outbox_writes_the_message_and_production_without_smtp_reports_failure()
         {
             var development = new TestEnvironment();
             var production = new TestEnvironment { EnvironmentName = "Production" };
             try
             {
                 Assert.True(await Outbox(development).SendAsync(Valid));
-                Assert.True(await Outbox(production).SendAsync(Valid));
+                Assert.False(await Outbox(production).SendAsync(Valid));
 
                 var file = Assert.Single(Directory.GetFiles(Path.Combine(development.ContentRootPath, "outbox")));
                 var text = await File.ReadAllTextAsync(file);

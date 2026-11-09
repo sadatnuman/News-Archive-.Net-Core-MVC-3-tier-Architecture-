@@ -45,5 +45,7 @@ namespace BLL.DTOs
         public string StatusName => ArticleStatus.Name(StatusId);
 
         public bool IsPublished => StatusId == ArticleStatus.Published;
+
+        public string Version => ArticleRules.Version(StatusId, UpdatedAt, CreatedAt);
     }
 }

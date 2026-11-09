@@ -82,7 +82,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 | Content | Markdig (safe Markdown) |
 | API docs | Swashbuckle / Swagger |
 | UI | Razor, Bootstrap 5.3, Bootstrap Icons, Source Serif 4, Inter, Cinzel, Noto Bengali |
-| Tests | xUnit (108 unit and integration tests), GitHub Actions |
+| Tests | xUnit (116 unit and integration tests), a smoke-test and benchmark script, GitHub Actions |
 
 ## Project structure
 
@@ -177,6 +177,15 @@ dotnet test NewsArchive.Tests
 ```
 
 The integration tests start the app against a separate database, `NewsArchiveTestDB`, which they create on `localhost\SQLEXPRESS`. Your own database is never touched. To use another server, set the environment variable `NEWSARCHIVE_TEST_DB` to a connection string. CI runs them against a SQL Server container.
+
+**End-to-end smoke test and search benchmark** (Python 3 standard library, `sqlcmd`):
+
+```bash
+python tools/smoke/smoke.py                  # recreate NewsArchiveSmokeDB, load the sample data, run every check
+python tools/smoke/smoke.py --stories 5000   # also add 5,000 generated stories and measure search p50/p95/p99
+```
+
+The script refuses any database whose name does not contain `Smoke` or `Test`, so it can never reset `NewsArchiveDB`. It reads the demo passwords from `appsettings.Development.json`, runs the app on `127.0.0.1:5199` in Development (emails only go to the local outbox) and stops it at the end.
 
 ### 6. API
 

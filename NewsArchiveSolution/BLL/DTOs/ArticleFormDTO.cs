@@ -45,5 +45,7 @@ namespace BLL.DTOs
         public int StatusId { get; set; }
 
         public string? ReviewNote { get; set; }
+
+        public string? Version { get; set; }
     }
 }

@@ -75,41 +75,39 @@ namespace NewsArchive.Controllers
         public IActionResult Approve(int id, DateTime? publishAt)
         {
             var scheduled = ArticleRules.IsFutureSchedule(publishAt, BLL.SiteClock.Now);
-            if (articleService.Approve(id, CurrentUserId ?? 0, publishAt))
-                Flash("success", scheduled ? "Article approved and scheduled." : "Article approved and published.");
-            else
-                Flash("danger", "Only pending articles can be approved.");
+            Decided(articleService.Approve(id, CurrentUserId ?? 0, publishAt),
+                "success", scheduled ? "Article approved and scheduled." : "Article approved and published.",
+                "Only pending articles can be approved.");
             return RedirectToAction("PendingArticles");
         }
 
         [HttpPost]
         public IActionResult PublishNow(int id)
         {
-            if (articleService.PublishNow(id))
-                Flash("success", "Article published.");
-            else
-                Flash("danger", "Only scheduled articles can be published early.");
+            Decided(articleService.PublishNow(id), "success", "Article published.", "Only scheduled articles can be published early.");
             return RedirectToAction("PendingArticles");
         }
 
         [HttpPost]
         public IActionResult Unschedule(int id)
         {
-            if (articleService.Unschedule(id))
-                Flash("warning", "Schedule cancelled. The article is back in the review queue.");
-            else
-                Flash("danger", "Only scheduled articles can be changed.");
+            Decided(articleService.Unschedule(id), "warning", "Schedule cancelled. The article is back in the review queue.", "Only scheduled articles can be changed.");
             return RedirectToAction("PendingArticles");
         }
 
         [HttpPost]
         public IActionResult Reject(int id, string? note)
         {
-            if (articleService.Reject(id, CurrentUserId ?? 0, note))
-                Flash("warning", "Article rejected and returned to the author.");
-            else
-                Flash("danger", "Only pending articles can be rejected.");
+            Decided(articleService.Reject(id, CurrentUserId ?? 0, note), "warning", "Article rejected and returned to the author.", "Only pending articles can be rejected.");
             return RedirectToAction("PendingArticles");
+        }
+
+        private void Decided(ChangeResult result, string doneClass, string done, string notAllowed)
+        {
+            if (result == ChangeResult.Done)
+                Flash(doneClass, done);
+            else
+                Flash("danger", result == ChangeResult.Conflict ? ArticleMessages.DecidedElsewhere : notAllowed);
         }
 
         [HttpGet]

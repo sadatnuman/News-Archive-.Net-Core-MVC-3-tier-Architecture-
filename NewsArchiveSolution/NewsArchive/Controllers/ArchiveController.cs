@@ -10,18 +10,18 @@ namespace NewsArchive.Controllers
         private const int PageSize = 12;
 
         private readonly IArticleLookupService lookupService;
-        private readonly IArticleService articleService;
+        private readonly IArticleArchive archive;
 
-        public ArchiveController(IArticleService articleService, IArticleLookupService lookupService)
+        public ArchiveController(IArticleArchive archive, IArticleLookupService lookupService)
         {
             this.lookupService = lookupService;
-            this.articleService = articleService;
+            this.archive = archive;
         }
 
         [HttpGet("archive")]
         public IActionResult Index()
         {
-            return View(articleService.GetArchiveMonths(CurrentLanguage));
+            return View(archive.GetArchiveMonths(CurrentLanguage));
         }
 
         [HttpGet("archive/{year:int}")]
@@ -29,9 +29,9 @@ namespace NewsArchive.Controllers
         {
             if (!ArticleRules.IsValidArchiveDate(year)) return NotFound();
 
-            var months = articleService.GetArchiveMonths(CurrentLanguage).Where(m => m.Year == year).ToList();
+            var months = archive.GetArchiveMonths(CurrentLanguage).Where(m => m.Year == year).ToList();
             ViewBag.Year = year;
-            ViewBag.Years = articleService.GetArchiveMonths(CurrentLanguage).Select(m => m.Year).Distinct().ToList();
+            ViewBag.Years = archive.GetArchiveMonths(CurrentLanguage).Select(m => m.Year).Distinct().ToList();
             return View(months);
         }
 
@@ -45,10 +45,10 @@ namespace NewsArchive.Controllers
                 return RedirectPermanent(SeoUrls.Archive(year, month, day, page: page));
 
             page = Math.Max(page, 1);
-            var articles = articleService.GetArchive(year, month, day, CurrentLanguage, page, PageSize, out var total);
+            var articles = archive.GetArchive(year, month, day, CurrentLanguage, page, PageSize, out var total);
             if (page > 1 && articles.Count == 0) return NotFound();
 
-            var months = articleService.GetArchiveMonths(CurrentLanguage);
+            var months = archive.GetArchiveMonths(CurrentLanguage);
             var key = year * 12 + month;
             var newer = months.Where(m => m.Year * 12 + m.Month > key).OrderBy(m => m.Year * 12 + m.Month).FirstOrDefault();
             var older = months.Where(m => m.Year * 12 + m.Month < key).OrderByDescending(m => m.Year * 12 + m.Month).FirstOrDefault();
@@ -60,7 +60,7 @@ namespace NewsArchive.Controllers
             ViewBag.Page = page;
             ViewBag.PageSize = PageSize;
             ViewBag.Total = total;
-            ViewBag.DayCounts = articleService.GetArchiveDayCounts(year, month, CurrentLanguage);
+            ViewBag.DayCounts = archive.GetArchiveDayCounts(year, month, CurrentLanguage);
             ViewBag.Newer = newer;
             ViewBag.Older = older;
             return View(articles);
