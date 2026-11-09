@@ -88,6 +88,8 @@ public partial class NewsArchiveDbContext : DbContext
         {
             entity.HasKey(e => e.ArticleId).HasName("PK__Articles__9C6270E827220E8D");
 
+            entity.Property(e => e.StatusId).IsConcurrencyToken();
+
             entity.HasIndex(e => new { e.LanguageCode, e.StatusId, e.PublishDate }, "IX_Articles_LanguageCode_StatusId_PublishDate")
                 .IsDescending(false, false, true);
 

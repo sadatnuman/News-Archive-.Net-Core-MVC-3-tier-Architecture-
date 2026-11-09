@@ -1,4 +1,5 @@
 using BLL.Audit;
+using BLL.Builders;
 using BLL.Caching;
 using BLL.DTOs;
 using BLL.Interfaces;
@@ -56,34 +57,18 @@ namespace BLL.Services
             var isAdmin = roleId == AppRoles.Admin;
             if (!isAdmin && roleId != AppRoles.Author) return 0;
 
-            var now = SiteClock.Now;
-            var article = new Article
-            {
-                Title = form.Title.Trim(),
-                Slug = SlugHelper.Generate(form.Title),
-                Summary = form.Summary.Trim(),
-                Content = form.Content,
-                ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim(),
-                CategoryId = form.CategoryId,
-                IsBreakingNews = isAdmin && form.IsBreakingNews,
-                LanguageCode = AppLanguages.Normalize(form.LanguageCode),
-                AuthorId = authorId,
-                CreatedAt = now,
-                PublishDate = now,
-                ViewsCount = 0
-            };
-
+            var builder = new ArticleBuilder(SiteClock.Now)
+                .WrittenBy(authorId)
+                .WithText(form.Title, form.Summary, form.Content)
+                .InSection(form.CategoryId)
+                .InLanguage(form.LanguageCode)
+                .WithImage(form.ImagePath);
             if (isAdmin)
-            {
-                PublishOrSchedule(article, form.PublishAt, now);
-                article.ReviewedById = authorId;
-                article.ReviewedAt = now;
-            }
-            else
-            {
-                article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
-            }
+                builder.AsBreakingNews(form.IsBreakingNews).ApprovedBy(authorId, form.PublishAt);
+            else if (submitForReview)
+                builder.SubmittedForReview();
 
+            var article = builder.Build();
             if (!repo.Create(article)) return 0;
             SaveTags(article.ArticleId, form.TagIds);
             Index(article);

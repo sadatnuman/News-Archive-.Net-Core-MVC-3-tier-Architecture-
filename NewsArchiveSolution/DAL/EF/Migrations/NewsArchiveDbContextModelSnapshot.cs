@@ -97,6 +97,7 @@ namespace DAL.EF.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("StatusId")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(1);

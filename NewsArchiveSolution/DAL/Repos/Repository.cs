@@ -39,8 +39,16 @@ namespace DAL.Repos
             if (existing == null) return false;
 
             db.Entry(existing).CurrentValues.SetValues(entity);
-            db.SaveChanges();
-            return true;
+            try
+            {
+                db.SaveChanges();
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                db.ChangeTracker.Clear();
+                return false;
+            }
         }
 
         public virtual bool Delete(int id)

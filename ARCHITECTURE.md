@@ -105,7 +105,7 @@ All schema changes are EF Core migrations in `DAL/EF/Migrations` (generated comm
 
 ### Migrations
 
-`InitialSchema` → `NormalizeSchemaAndApprovalWorkflow` → `AddLanguages` → `AddUserTokens` → `AddTagTranslationsAndSlugs` → `AddUserAvatars` → `AddUserBio` → `AddBookmarks` → `AddScheduledPublishing` → `AddReadingHistory` → `AddCommentModeration` → `AddAuditLog` → `AddNewsletterSubscribers` → `AddArticleWords`.
+`InitialSchema` → `NormalizeSchemaAndApprovalWorkflow` → `AddLanguages` → `AddUserTokens` → `AddTagTranslationsAndSlugs` → `AddUserAvatars` → `AddUserBio` → `AddBookmarks` → `AddScheduledPublishing` → `AddReadingHistory` → `AddCommentModeration` → `AddAuditLog` → `AddNewsletterSubscribers` → `AddArticleWords` → `ArticleStatusConcurrencyToken` (no schema change; it records the concurrency token in the model snapshot).
 
 ### Indexes worth knowing
 
@@ -222,6 +222,8 @@ Passwords and codes are never written to the log. Entries are kept for 365 days.
 
 ### Writing
 
+- New articles are put together by `BLL/Builders/ArticleBuilder` (Builder pattern). The service calls `WrittenBy`, `WithText`, `InSection`, `InLanguage`, `WithImage`, then `SubmittedForReview()` or `ApprovedBy(admin, publishAt)`. `Build()` refuses an article with no author, section or text, or breaking news without an approval. It decides Draft, Pending, Published or Scheduled in one place.
+- Review decisions cannot overwrite each other. `Articles.StatusId` is an EF Core concurrency token, so every update checks that the status is still the one that was loaded. If two admins approve and reject the same story at once, the second save matches no row, `Repository.Update` returns `false`, and the API answers 409.
 - Markdown with a toolbar and a live preview (`Content/ArticleRenderer`, Markdig). Raw HTML is disabled; only `http`, `https`, `mailto`, `#` and site paths are allowed as links, and only site or `https` images. Paths starting with `//` or `/\` and anything containing a backslash are rejected. External links get `rel="nofollow noopener noreferrer"`; headings are shifted down one level.
 - Picture upload: JPEG, PNG, WebP or GIF, detected from the file's first bytes. Limits: 5 MB for articles, 2 MB for profile pictures. Files get random names under `wwwroot/uploads`.
 
@@ -318,7 +320,7 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 
 ### Email
 
-`MailComposer` builds the confirmation, digest and reset-code emails in English or Bangla, as plain text plus HTML with absolute links. `OutboxEmailSender` logs every email (address masked) and in Development writes it to `App_Data/outbox`. `SmtpEmailSender` is used automatically when `Email:Smtp:Host` is set.
+`MailComposer` builds the confirmation, digest and reset-code emails in English or Bangla, as plain text plus HTML with absolute links. Sending uses the Factory Method pattern. The abstract creator `EmailSender` checks the address, asks its factory method `CreateTransport()` for a fresh `IMailTransport`, sends, logs the masked address and turns any delivery error into `false`. `SmtpEmailSender` creates an `SmtpTransport` (a new `SmtpClient` per message). `OutboxEmailSender` creates an `OutboxTransport`, which writes to `App_Data/outbox` in Development and does nothing elsewhere. `Program.cs` picks the SMTP sender when `Email:Smtp:Host` is set. A new channel is a new creator and transport, with no change to the newsletter or the controllers.
 
 ## 9. Languages, theme and design
 
@@ -373,7 +375,7 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 
 | Tool | What |
 |---|---|
-| `NewsArchive.Tests` (xUnit, 92 tests) | Unit tests with DispatchProxy-based fakes and no database: rules (articles, slugs, passwords, recommendations, moderation, search words, newsletter, audit), services (comments, newsletter, recommendations, audit) and security classes (sign-in lockout, reset codes, password change, Markdown links, no demo logins in the base settings). Integration tests (`Integration/`) start the whole app with `WebApplicationFactory` against a separate `NewsArchiveTestDB`: sign-in redirect, antiforgery, security headers, API roles, account lockout, word search in English and Bangla, and script-free Markdown pages |
+| `NewsArchive.Tests` (xUnit, 108 tests) | Unit tests with DispatchProxy-based fakes and no database: rules (articles, slugs, passwords, recommendations, moderation, search words, newsletter, audit), services (comments, newsletter, recommendations, audit) security classes (sign-in lockout, reset codes, password change, Markdown links, no demo logins in the base settings) and patterns (`ArticleBuilder` rules, the `EmailSender` factory method and one contract shared by every sender). Integration tests (`Integration/`) start the whole app with `WebApplicationFactory` against a separate `NewsArchiveTestDB`: sign-in redirect, antiforgery, security headers, API roles, account lockout, word search in English and Bangla, and script-free Markdown pages, the author → admin approval flow, two reviewers racing on one story, the single shared lockout and reset stores, and repositories from one factory sharing one unit of work. Each test client gets its own IP address through a test-only startup filter, so the per-IP rate limits behave as in production |
 | `.github/workflows/build.yml` | On every push and PR to `develop`/`main`: restore, Release build, all tests against a SQL Server 2022 service container, vulnerable package report |
 | `.vscode/` | Launch configuration and `build`, `watch`, `test` and `database update` tasks |
 | `global.json` | .NET 10 SDK, latest feature band |

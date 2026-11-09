@@ -1,31 +1,44 @@
+using System.Globalization;
 using System.Text;
 using BLL.Email;
 using Microsoft.Extensions.Options;
 
 namespace NewsArchive.Email
 {
-    public partial class OutboxEmailSender : IEmailSender
+    public sealed class OutboxEmailSender : EmailSender
     {
         private readonly EmailOptions options;
-        private readonly IWebHostEnvironment environment;
-        private readonly ILogger<OutboxEmailSender> logger;
+        private readonly string? folder;
 
         public OutboxEmailSender(IOptions<EmailOptions> options, IWebHostEnvironment environment, ILogger<OutboxEmailSender> logger)
+            : base(logger)
         {
             this.options = options.Value;
-            this.environment = environment;
-            this.logger = logger;
+            folder = environment.IsDevelopment()
+                ? Path.GetFullPath(Path.Combine(environment.ContentRootPath, this.options.OutboxFolder))
+                : null;
         }
 
-        public async Task<bool> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-                LogQueued(message.Category ?? "general", Mask(message.To), message.Subject);
-            if (!environment.IsDevelopment()) return true;
+        protected override IMailTransport CreateTransport() => new OutboxTransport(folder, options);
+    }
 
-            var folder = Path.GetFullPath(Path.Combine(environment.ContentRootPath, options.OutboxFolder));
+    public sealed class OutboxTransport : IMailTransport
+    {
+        private readonly string? folder;
+        private readonly EmailOptions options;
+
+        public OutboxTransport(string? folder, EmailOptions options)
+        {
+            this.folder = folder;
+            this.options = options;
+        }
+
+        public async Task DeliverAsync(EmailMessage message, CancellationToken cancellationToken)
+        {
+            if (folder == null) return;
+
             Directory.CreateDirectory(folder);
-            var name = $"{DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture)}-{Safe(message.Category ?? "mail")}-{Guid.NewGuid():N}.txt";
+            var name = $"{DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture)}-{Safe(message.Category ?? "mail")}-{Guid.NewGuid():N}.txt";
             var content = new StringBuilder()
                 .Append("From: ").Append(options.FromName).Append(" <").Append(options.FromAddress).AppendLine(">")
                 .Append("To: ").AppendLine(message.To)
@@ -35,18 +48,12 @@ namespace NewsArchive.Email
                 .AppendLine(message.TextBody)
                 .ToString();
             await File.WriteAllTextAsync(Path.Combine(folder, name), content, Encoding.UTF8, cancellationToken);
-            return true;
         }
 
-        [LoggerMessage(Level = LogLevel.Information, Message = "Email ({Category}) queued for {Recipient}: {Subject}")]
-        private partial void LogQueued(string category, string recipient, string subject);
+        public void Dispose()
+        {
+        }
 
         private static string Safe(string value) => new(value.Where(char.IsLetterOrDigit).Take(20).ToArray());
-
-        private static string Mask(string email)
-        {
-            var at = email.IndexOf('@');
-            return at <= 1 ? "***" : email[0] + "***" + email[at..];
-        }
     }
 }

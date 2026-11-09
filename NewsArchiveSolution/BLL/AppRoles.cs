@@ -24,7 +24,7 @@ namespace BLL
 
         public static readonly string[] All = { English, Bangla };
 
-        public static string Normalize(string? code) => code == Bangla ? Bangla : English;
+        public static string Normalize(string? code) => string.Equals(code?.Trim(), Bangla, StringComparison.OrdinalIgnoreCase) ? Bangla : English;
 
         public static string NativeName(string code) => code == Bangla ? "বাংলা" : "English";
     }

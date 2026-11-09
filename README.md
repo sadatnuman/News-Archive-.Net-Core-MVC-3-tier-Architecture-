@@ -82,7 +82,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 | Content | Markdig (safe Markdown) |
 | API docs | Swashbuckle / Swagger |
 | UI | Razor, Bootstrap 5.3, Bootstrap Icons, Source Serif 4, Inter, Cinzel, Noto Bengali |
-| Tests | xUnit (92 unit and integration tests), GitHub Actions |
+| Tests | xUnit (108 unit and integration tests), GitHub Actions |
 
 ## Project structure
 

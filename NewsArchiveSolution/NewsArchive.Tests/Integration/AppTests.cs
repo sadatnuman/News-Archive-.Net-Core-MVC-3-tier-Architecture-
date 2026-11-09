@@ -2,7 +2,13 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using BLL.Email;
+using DAL.EF;
+using DAL.Interfaces;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using NewsArchive.Auth;
+using NewsArchive.Email;
 
 namespace NewsArchive.Tests.Integration
 {
@@ -17,8 +23,12 @@ namespace NewsArchive.Tests.Integration
             this.factory = factory;
         }
 
-        private HttpClient Client(bool followRedirects = true) =>
-            factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = followRedirects });
+        private HttpClient Client(bool followRedirects = true)
+        {
+            var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = followRedirects });
+            client.DefaultRequestHeaders.Add(AppFactory.IpHeader, $"10.{Random.Shared.Next(256)}.{Random.Shared.Next(256)}.{Random.Shared.Next(1, 255)}");
+            return client;
+        }
 
         private static string NewEmail() => $"t{Guid.NewGuid():N}@test.local";
 
@@ -52,10 +62,11 @@ namespace NewsArchive.Tests.Integration
             return json.RootElement.GetProperty(property).GetInt32();
         }
 
-        private static async Task<int> PublishStory(HttpClient admin, string content)
-        {
-            var section = await Id(await admin.PostAsJsonAsync("/api/categories", new { name = "Section " + Guid.NewGuid().ToString("N")[..8] }), "categoryId");
-            return await Id(await admin.PostAsJsonAsync("/api/articles", new
+        private static async Task<int> CreateSection(HttpClient admin) =>
+            await Id(await admin.PostAsJsonAsync("/api/categories", new { name = "Section " + Guid.NewGuid().ToString("N")[..8] }), "categoryId");
+
+        private static async Task<int> WriteStory(HttpClient writer, int section, string content, bool submit = false) =>
+            await Id(await writer.PostAsJsonAsync("/api/articles" + (submit ? "?submit=true" : ""), new
             {
                 title = "River ferry service returns",
                 summary = "Ferries are running again on the southern river routes.",
@@ -63,7 +74,9 @@ namespace NewsArchive.Tests.Integration
                 categoryId = section,
                 languageCode = "en"
             }), "articleId");
-        }
+
+        private static async Task<int> PublishStory(HttpClient admin, string content) =>
+            await WriteStory(admin, await CreateSection(admin), content);
 
         [Fact]
         public async Task Admin_pages_need_sign_in()
@@ -151,6 +164,71 @@ namespace NewsArchive.Tests.Integration
             Assert.DoesNotContain("<script>alert", html);
             Assert.DoesNotContain("javascript:alert", html);
             Assert.DoesNotContain("href=\"//evil.test", html);
+        }
+
+        [Fact]
+        public async Task Two_reviewers_cannot_both_decide_the_same_article()
+        {
+            var admin = await SignedIn(roleId: 1);
+            var author = await SignedIn(roleId: 3);
+            var id = await WriteStory(author, await CreateSection(admin), "A story waiting for an editor's decision.", submit: true);
+
+            using var first = factory.Services.CreateScope();
+            using var second = factory.Services.CreateScope();
+            var firstRepo = first.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository();
+            var secondRepo = second.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository();
+            var approved = firstRepo.Get(id)!;
+            var rejected = secondRepo.Get(id)!;
+            Assert.Equal(ArticleStatusIds.Pending, rejected.StatusId);
+
+            approved.StatusId = ArticleStatusIds.Published;
+            rejected.StatusId = ArticleStatusIds.Rejected;
+            Assert.True(firstRepo.Update(approved));
+            Assert.False(secondRepo.Update(rejected));
+
+            using var check = factory.Services.CreateScope();
+            Assert.Equal(ArticleStatusIds.Published, check.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository().Get(id)!.StatusId);
+        }
+
+        [Fact]
+        public async Task Author_submission_stays_hidden_until_an_admin_approves_it()
+        {
+            var admin = await SignedIn(roleId: 1);
+            var author = await SignedIn(roleId: 3);
+            var id = await WriteStory(author, await CreateSection(admin), "Draft text that readers must not see before approval.", submit: true);
+
+            Assert.Equal(HttpStatusCode.NotFound, (await Client().GetAsync($"/api/articles/{id}")).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await author.PostAsJsonAsync($"/api/articles/{id}/approve", new { })).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync($"/api/articles/{id}/approve", new { })).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await Client().GetAsync($"/api/articles/{id}")).StatusCode);
+            Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsJsonAsync($"/api/articles/{id}/reject", new { note = "late" })).StatusCode);
+        }
+
+        [Fact]
+        public void Lockout_and_reset_stores_are_one_instance_for_the_whole_app()
+        {
+            using var first = factory.Services.CreateScope();
+            using var second = factory.Services.CreateScope();
+
+            Assert.Same(first.ServiceProvider.GetRequiredService<LoginThrottle>(), second.ServiceProvider.GetRequiredService<LoginThrottle>());
+            Assert.Same(first.ServiceProvider.GetRequiredService<PasswordResetStore>(), second.ServiceProvider.GetRequiredService<PasswordResetStore>());
+            Assert.IsType<OutboxEmailSender>(first.ServiceProvider.GetRequiredService<IEmailSender>());
+        }
+
+        [Fact]
+        public async Task Repositories_from_one_factory_share_one_unit_of_work()
+        {
+            var admin = await SignedIn(roleId: 1);
+            var id = await PublishStory(admin, "A story used to check the repository family.");
+
+            using var scope = factory.Services.CreateScope();
+            using var other = factory.Services.CreateScope();
+            var data = scope.ServiceProvider.GetRequiredService<IDataAccessFactory>();
+            var article = data.GetArticleRepository().Get(id)!;
+            var section = data.GetCategoryRepository().Get(article.CategoryId)!;
+
+            Assert.Same(section, article.Category);
+            Assert.NotSame(article, other.ServiceProvider.GetRequiredService<IDataAccessFactory>().GetArticleRepository().Get(id));
         }
     }
 }
