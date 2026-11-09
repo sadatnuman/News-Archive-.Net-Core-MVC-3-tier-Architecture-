@@ -71,7 +71,7 @@ namespace NewsArchive.Controllers
                 var url = new XElement(SitemapNs + "url",
                     new XElement(SitemapNs + "loc", urls.Absolute(path)));
                 if (modified.HasValue)
-                    url.Add(new XElement(SitemapNs + "lastmod", modified.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)));
+                    url.Add(new XElement(SitemapNs + "lastmod", BLL.SiteClock.ToUtc(modified.Value).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)));
                 url.Add(new XElement(SitemapNs + "changefreq", changeFreq));
                 url.Add(new XElement(SitemapNs + "priority", priority));
                 if (image != null) url.Add(image);
@@ -122,7 +122,7 @@ namespace NewsArchive.Controllers
         [ResponseCache(Duration = 900)]
         public ContentResult NewsSitemap()
         {
-            var cutoff = DateTime.Now.AddDays(-2);
+            var cutoff = BLL.SiteClock.Now.AddDays(-2);
             var root = new XElement(SitemapNs + "urlset",
                 new XAttribute(XNamespace.Xmlns + "news", NewsNs));
 
@@ -134,7 +134,7 @@ namespace NewsArchive.Controllers
                         new XElement(NewsNs + "publication",
                             new XElement(NewsNs + "name", site.Name),
                             new XElement(NewsNs + "language", a.LanguageCode)),
-                        new XElement(NewsNs + "publication_date", a.PublishDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
+                        new XElement(NewsNs + "publication_date", BLL.SiteClock.ToUtc(a.PublishDate).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
                         new XElement(NewsNs + "title", a.Title))));
             }
 
@@ -156,7 +156,7 @@ namespace NewsArchive.Controllers
                 new XElement("link", urls.Absolute(SeoUrls.Page("/", language))),
                 new XElement("description", L[site.Description].Value),
                 new XElement("language", language),
-                new XElement("lastBuildDate", DateTime.Now.ToString("R")));
+                new XElement("lastBuildDate", DateTime.UtcNow.ToString("R")));
 
             foreach (var a in articleService.GetLatest(50, language))
             {
@@ -165,7 +165,7 @@ namespace NewsArchive.Controllers
                     new XElement("title", a.Title),
                     new XElement("link", link),
                     new XElement("guid", new XAttribute("isPermaLink", "true"), link),
-                    new XElement("pubDate", a.PublishDate.ToString("R")),
+                    new XElement("pubDate", BLL.SiteClock.ToUtc(a.PublishDate).ToString("R")),
                     new XElement("description", a.Summary));
                 if (!string.IsNullOrEmpty(a.ImagePath))
                     item.Add(new XElement("enclosure",

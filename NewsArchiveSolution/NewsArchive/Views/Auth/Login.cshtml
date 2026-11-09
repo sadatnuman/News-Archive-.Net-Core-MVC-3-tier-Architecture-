@@ -6,8 +6,7 @@
     ViewData["Title"] = L["Sign in"];
     ViewData["NoIndex"] = true;
     var returnUrl = ViewBag.ReturnUrl as string;
-    var site = SiteConfig.Value;
-    var demos = site.ShowDemoNotice ? site.DemoAccounts : Array.Empty<DemoAccount>();
+    var demos = SiteConfig.Value.DemoAccounts;
     string Icon(string role) => role switch { "Admin" => "bi-shield-lock", "Author" => "bi-pencil-square", _ => "bi-book" };
 }
 

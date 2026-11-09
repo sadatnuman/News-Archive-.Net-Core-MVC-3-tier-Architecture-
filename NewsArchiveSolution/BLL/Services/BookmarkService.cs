@@ -26,7 +26,7 @@ namespace BLL.Services
             var article = articleRepo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Published) return false;
             if (!repo.Exists(userId, articleId) && repo.Count(userId) >= MaxBookmarks) return false;
-            return repo.Add(userId, articleId);
+            return repo.Add(userId, articleId, SiteClock.Now);
         }
 
         public bool Remove(int userId, int articleId)

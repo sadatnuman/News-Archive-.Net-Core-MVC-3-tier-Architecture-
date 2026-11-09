@@ -7,20 +7,40 @@ using Microsoft.Extensions.Options;
 
 namespace NewsArchive.Email
 {
-    public partial class SmtpEmailSender : IEmailSender
+    public sealed class SmtpEmailSender : EmailSender
     {
         private readonly EmailOptions options;
-        private readonly ILogger<SmtpEmailSender> logger;
 
         public SmtpEmailSender(IOptions<EmailOptions> options, ILogger<SmtpEmailSender> logger)
+            : base(logger)
         {
             this.options = options.Value;
-            this.logger = logger;
         }
 
-        public async Task<bool> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        protected override IMailTransport CreateTransport() => new SmtpTransport(options);
+    }
+
+    public sealed class SmtpTransport : IMailTransport
+    {
+        private readonly EmailOptions options;
+        private readonly SmtpClient client;
+
+        public SmtpTransport(EmailOptions options)
         {
+            this.options = options;
             var smtp = options.Smtp;
+            client = new SmtpClient(smtp.Host, smtp.Port)
+            {
+                EnableSsl = smtp.UseSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                Timeout = Math.Clamp(smtp.TimeoutSeconds, 5, 120) * 1000
+            };
+            if (!string.IsNullOrEmpty(smtp.UserName))
+                client.Credentials = new NetworkCredential(smtp.UserName, smtp.Password);
+        }
+
+        public async Task DeliverAsync(EmailMessage message, CancellationToken cancellationToken)
+        {
             using var mail = new MailMessage
             {
                 From = new MailAddress(options.FromAddress, options.FromName, Encoding.UTF8),
@@ -39,28 +59,9 @@ namespace NewsArchive.Email
                 mail.Headers.Add("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
             }
 
-            using var client = new SmtpClient(smtp.Host, smtp.Port)
-            {
-                EnableSsl = smtp.UseSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                Timeout = Math.Clamp(smtp.TimeoutSeconds, 5, 120) * 1000
-            };
-            if (!string.IsNullOrEmpty(smtp.UserName))
-                client.Credentials = new NetworkCredential(smtp.UserName, smtp.Password);
-
-            try
-            {
-                await client.SendMailAsync(mail, cancellationToken);
-                return true;
-            }
-            catch (Exception ex) when (ex is SmtpException or InvalidOperationException or FormatException)
-            {
-                LogSendFailed(ex, message.Category ?? "general");
-                return false;
-            }
+            await client.SendMailAsync(mail, cancellationToken);
         }
 
-        [LoggerMessage(Level = LogLevel.Error, Message = "Email ({Category}) could not be sent")]
-        private partial void LogSendFailed(Exception exception, string category);
+        public void Dispose() => client.Dispose();
     }
 }

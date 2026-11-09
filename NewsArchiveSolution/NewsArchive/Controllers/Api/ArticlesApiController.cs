@@ -254,7 +254,7 @@ namespace NewsArchive.Controllers.Api
             if (article == null || !article.IsPublished) return NotFound();
 
             var user = await RequireApiUserAsync();
-            var dto = new CommentDTO { ArticleId = id, UserId = user.UserId, Text = comment.Text, CreatedDate = DateTime.Now };
+            var dto = new CommentDTO { ArticleId = id, UserId = user.UserId, Text = comment.Text, CreatedDate = BLL.SiteClock.Now };
             if (!commentService.Create(dto))
                 return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Comments must be between 2 and 500 characters.");
 

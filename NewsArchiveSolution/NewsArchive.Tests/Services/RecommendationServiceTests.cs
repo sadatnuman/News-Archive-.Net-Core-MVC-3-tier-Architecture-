@@ -21,7 +21,7 @@ namespace NewsArchive.Tests.Services
             AuthorId = author,
             LanguageCode = "en",
             StatusId = ArticleStatusIds.Published,
-            PublishDate = DateTime.Now.AddDays(-id),
+            PublishDate = BLL.SiteClock.Now.AddDays(-id),
             ViewsCount = 10,
             Tags = tags.Select(t => new Tag { TagId = t, Name = "tag" + t }).ToList()
         };
@@ -33,7 +33,7 @@ namespace NewsArchive.Tests.Services
                 .On("GetRecommendationCandidates", a => candidates.Where(c => !((IEnumerable<int>)a[1]!).Contains(c.ArticleId)).ToList())
                 .On("Get", a => candidates.Concat(new[] { source }).FirstOrDefault(c => c.ArticleId == (int)a[0]!));
             data.History.On("GetRecentArticleIds", _ => read.ToList());
-            return new RecommendationService(data.Instance, TestServices.Mapper);
+            return new RecommendationService(data.Instance, TestServices.Mapper, TestServices.NoCache);
         }
 
         [Fact]

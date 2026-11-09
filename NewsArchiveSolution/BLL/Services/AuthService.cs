@@ -32,7 +32,6 @@ namespace BLL.Services
             if (user == null)
             {
                 PasswordHasher.SimulateVerify(password);
-                audit.Record(AuditActions.SignInFailed, AuditEntities.Security, null, "Unknown account " + AuditRules.MaskEmail(email));
                 return null;
             }
             if (!PasswordHasher.Verify(password, user.PasswordHash, out var needsUpgrade))
@@ -68,7 +67,7 @@ namespace BLL.Services
                 Email = email,
                 PasswordHash = PasswordHasher.Hash(dto.Password),
                 RoleId = AppRoles.Reader,
-                CreatedAt = DateTime.Now
+                CreatedAt = SiteClock.Now
             };
             if (!userRepo.Create(user)) return null;
 

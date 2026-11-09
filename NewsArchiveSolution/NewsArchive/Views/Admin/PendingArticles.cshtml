@@ -6,7 +6,7 @@
     var authors = ViewBag.AuthorNames as Dictionary<int, string> ?? new Dictionary<int, string>();
     var categories = ViewBag.CategoryNames as Dictionary<int, string> ?? new Dictionary<int, string>();
     var scheduled = ViewBag.Scheduled as List<BLL.DTOs.ArticleDTO> ?? new List<BLL.DTOs.ArticleDTO>();
-    var minLocal = DateTime.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm");
+    var minLocal = BLL.SiteClock.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm");
 }
 
 <div class="container py-4 py-lg-5">

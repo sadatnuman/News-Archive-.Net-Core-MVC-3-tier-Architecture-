@@ -1,4 +1,5 @@
 using BLL.Audit;
+using BLL.Builders;
 using BLL.Caching;
 using BLL.DTOs;
 using BLL.Interfaces;
@@ -56,36 +57,21 @@ namespace BLL.Services
             var isAdmin = roleId == AppRoles.Admin;
             if (!isAdmin && roleId != AppRoles.Author) return 0;
 
-            var now = DateTime.Now;
-            var article = new Article
-            {
-                Title = form.Title.Trim(),
-                Slug = SlugHelper.Generate(form.Title),
-                Summary = form.Summary.Trim(),
-                Content = form.Content,
-                ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim(),
-                CategoryId = form.CategoryId,
-                IsBreakingNews = isAdmin && form.IsBreakingNews,
-                LanguageCode = AppLanguages.Normalize(form.LanguageCode),
-                AuthorId = authorId,
-                CreatedAt = now,
-                PublishDate = now,
-                ViewsCount = 0
-            };
-
+            var builder = new ArticleBuilder(SiteClock.Now)
+                .WrittenBy(authorId)
+                .WithText(form.Title, form.Summary, form.Content)
+                .InSection(form.CategoryId)
+                .InLanguage(form.LanguageCode)
+                .WithImage(form.ImagePath);
             if (isAdmin)
-            {
-                PublishOrSchedule(article, form.PublishAt, now);
-                article.ReviewedById = authorId;
-                article.ReviewedAt = now;
-            }
-            else
-            {
-                article.StatusId = submitForReview ? ArticleStatus.Pending : ArticleStatus.Draft;
-            }
+                builder.AsBreakingNews(form.IsBreakingNews).ApprovedBy(authorId, form.PublishAt);
+            else if (submitForReview)
+                builder.SubmittedForReview();
 
+            var article = builder.Build();
             if (!repo.Create(article)) return 0;
             SaveTags(article.ArticleId, form.TagIds);
+            Index(article);
             if (isAdmin)
             {
                 if (article.StatusId == ArticleStatus.Scheduled)
@@ -110,15 +96,15 @@ namespace BLL.Services
             article.ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim();
             article.CategoryId = form.CategoryId;
             article.LanguageCode = AppLanguages.Normalize(form.LanguageCode);
-            article.UpdatedAt = DateTime.Now;
+            article.UpdatedAt = SiteClock.Now;
 
             if (isAdmin)
             {
                 article.IsBreakingNews = form.IsBreakingNews;
-                if (article.StatusId != ArticleStatus.Published && ArticleRules.IsFutureSchedule(form.PublishAt, DateTime.Now))
-                    PublishOrSchedule(article, form.PublishAt, DateTime.Now);
+                if (article.StatusId != ArticleStatus.Published && ArticleRules.IsFutureSchedule(form.PublishAt, SiteClock.Now))
+                    PublishOrSchedule(article, form.PublishAt, SiteClock.Now);
                 else if (article.StatusId == ArticleStatus.Scheduled && form.PublishAt == null)
-                    PublishOrSchedule(article, null, DateTime.Now);
+                    PublishOrSchedule(article, null, SiteClock.Now);
             }
             else
             {
@@ -127,6 +113,7 @@ namespace BLL.Services
 
             if (!repo.Update(article)) return false;
             SaveTags(articleId, form.TagIds);
+            Index(article);
             cache.Invalidate(CacheRegions.Content);
             if (isAdmin && (wasPublished || article.AuthorId != editorId))
                 Log(AuditActions.ArticleEdited, article, ArticleStatus.Name(article.StatusId), editorId);
@@ -140,7 +127,7 @@ namespace BLL.Services
             if (article.StatusId != ArticleStatus.Draft && article.StatusId != ArticleStatus.Rejected) return false;
 
             article.StatusId = ArticleStatus.Pending;
-            article.UpdatedAt = DateTime.Now;
+            article.UpdatedAt = SiteClock.Now;
             return repo.Update(article);
         }
 
@@ -165,7 +152,7 @@ namespace BLL.Services
             var article = repo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Pending) return false;
 
-            var now = DateTime.Now;
+            var now = SiteClock.Now;
             PublishOrSchedule(article, publishAt, now);
             article.ReviewedById = adminId;
             article.ReviewedAt = now;
@@ -183,7 +170,7 @@ namespace BLL.Services
         {
             var article = repo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
-            PublishOrSchedule(article, null, DateTime.Now);
+            PublishOrSchedule(article, null, SiteClock.Now);
             if (!repo.Update(article)) return false;
 
             Log(AuditActions.ArticlePublishedEarly, article);
@@ -204,7 +191,7 @@ namespace BLL.Services
 
         public int PublishDue()
         {
-            var count = repo.PublishDue(DateTime.Now);
+            var count = repo.PublishDue(SiteClock.Now);
             if (count > 0)
             {
                 cache.Invalidate(CacheRegions.Content);
@@ -225,7 +212,7 @@ namespace BLL.Services
 
             article.StatusId = ArticleStatus.Rejected;
             article.ReviewedById = adminId;
-            article.ReviewedAt = DateTime.Now;
+            article.ReviewedAt = SiteClock.Now;
             var cleanNote = string.IsNullOrWhiteSpace(note) ? "No reason given." : note.Trim();
             article.ReviewNote = cleanNote.Length > 500 ? cleanNote[..500] : cleanNote;
             if (!repo.Update(article)) return false;
@@ -300,16 +287,17 @@ namespace BLL.Services
             return data == null ? null : mapper.Map<ArticleDTO>(data);
         }
 
-        public void IncrementViewCount(int articleId)
-        {
-            repo.IncrementViewCount(articleId);
-        }
-
         public List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 50) pageSize = 9;
-            var data = repo.Search(keyword, from, to, page, pageSize, out total, language);
+            var terms = SearchRules.QueryTerms(keyword);
+            if (terms.Count == 0 && !string.IsNullOrWhiteSpace(keyword))
+            {
+                total = 0;
+                return new List<ArticleDTO>();
+            }
+            var data = repo.Search(terms, from, to, page, pageSize, out total, language);
             return mapper.Map<List<ArticleDTO>>(data);
         }
 
@@ -364,14 +352,19 @@ namespace BLL.Services
             return mapper.Map<List<ArticleDTO>>(repo.GetPublishedForSitemap());
         }
 
-        public int GetCommentCount(int articleId)
+        private void Index(Article article)
         {
-            return repo.GetCommentCount(articleId);
+            repo.ReplaceWords(article.ArticleId, SearchRules.IndexWords(article.Title + " " + article.Summary + " " + article.Content));
         }
 
-        public bool HasBreakingNews(string? language = null)
+        public int IndexMissingSearchWords()
         {
-            return repo.HasBreakingNews(language);
+            var articles = repo.GetUnindexed(50);
+            foreach (var article in articles)
+                Index(article);
+            if (articles.Count > 0)
+                cache.Invalidate(CacheRegions.Content);
+            return articles.Count;
         }
 
         public void EnsureSlugs()

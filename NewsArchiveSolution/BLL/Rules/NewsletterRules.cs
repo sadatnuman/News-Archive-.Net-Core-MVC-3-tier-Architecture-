@@ -10,6 +10,7 @@ namespace BLL
         public static readonly TimeSpan ConfirmWindow = TimeSpan.FromHours(48);
         public static readonly TimeSpan ResendDelay = TimeSpan.FromMinutes(2);
         public static readonly TimeSpan PendingRetention = TimeSpan.FromDays(7);
+        public static readonly TimeSpan DigestGap = TimeSpan.FromDays(6);
 
         public static string? NormalizeEmail(string? email)
         {

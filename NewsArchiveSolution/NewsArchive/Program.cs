@@ -27,6 +27,7 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();
+SiteClock.Use(builder.Configuration["Site:TimeZone"]);
 var secureCookies = isDevelopment ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
@@ -112,6 +113,8 @@ if (emailOptions.UseSmtp)
 else
     builder.Services.AddSingleton<IEmailSender, OutboxEmailSender>();
 builder.Services.AddScoped<MailComposer>();
+builder.Services.AddSingleton<DigestSender>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<DigestSender>());
 builder.Services.AddSingleton<PasswordResetStore>();
 builder.Services.AddScoped<PasswordChanger>();
 
@@ -171,6 +174,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
     options.ForwardLimit = 1;
+    if (builder.Configuration.GetValue<bool>("Hosting:TrustAllProxies"))
+    {
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    }
     foreach (var proxy in builder.Configuration.GetSection("Hosting:KnownProxies").Get<string[]>() ?? [])
     {
         if (System.Net.IPAddress.TryParse(proxy, out var address))
@@ -312,3 +320,7 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
+
+public partial class Program
+{
+}

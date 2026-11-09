@@ -28,7 +28,7 @@ namespace BLL.Services
                 EntityId = entityId,
                 Details = AuditRules.Clip(details),
                 IpAddress = ip != null && ip.Length > 45 ? ip[..45] : ip,
-                CreatedAt = DateTime.Now
+                CreatedAt = SiteClock.Now
             });
         }
 
@@ -55,7 +55,7 @@ namespace BLL.Services
 
         public int PurgeOld()
         {
-            return repo.PurgeBefore(DateTime.Now.AddDays(-AuditRules.RetentionDays));
+            return repo.PurgeBefore(SiteClock.Now.AddDays(-AuditRules.RetentionDays));
         }
     }
 }

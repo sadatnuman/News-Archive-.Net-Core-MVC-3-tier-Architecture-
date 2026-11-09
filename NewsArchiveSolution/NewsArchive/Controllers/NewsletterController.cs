@@ -28,13 +28,16 @@ namespace NewsArchive.Controllers
 
         [HttpPost("newsletter/subscribe")]
         [EnableRateLimiting(ApiOptions.NewsletterRateLimit)]
-        public async Task<IActionResult> Subscribe(string? email, string? returnUrl)
+        public async Task<IActionResult> Subscribe(string? email, string? returnUrl, string? website)
         {
-            var result = newsletterService.Subscribe(email, CurrentLanguage);
-            if (result.Status == SubscribeStatus.ConfirmationNeeded)
-                await emailSender.SendAsync(mail.SubscriptionConfirmation(result));
-
-            var ok = result.Status != SubscribeStatus.InvalidEmail;
+            var ok = !string.IsNullOrEmpty(website);
+            if (!ok)
+            {
+                var result = newsletterService.Subscribe(email, CurrentLanguage);
+                if (result.Status == SubscribeStatus.ConfirmationNeeded)
+                    await emailSender.SendAsync(mail.SubscriptionConfirmation(result));
+                ok = result.Status != SubscribeStatus.InvalidEmail;
+            }
             if (WantsJson)
             {
                 var text = ok ? L["Thanks! Check your inbox and confirm your subscription."] : L["Please enter a valid email address."];

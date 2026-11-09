@@ -93,13 +93,13 @@ namespace BLL.Services
             var article = articleRepo.Get(comment.ArticleId);
             if (article == null || article.StatusId != ArticleStatus.Published) return ReportResult.NotFound;
 
-            if (!repo.AddReport(commentId, userId, reasonId, ModerationRules.CleanNote(note), DateTime.Now))
+            if (!repo.AddReport(commentId, userId, reasonId, ModerationRules.CleanNote(note), SiteClock.Now))
                 return ReportResult.AlreadyReported;
 
             var reports = repo.CountReports(commentId);
             if (ModerationRules.ShouldAutoHide(reports))
             {
-                repo.SetHidden(commentId, true, null, DateTime.Now);
+                repo.SetHidden(commentId, true, null, SiteClock.Now);
                 cache.Invalidate(CacheRegions.Content);
                 audit.Record(AuditActions.CommentAutoHidden, AuditEntities.Comment, commentId, $"{reports} reports; {Excerpt(comment.Text)}");
                 return ReportResult.AutoHidden;
@@ -125,7 +125,7 @@ namespace BLL.Services
         private bool Moderate(int commentId, bool hidden, int moderatorId, string action)
         {
             var comment = repo.Get(commentId);
-            if (comment == null || !repo.SetHidden(commentId, hidden, moderatorId, DateTime.Now)) return false;
+            if (comment == null || !repo.SetHidden(commentId, hidden, moderatorId, SiteClock.Now)) return false;
 
             var cleared = repo.ClearReports(commentId);
             cache.Invalidate(CacheRegions.Content);

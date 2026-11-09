@@ -105,7 +105,7 @@ namespace NewsArchive.Tests.Services
         [InlineData("   ")]
         public void Too_short_comments_are_not_saved(string text)
         {
-            Assert.False(Service().Create(new BLL.DTOs.CommentDTO { ArticleId = 1, UserId = 4, Text = text, CreatedDate = DateTime.Now }));
+            Assert.False(Service().Create(new BLL.DTOs.CommentDTO { ArticleId = 1, UserId = 4, Text = text, CreatedDate = BLL.SiteClock.Now }));
             Assert.Equal(0, data.Comments.CountOf("Create"));
         }
     }

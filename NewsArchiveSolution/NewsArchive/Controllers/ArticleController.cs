@@ -90,7 +90,7 @@ namespace NewsArchive.Controllers
             ViewBag.Trending = trending;
             ViewBag.ForYou = forYou;
             ViewBag.PopularTags = isSearch ? new List<TagDTO>() : tagService.GetPopular(12, CurrentLanguage);
-            ViewBag.OnThisDay = isSearch ? new List<ArticleDTO>() : articleService.GetOnThisDay(DateTime.Now, 3, CurrentLanguage);
+            ViewBag.OnThisDay = isSearch ? new List<ArticleDTO>() : articleService.GetOnThisDay(BLL.SiteClock.Now, 3, CurrentLanguage);
             ViewBag.Keyword = keyword;
             ViewBag.From = from;
             ViewBag.To = to;
@@ -139,9 +139,6 @@ namespace NewsArchive.Controllers
 
             if (article.IsPublished && slug != article.Slug)
                 return RedirectPermanent(Seo.SeoUrls.Article(article));
-
-            if (article.IsPublished && userId.HasValue)
-                articleService.IncrementViewCount(id);
 
             List<int>? sessionReads = null;
             if (article.IsPublished)
@@ -351,7 +348,7 @@ namespace NewsArchive.Controllers
                 ArticleId = articleId,
                 UserId = userId.Value,
                 Text = commentText,
-                CreatedDate = DateTime.Now
+                CreatedDate = BLL.SiteClock.Now
             });
             if (!created)
                 Flash("danger", "Comments must be between 2 and 500 characters.");

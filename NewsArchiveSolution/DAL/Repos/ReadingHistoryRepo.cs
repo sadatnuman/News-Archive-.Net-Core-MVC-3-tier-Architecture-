@@ -28,9 +28,9 @@ namespace DAL.Repos
                     .SetProperty(h => h.ReadCount, h => h.ReadCount + 1));
         }
 
-        public void Record(int userId, int articleId, DateTime readAt)
+        public bool Record(int userId, int articleId, DateTime readAt)
         {
-            if (Touch(userId, articleId, readAt) > 0) return;
+            if (Touch(userId, articleId, readAt) > 0) return false;
 
             db.ReadingHistory.Add(new ReadingHistory
             {
@@ -43,11 +43,13 @@ namespace DAL.Repos
             try
             {
                 db.SaveChanges();
+                return true;
             }
             catch (DbUpdateException)
             {
                 db.ChangeTracker.Clear();
                 Touch(userId, articleId, readAt);
+                return false;
             }
         }
 

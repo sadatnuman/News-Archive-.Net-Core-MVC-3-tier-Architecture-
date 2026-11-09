@@ -8,10 +8,12 @@ namespace NewsArchive.Auth
         public static readonly TimeSpan LockWindow = TimeSpan.FromMinutes(15);
 
         private readonly IMemoryCache cache;
+        private readonly IHttpContextAccessor http;
 
-        public LoginThrottle(IMemoryCache cache)
+        public LoginThrottle(IMemoryCache cache, IHttpContextAccessor http)
         {
             this.cache = cache;
+            this.http = http;
         }
 
         public bool IsLocked(string? email)
@@ -31,9 +33,10 @@ namespace NewsArchive.Auth
             cache.Remove(Key(email));
         }
 
-        private static string Key(string? email)
+        private string Key(string? email)
         {
-            return "login-failures:" + (email ?? string.Empty).Trim().ToLowerInvariant();
+            var ip = http.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return "login-failures:" + (email ?? string.Empty).Trim().ToLowerInvariant() + "|" + ip;
         }
     }
 }

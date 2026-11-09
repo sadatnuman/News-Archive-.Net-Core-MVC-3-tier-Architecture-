@@ -17,18 +17,45 @@ namespace DAL.Repos
             return string.IsNullOrEmpty(language) ? query : query.Where(a => a.LanguageCode == language);
         }
 
+        private static IQueryable<Article> Cards(IQueryable<Article> query)
+        {
+            return query.Select(a => new Article
+            {
+                ArticleId = a.ArticleId,
+                Title = a.Title,
+                Slug = a.Slug,
+                Summary = a.Summary,
+                Content = string.Empty,
+                PublishDate = a.PublishDate,
+                ViewsCount = a.ViewsCount,
+                IsBreakingNews = a.IsBreakingNews,
+                ImagePath = a.ImagePath,
+                CategoryId = a.CategoryId,
+                AuthorId = a.AuthorId,
+                StatusId = a.StatusId,
+                LanguageCode = a.LanguageCode,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt,
+                ScheduledAt = a.ScheduledAt,
+                ReviewedById = a.ReviewedById,
+                ReviewedAt = a.ReviewedAt,
+                ReviewNote = a.ReviewNote,
+                Tags = a.Tags.ToList()
+            });
+        }
+
         public override List<Article> Get()
         {
-            return db.Articles.AsNoTracking().OrderByDescending(a => a.PublishDate).ToList();
+            return Cards(db.Articles.AsNoTracking().OrderByDescending(a => a.PublishDate)).ToList();
         }
 
         public List<Article> GetByCategoryId(int categoryId, string? language, int page, int pageSize, out int total)
         {
             var query = Published(language).Where(a => a.CategoryId == categoryId);
             total = query.Count();
-            return query.OrderByDescending(a => a.PublishDate)
+            return Cards(query.OrderByDescending(a => a.PublishDate)
                         .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
+                        .Take(pageSize))
                         .ToList();
         }
 
@@ -48,20 +75,43 @@ namespace DAL.Repos
                 .ExecuteUpdate(s => s.SetProperty(a => a.ViewsCount, a => a.ViewsCount + 1));
         }
 
-        public List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
+        public bool IsPublished(int articleId)
+        {
+            return db.Articles.Any(a => a.ArticleId == articleId && a.StatusId == ArticleStatusIds.Published);
+        }
+
+        public void ReplaceWords(int articleId, IEnumerable<string> words)
+        {
+            db.ArticleWords.Where(w => w.ArticleId == articleId).ExecuteDelete();
+            db.ArticleWords.AddRange(words.Select(w => new ArticleWord { ArticleId = articleId, Word = w }));
+            db.SaveChanges();
+            db.ChangeTracker.Clear();
+        }
+
+        public List<Article> GetUnindexed(int count)
+        {
+            return db.Articles.AsNoTracking()
+                .Where(a => !a.Words.Any())
+                .OrderBy(a => a.ArticleId)
+                .Take(count)
+                .Select(a => new Article { ArticleId = a.ArticleId, Title = a.Title, Summary = a.Summary, Content = a.Content })
+                .ToList();
+        }
+
+        public List<Article> Search(IReadOnlyList<string> terms, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
         {
             var query = Published(language);
-            if (!string.IsNullOrWhiteSpace(keyword))
-                query = query.Where(a => a.Title.Contains(keyword) || a.Summary.Contains(keyword) || a.Content.Contains(keyword));
+            foreach (var term in terms)
+                query = query.Where(a => a.Words.Any(w => w.Word.StartsWith(term)));
             if (from.HasValue)
                 query = query.Where(a => a.PublishDate >= from.Value);
             if (to.HasValue)
                 query = query.Where(a => a.PublishDate < to.Value.Date.AddDays(1));
 
             total = query.Count();
-            return query.OrderByDescending(a => a.PublishDate)
+            return Cards(query.OrderByDescending(a => a.PublishDate)
                         .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
+                        .Take(pageSize))
                         .ToList();
         }
 
@@ -69,9 +119,9 @@ namespace DAL.Repos
         {
             var query = Published(language).Where(a => a.PublishDate >= from && a.PublishDate < toExclusive);
             total = query.Count();
-            return query.OrderByDescending(a => a.PublishDate)
+            return Cards(query.OrderByDescending(a => a.PublishDate)
                         .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
+                        .Take(pageSize))
                         .ToList();
         }
 
@@ -99,48 +149,43 @@ namespace DAL.Repos
 
         public List<Article> GetOnThisDay(int month, int day, int beforeYear, int count, string? language = null)
         {
-            return Published(language)
+            return Cards(Published(language)
                 .Where(a => a.PublishDate.Month == month && a.PublishDate.Day == day && a.PublishDate.Year < beforeYear)
                 .OrderByDescending(a => a.PublishDate)
-                .Take(count)
+                .Take(count))
                 .ToList();
         }
 
         public List<Article> GetBreaking(string? language = null)
         {
-            return Published(language)
+            return Cards(Published(language)
                 .Where(a => a.IsBreakingNews)
-                .OrderByDescending(a => a.PublishDate)
+                .OrderByDescending(a => a.PublishDate))
                 .ToList();
-        }
-
-        public bool HasBreakingNews(string? language = null)
-        {
-            return Published(language).Any(a => a.IsBreakingNews);
         }
 
         public List<Article> GetTrending(int count, string? language = null)
         {
-            return Published(language)
+            return Cards(Published(language)
                 .OrderByDescending(a => a.ViewsCount + a.Comments.Count(c => !c.IsHidden) * 2)
                 .ThenByDescending(a => a.PublishDate)
-                .Take(count)
+                .Take(count))
                 .ToList();
         }
 
         public List<Article> GetMostViewed(int count)
         {
-            return Published()
+            return Cards(Published()
                 .OrderByDescending(a => a.ViewsCount)
-                .Take(count)
+                .Take(count))
                 .ToList();
         }
 
         public List<Article> GetLatest(int count, string? language = null)
         {
-            return Published(language)
+            return Cards(Published(language)
                 .OrderByDescending(a => a.PublishDate)
-                .Take(count)
+                .Take(count))
                 .ToList();
         }
 
@@ -152,65 +197,44 @@ namespace DAL.Repos
             var tags = tagIds.Distinct().ToList();
             var authors = authorIds.Distinct().ToList();
 
-            var related = Published(language)
+            var related = Cards(Published(language)
                 .Where(a => !excluded.Contains(a.ArticleId)
                     && (categories.Contains(a.CategoryId) || authors.Contains(a.AuthorId) || a.Tags.Any(t => tags.Contains(t.TagId))))
                 .OrderByDescending(a => a.PublishDate)
-                .Take(relatedLimit)
-                .Include(a => a.Tags)
+                .Take(relatedLimit))
                 .ToList();
 
             var known = related.Select(a => a.ArticleId).Concat(excluded).ToList();
-            related.AddRange(Published(language)
+            related.AddRange(Cards(Published(language)
                 .Where(a => !known.Contains(a.ArticleId))
                 .OrderByDescending(a => a.ViewsCount)
                 .ThenByDescending(a => a.PublishDate)
-                .Take(popularLimit)
-                .Include(a => a.Tags)
+                .Take(popularLimit))
                 .ToList());
             return related;
         }
 
         public List<Article> Suggest(string term, string? language, int count)
         {
-            return Published(language)
-                .Where(a => a.Title.Contains(term) || a.Summary.Contains(term))
+            return Cards(Published(language)
+                .Where(a => a.Title.Contains(term))
                 .OrderByDescending(a => a.Title.StartsWith(term))
-                .ThenByDescending(a => a.Title.Contains(term))
                 .ThenByDescending(a => a.PublishDate)
-                .Take(count)
-                .Select(a => new Article
-                {
-                    ArticleId = a.ArticleId,
-                    Title = a.Title,
-                    Slug = a.Slug,
-                    Summary = string.Empty,
-                    Content = string.Empty,
-                    LanguageCode = a.LanguageCode,
-                    CategoryId = a.CategoryId,
-                    AuthorId = a.AuthorId,
-                    ImagePath = a.ImagePath,
-                    PublishDate = a.PublishDate,
-                    IsBreakingNews = a.IsBreakingNews,
-                    StatusId = a.StatusId
-                })
+                .Take(count))
                 .ToList();
         }
 
         public List<Article> GetManyWithTags(IEnumerable<int> articleIds)
         {
             var ids = articleIds.Distinct().ToList();
-            return db.Articles.AsNoTracking()
-                .Where(a => ids.Contains(a.ArticleId))
-                .Include(a => a.Tags)
-                .ToList();
+            return Cards(db.Articles.AsNoTracking().Where(a => ids.Contains(a.ArticleId))).ToList();
         }
 
         public List<Article> GetByAuthor(int authorId)
         {
-            return db.Articles.AsNoTracking()
+            return Cards(db.Articles.AsNoTracking()
                 .Where(a => a.AuthorId == authorId)
-                .OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt)
+                .OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt))
                 .ToList();
         }
 
@@ -218,9 +242,9 @@ namespace DAL.Repos
         {
             var query = Published(language).Where(a => a.AuthorId == authorId);
             total = query.Count();
-            return query.OrderByDescending(a => a.PublishDate)
+            return Cards(query.OrderByDescending(a => a.PublishDate)
                         .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
+                        .Take(pageSize))
                         .ToList();
         }
 
@@ -244,28 +268,15 @@ namespace DAL.Repos
 
         public List<Article> GetByStatus(int statusId)
         {
-            return db.Articles.AsNoTracking()
+            return Cards(db.Articles.AsNoTracking()
                 .Where(a => a.StatusId == statusId)
-                .OrderBy(a => a.UpdatedAt ?? a.CreatedAt)
+                .OrderBy(a => a.UpdatedAt ?? a.CreatedAt))
                 .ToList();
         }
 
         public List<Article> GetPublishedForSitemap()
         {
-            return Published()
-                .OrderByDescending(a => a.PublishDate)
-                .Select(a => new Article
-                {
-                    ArticleId = a.ArticleId,
-                    LanguageCode = a.LanguageCode,
-                    Title = a.Title,
-                    Slug = a.Slug,
-                    PublishDate = a.PublishDate,
-                    UpdatedAt = a.UpdatedAt,
-                    ImagePath = a.ImagePath,
-                    Summary = a.Summary,
-                    Content = string.Empty
-                })
+            return Cards(Published().OrderByDescending(a => a.PublishDate))
                 .ToList();
         }
 
@@ -274,15 +285,9 @@ namespace DAL.Repos
             return db.Articles.Where(a => a.Slug == null).ToList();
         }
 
-
         public int CountByStatus(int statusId)
         {
             return db.Articles.Count(a => a.StatusId == statusId);
-        }
-
-        public int GetCommentCount(int articleId)
-        {
-            return db.Comments.Count(c => c.ArticleId == articleId && !c.IsHidden);
         }
 
         public Dictionary<int, int> CountPerCategory()

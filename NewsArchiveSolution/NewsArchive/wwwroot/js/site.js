@@ -33,8 +33,6 @@
             if (emailField && passwordField) {
                 emailField.value = demoButton.getAttribute("data-demo-email");
                 passwordField.value = demoButton.getAttribute("data-demo-password");
-                emailField.dispatchEvent(new Event("input", { bubbles: true }));
-                passwordField.dispatchEvent(new Event("input", { bubbles: true }));
                 document.querySelectorAll("[data-demo-email]").forEach(function (b) { b.classList.toggle("active", b === demoButton); });
                 passwordField.form.querySelector("button[type=submit]").focus();
             }

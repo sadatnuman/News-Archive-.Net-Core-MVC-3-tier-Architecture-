@@ -22,7 +22,7 @@
 
 <div class="topbar">
     <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
-        <time datetime="@DateTime.Now.ToString("yyyy-MM-dd")">@DateTime.Now.ToString("dddd, d MMMM yyyy")</time>
+        <time datetime="@BLL.SiteClock.Now.ToString("yyyy-MM-dd")">@BLL.SiteClock.Now.ToString("dddd, d MMMM yyyy")</time>
         <div class="d-flex flex-wrap align-items-center gap-3">
             <nav class="lang-switch" aria-label="@L["Language"]">
                 @foreach (var code in AppLanguages.All)

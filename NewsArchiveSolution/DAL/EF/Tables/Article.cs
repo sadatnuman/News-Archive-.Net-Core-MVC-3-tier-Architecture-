@@ -60,4 +60,6 @@ public partial class Article
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
 
     public virtual ICollection<ReadingHistory> Readers { get; set; } = new List<ReadingHistory>();
+
+    public virtual ICollection<ArticleWord> Words { get; set; } = new List<ArticleWord>();
 }

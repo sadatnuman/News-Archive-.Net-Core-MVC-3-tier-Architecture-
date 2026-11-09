@@ -122,7 +122,7 @@
     {
         <div class="mb-4" style="max-width: 22rem;">
             <label asp-for="PublishAt" class="form-label fw-semibold"></label>
-            <input asp-for="PublishAt" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" min="@DateTime.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm")" />
+            <input asp-for="PublishAt" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" min="@BLL.SiteClock.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm")" />
             <div class="form-text">@L["Leave empty to publish immediately."]</div>
         </div>
     }

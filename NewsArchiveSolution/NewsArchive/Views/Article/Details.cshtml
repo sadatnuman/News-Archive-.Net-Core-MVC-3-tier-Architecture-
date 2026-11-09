@@ -32,7 +32,7 @@
     var wordCount = (Model.Content ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
     var readingMinutes = Math.Max(1, (int)Math.Round(wordCount / 220.0));
     var modified = Model.UpdatedAt.HasValue && Model.UpdatedAt > Model.PublishDate ? Model.UpdatedAt : null;
-    string Iso(DateTime d) => d.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
+    string Iso(DateTime d) => BLL.SiteClock.ToUtc(d).ToString("yyyy-MM-ddTHH:mm:ssZ");
 
     var meta = ViewData.Meta();
     meta.Title = Model.Title;
@@ -104,7 +104,7 @@
                     <div class="d-flex flex-wrap gap-2">
                         <form asp-controller="Admin" asp-action="Approve" asp-route-id="@Model.ArticleId" method="post" class="d-flex gap-2">
                             <label class="visually-hidden" for="publishAt">@L["Publish at (leave empty to publish now)"]</label>
-                            <input id="publishAt" type="datetime-local" name="publishAt" class="form-control" title="@L["Publish at (leave empty to publish now)"]" min="@DateTime.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm")" />
+                            <input id="publishAt" type="datetime-local" name="publishAt" class="form-control" title="@L["Publish at (leave empty to publish now)"]" min="@BLL.SiteClock.Now.AddMinutes(2).ToString("yyyy-MM-ddTHH:mm")" />
                             <button type="submit" class="btn btn-success flex-shrink-0"><i class="bi bi-check2-circle"></i> @L["Approve & publish"]</button>
                         </form>
                         <form asp-controller="Admin" asp-action="Reject" asp-route-id="@Model.ArticleId" method="post" class="d-flex gap-2">

@@ -44,6 +44,8 @@ public partial class NewsArchiveDbContext : DbContext
 
     public virtual DbSet<Subscriber> Subscribers { get; set; }
 
+    public virtual DbSet<ArticleWord> ArticleWords { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -85,6 +87,8 @@ public partial class NewsArchiveDbContext : DbContext
         modelBuilder.Entity<Article>(entity =>
         {
             entity.HasKey(e => e.ArticleId).HasName("PK__Articles__9C6270E827220E8D");
+
+            entity.Property(e => e.StatusId).IsConcurrencyToken();
 
             entity.HasIndex(e => new { e.LanguageCode, e.StatusId, e.PublishDate }, "IX_Articles_LanguageCode_StatusId_PublishDate")
                 .IsDescending(false, false, true);
@@ -205,6 +209,20 @@ public partial class NewsArchiveDbContext : DbContext
                 .HasForeignKey(d => d.ArticleId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Bookmarks_Articles");
+        });
+
+        modelBuilder.Entity<ArticleWord>(entity =>
+        {
+            entity.HasKey(e => new { e.Word, e.ArticleId }).HasName("PK_ArticleWords");
+
+            entity.HasIndex(e => e.ArticleId, "IX_ArticleWords_ArticleId");
+
+            entity.Property(e => e.Word).HasMaxLength(40);
+
+            entity.HasOne(d => d.Article).WithMany(p => p.Words)
+                .HasForeignKey(d => d.ArticleId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ArticleWords_Articles");
         });
 
         modelBuilder.Entity<ReadingHistory>(entity =>

@@ -432,8 +432,8 @@
   <data name="Details (optional)" xml:space="preserve">
     <value>বিস্তারিত (ঐচ্ছিক)</value>
   </data>
-  <data name="Digest sent to every subscriber." xml:space="preserve">
-    <value>সব গ্রাহকের কাছে ডাইজেস্ট পাঠানো হয়েছে।</value>
+  <data name="The digest is being sent in the background. The audit log shows the result." xml:space="preserve">
+    <value>ডাইজেস্ট পেছনে পাঠানো হচ্ছে। ফলাফল অডিট লগে দেখা যাবে।</value>
   </data>
   <data name="Do you want to sign out of this browser?" xml:space="preserve">
     <value>এই ব্রাউজার থেকে লগ-আউট করতে চান?</value>
@@ -1269,8 +1269,8 @@
   <data name="Skip to main content" xml:space="preserve">
     <value>মূল কনটেন্টে যান</value>
   </data>
-  <data name="Some emails could not be sent. Check the email settings and the log." xml:space="preserve">
-    <value>কিছু ইমেইল পাঠানো যায়নি। ইমেইল সেটিংস ও লগ দেখুন।</value>
+  <data name="This edition is already being sent." xml:space="preserve">
+    <value>এই সংস্করণটি এখন পাঠানো হচ্ছে।</value>
   </data>
   <data name="Something went wrong" xml:space="preserve">
     <value>কিছু একটা সমস্যা হয়েছে</value>

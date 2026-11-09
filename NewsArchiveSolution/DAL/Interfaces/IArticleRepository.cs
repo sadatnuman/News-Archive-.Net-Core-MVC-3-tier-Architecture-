@@ -10,7 +10,13 @@ namespace DAL.Interfaces
 
         void IncrementViewCount(int articleId);
 
-        List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
+        bool IsPublished(int articleId);
+
+        void ReplaceWords(int articleId, IEnumerable<string> words);
+
+        List<Article> GetUnindexed(int count);
+
+        List<Article> Search(IReadOnlyList<string> terms, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
 
         List<Article> GetByPeriod(DateTime from, DateTime toExclusive, string? language, int page, int pageSize, out int total);
 
@@ -21,8 +27,6 @@ namespace DAL.Interfaces
         List<Article> GetOnThisDay(int month, int day, int beforeYear, int count, string? language = null);
 
         List<Article> GetBreaking(string? language = null);
-
-        bool HasBreakingNews(string? language = null);
 
         List<Article> GetTrending(int count, string? language = null);
 
@@ -52,8 +56,6 @@ namespace DAL.Interfaces
         int CountByStatus(int statusId);
 
         int PublishDue(DateTime now);
-
-        int GetCommentCount(int articleId);
 
         Dictionary<int, int> CountPerCategory();
     }

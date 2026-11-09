@@ -40,8 +40,6 @@ namespace BLL.Interfaces
 
         ArticleDTO? GetWithDetails(int id);
 
-        void IncrementViewCount(int articleId);
-
         List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
 
         List<ArticleDTO> GetArchive(int year, int? month, int? day, string? language, int page, int pageSize, out int total);
@@ -60,9 +58,7 @@ namespace BLL.Interfaces
 
         List<ArticleDTO> GetPublishedForSitemap();
 
-        int GetCommentCount(int articleId);
-
-        bool HasBreakingNews(string? language = null);
+        int IndexMissingSearchWords();
 
         void EnsureSlugs();
     }

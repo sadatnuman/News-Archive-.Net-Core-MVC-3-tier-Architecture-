@@ -14,10 +14,10 @@ namespace DAL.Repos
             this.db = db;
         }
 
-        public bool Add(int userId, int articleId)
+        public bool Add(int userId, int articleId, DateTime createdAt)
         {
             if (Exists(userId, articleId)) return true;
-            db.Bookmarks.Add(new Bookmark { UserId = userId, ArticleId = articleId, CreatedAt = DateTime.Now });
+            db.Bookmarks.Add(new Bookmark { UserId = userId, ArticleId = articleId, CreatedAt = createdAt });
             try
             {
                 return db.SaveChanges() > 0;

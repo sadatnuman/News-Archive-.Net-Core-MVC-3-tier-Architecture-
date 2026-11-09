@@ -7,11 +7,5 @@ namespace BLL.Interfaces
         List<RoleDTO> Get();
 
         RoleDTO? Get(int id);
-
-        bool Create(RoleDTO c);
-
-        bool Update(RoleDTO c);
-
-        bool Delete(int id);
     }
 }
