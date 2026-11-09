@@ -25,6 +25,14 @@ namespace BLL
             return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{statusId}-{(updatedAt ?? createdAt).Ticks}");
         }
 
+        public static bool IsWellFormedVersion(string? version)
+        {
+            var parts = version?.Split('-');
+            return parts is { Length: 2 }
+                && int.TryParse(parts[0], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out _)
+                && long.TryParse(parts[1], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out _);
+        }
+
         public static bool IsFutureSchedule(DateTime? publishAt, DateTime now)
         {
             return publishAt.HasValue && publishAt.Value > now.AddMinutes(1) && publishAt.Value <= now.Add(MaxScheduleAhead);

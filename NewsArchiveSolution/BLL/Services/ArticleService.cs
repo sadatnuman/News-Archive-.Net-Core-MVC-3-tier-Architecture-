@@ -39,13 +39,6 @@ namespace BLL.Services
             tagRepo.SetArticleTags(articleId, (tagIds ?? Enumerable.Empty<int>()).Distinct().Take(ArticleRules.MaxTagsPerArticle));
         }
 
-        public List<ArticleDTO> Get()
-        {
-            var data = repo.Get();
-            var res = mapper.Map<List<ArticleDTO>>(data);
-            return res;
-        }
-
         public ArticleDTO? Get(int id)
         {
             var data = repo.Get(id);
@@ -349,9 +342,9 @@ namespace BLL.Services
             return mapper.Map<List<ArticleDTO>>(repo.GetLatest(count, language));
         }
 
-        public List<ArticleDTO> GetPublishedForSitemap()
+        public List<ArticleDTO> GetPublishedForSitemap(DateTime? since, int max)
         {
-            return mapper.Map<List<ArticleDTO>>(repo.GetPublishedForSitemap());
+            return mapper.Map<List<ArticleDTO>>(repo.GetPublishedForSitemap(since, Math.Clamp(max, 1, SeoLimits.MaxSitemapArticles)));
         }
 
         private void Index(Article article)

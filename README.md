@@ -23,9 +23,9 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
   - *Recommended for you* on the home page and in the article sidebar
 - **Reading history** (`/history`) with remove and clear, and **saved stories** (`/bookmarks`)
 - Comments, with a **Report** button for spam, abuse, off-topic or misinformation
-- **Weekly email digest** with double opt-in, one-click unsubscribe and a bot trap
+- **Weekly email digest** with double opt-in, one-click unsubscribe and a bot trap (written to a local outbox only; see "Email" below)
 - Works **offline**: a bilingual offline page, and repeat visits load faster
-- Sign up, profile picture, bio, password change, and password reset by an emailed code; eye button on every password field
+- Sign up, profile picture, bio, password change, and password reset by a code (delivered to the local outbox only); eye button on every password field
 
 ### For authors
 
@@ -82,7 +82,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 | Content | Markdig (safe Markdown) |
 | API docs | Swashbuckle / Swagger |
 | UI | Razor, Bootstrap 5.3, Bootstrap Icons, Source Serif 4, Inter, Cinzel, Noto Bengali |
-| Tests | xUnit (116 unit and integration tests), a smoke-test and benchmark script, GitHub Actions |
+| Tests | xUnit (137 unit and integration tests), a smoke-test and benchmark script, GitHub Actions |
 
 ## Project structure
 
@@ -185,7 +185,7 @@ python tools/smoke/smoke.py                  # recreate NewsArchiveSmokeDB, load
 python tools/smoke/smoke.py --stories 5000   # also add 5,000 generated stories and measure search p50/p95/p99
 ```
 
-The script refuses any database whose name does not contain `Smoke` or `Test`, so it can never reset `NewsArchiveDB`. It reads the demo passwords from `appsettings.Development.json`, runs the app on `127.0.0.1:5199` in Development (emails only go to the local outbox) and stops it at the end.
+The script only accepts a database named `NewsArchiveSmokeDB…` or `NewsArchiveTestDB…` on a local SQL Server (`localhost`, `.`, `127.0.0.1` or `(localdb)`), so it can never reset `NewsArchiveDB`. It reads the demo passwords from `appsettings.Development.json`, removes any `Email__…`/`SMTP…` environment variables, runs the app on `127.0.0.1:5199` in Development (emails only go to the private local outbox, which it cleans afterwards) and stops it at the end.
 
 ### 6. API
 
@@ -197,6 +197,22 @@ curl -X POST http://localhost:5096/api/auth/login -H "Content-Type: application/
 curl http://localhost:5096/api/articles/pending -H "Authorization: Bearer <token>"
 curl "http://localhost:5096/api/search/suggest?q=rail&lang=en"
 ```
+
+**Editing an article (`PUT /api/articles/{id}`) needs a version.** First `GET /api/articles/{id}`; the response has a `version` field (for example `"3-639005184000000000"`). Send the full article plus that `version`:
+
+```bash
+curl -X PUT http://localhost:5096/api/articles/42 -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+     -d "{\"title\":\"...\",\"summary\":\"...\",\"content\":\"...\",\"categoryId\":1,\"languageCode\":\"en\",\"version\":\"3-639005184000000000\"}"
+```
+
+| Answer | Meaning |
+|---|---|
+| 204 | Saved |
+| 400 | `version` missing or malformed: send the value from `GET /api/articles/{id}` |
+| 409 | Someone saved or decided the story after you loaded it: load it again |
+| 401 / 403 / 404 | Not signed in / not allowed to edit / no such article |
+
+Clients written before this rule existed must add the `version` field; without it they get 400, never a false "someone else changed it".
 
 ---
 
@@ -212,24 +228,21 @@ curl "http://localhost:5096/api/search/suggest?q=rail&lang=en"
 | `Site:DemoAccounts` | Demo Admin, Author and Reader buttons on the sign-in page (set only in `appsettings.Development.json`) |
 | `Api:SwaggerEnabled`, `Api:TokenLifetimeHours`, `Api:AllowedOrigins` | Swagger outside Development, token lifetime (default 12 h), CORS origins |
 | `Email:FromAddress`, `Email:FromName` | Sender of all emails |
-| `Email:Smtp:Host`, `Port`, `UseSsl`, `UserName`, `Password` | SMTP server; leave `Host` empty to keep emails in the log |
-| `Email:OutboxFolder` | Where Development writes emails as text files (default `App_Data/outbox`, not in git) |
+| `Email:OutboxFolder` | Where Development writes emails as text files (default `App_Data/outbox` under the content root, not under `wwwroot`, not in git) |
 | `Hosting:KnownProxies` | Reverse proxies whose `X-Forwarded-*` headers are trusted |
 | `Hosting:TrustAllProxies` | Set `true` on Azure App Service and other hosts that put a proxy in front of the app, so every visitor gets their own rate limit |
 | `Database:MigrateOnStartup` | Apply migrations on startup outside Development |
 
-### Turning on real email
+### Email
 
-Add your provider's details, preferably with user secrets or environment variables rather than in the file:
+**Real email delivery is not implemented/configured or tested. Email verification uses a local outbox/fake transport only.**
 
-```json
-"Email": {
-  "FromAddress": "news@yourdomain.com",
-  "Smtp": { "Host": "smtp.yourprovider.com", "Port": 587, "UseSsl": true, "UserName": "...", "Password": "..." }
-}
-```
+| Environment | Sender | What happens |
+|---|---|---|
+| Development | `OutboxEmailSender` | Each email is written as a text file to `App_Data/outbox` (private, not served, not in git). Use it to confirm a newsletter sign-up or read a reset code while testing. |
+| Anything else | `DisabledEmailSender` | Nothing is sent and no connection is opened. `SendAsync` returns `false`. One warning is logged at start-up; no log line per email. The admin "Send digest" button says that email delivery is turned off. |
 
-The newsletter confirmations, digests and password reset codes then go out through SMTP with no code change.
+`SmtpEmailSender` stays in the code as the second product of the Factory Method example, but the app never registers it, even if an `Email:Smtp:Host` is configured. Because of this, on a public deployment readers cannot confirm a newsletter sign-up or receive a password-reset code. Turning on real email later needs a code change, a provider, and its own tests.
 
 ### Before going live
 
@@ -237,7 +250,7 @@ The newsletter confirmations, digests and password reset codes then go out throu
 - Set `Site:BaseUrl`.
 - Behind a host proxy (Azure App Service, most free hosts), set `Hosting:TrustAllProxies` to `true`.
 - Serve the site over HTTPS (cookies are Secure outside Development).
-- Configure SMTP.
+- Real email is off by design (see "Email"); newsletter confirmation and password reset by email do not work on a public host until it is added.
 - Keep `Api:SwaggerEnabled` off unless the API docs should be public.
 - Back up the database together with `wwwroot/uploads`.
 

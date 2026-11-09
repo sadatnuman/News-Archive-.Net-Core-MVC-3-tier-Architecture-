@@ -1,201 +1,351 @@
-# SADP Handoff for ChatGPT: The Meridian Newsfolio (AIUB CSC 4273), Revision 2
+# SADP Handoff for ChatGPT: The Meridian Newsfolio (final hardening)
 
-Written for an independent reviewer who has not seen the terminal session. Every claim gives a path (relative to `NewsArchiveSolution/` unless stated), a test name or a command result. Supporting files are in `sadp_delivery/`.
+Written for an independent reviewer. The block below is identical to `CLAUDE_FINAL_COPY_TO_CHATGPT.txt`; detailed evidence is in `SECURITY_REVIEW_FINDINGS_AND_FIXES.md`, `TEST_MATRIX_AND_COMMANDS.md`, `EMAIL_OFFLINE_MODE_AND_TESTS.md`, `MIDTERM_REQUIREMENT_TRACEABILITY.md`, `FULL_COURSE_APPLICABILITY_MATRIX.md` and `FINAL_CHANGELOG.md`.
 
-## A. Branch, commits, safety
+```text
+THE MERIDIAN NEWSFOLIO - FINAL SADP HANDOFF FOR INDEPENDENT REVIEW (AIUB CSC 4273)
+Plain-text copy for direct pasting. Same facts as sadp_delivery/SADP_HANDOFF_FOR_CHATGPT.md.
+Paths are relative to NewsArchiveSolution/ unless stated. Line numbers are final on this branch.
 
-| Item | Value |
-|---|---|
-| Repository | `sadatnuman/News-Archive-.Net-Core-MVC-3-tier-Architecture-` (remote unchanged) |
-| Start point | `main` at `484deb3` ("Merge pull request #9 from sadatnuman/sadp/midterm-readiness"); same file tree as `origin/sadp/midterm-readiness` (empty `git diff --stat`) |
-| Work branch | `sadp/review-corrections` (local) |
-| Code + documents commit | `95851fc2b5fccc803d3569657b5df9f9322a862f` |
-| This handoff | Committed on the same branch in the commit right after `95851fc` (`git log -1 -- sadp_delivery/SADP_HANDOFF_FOR_CHATGPT.md` shows it) |
-| Pushed / merged | **No / No** |
-| Size, code + README/ARCHITECTURE + tools | 29 files, +1,793 / −90 (1,049 of the added lines are the EF-generated migration designer) |
-| Size, `sadp_delivery/` | 22 files, +1,051 / −378 (including 2 PNG and 2 SVG diagrams) |
+=====================================================================
+A. REPOSITORY, BRANCH, SAFETY
+=====================================================================
+Repository : github.com/sadatnuman/News-Archive-.Net-Core-MVC-3-tier-Architecture-
+Base       : main @ 12d1893913787c12ff429f4b73809426c9d6d73f (PR #10; 116/116 tests, build 0 warnings / 0 errors)
+Branch     : sadp/final-hardening (local only)
+Commit 1   : c1dfb82ef1985b89732f57cd5c8d32cf89b22b0a  (code, tests, docs)
+Commit 2   : the next commit on the same branch          (this handoff, changelog)
+Pushed / merged / deployed : NO / NO / NO
+GitHub CI on the new commits : NOT RUN (not pushed). Local tests do not replace it.
 
-**Safety:**
-- No force push, merge or deployment.
-- No real email: SMTP host empty, outbox only.
-- No destructive migration: the new migration `20261109152432_ArticleEditConcurrencyToken` has empty Up/Down.
-- The user's `NewsArchiveDB` was **not touched** (28 articles, checked with `sqlcmd`). The new migration was not applied to it.
-- The smoke script and the 5,000 generated stories ran only on the disposable `NewsArchiveSmokeDB`.
-- No secrets added. The smoke script reads the existing development demo password at run time; it is not stored in the script.
-- No group details were invented: every name and ID is [TBD].
+Size:
+- Code + README/ARCHITECTURE + tools: 47 files, +1,147 / -149.
+- No EF migration added: "dotnet ef migrations has-pending-model-changes" reports no changes.
 
-## B. Files changed
+User database NewsArchiveDB: NOT TOUCHED.
+- Checked with sqlcmd: 28 articles.
+- Last applied migration: 20261109091901_AddArticleWords.
+- Only NewsArchiveTestDB (integration tests) and NewsArchiveSmokeDB (smoke/benchmark) were used.
 
-**Code (BLL / DAL / UI):**
-- `BLL/ChangeResult.cs` (new: `ChangeResult { Done, NotAllowed, Conflict }`, and the two conflict messages).
-- `BLL/Interfaces/IArticleArchive.cs` (new, 3 members).
-- `BLL/Interfaces/IArticleService.cs` (5 methods now return `ChangeResult`; 3 archive methods moved out; 29 → 26 members).
-- `BLL/Services/ArticleService.cs` (implements both interfaces; version check at `:89`).
-- `BLL/Rules/ArticleRules.cs:23` (`Version`).
-- `BLL/DTOs/ArticleDTO.cs` (`Version`), `BLL/DTOs/ArticleFormDTO.cs` (`Version`).
-- `BLL/BusinessLayerServices.cs:17` (registers `IArticleArchive`).
-- `DAL/EF/NewsArchiveDbContext.cs:92` (`UpdatedAt` concurrency token), the new empty migration, and the model snapshot.
-- `NewsArchive/Controllers/AdminController.cs:105` (`Decided` helper).
-- `Api/ArticlesApiController.cs` (409 for conflicts in `Update` and `Decided`).
-- `ArticleController.cs` (Edit conflict message).
-- `ArchiveController.cs`, `Api/ArchiveApiController.cs`, `SeoController.cs` (use `IArticleArchive`).
-- `NewsArchive/Email/OutboxEmailSender.cs:39`.
-- `Views/Article/_ArticleForm.cshtml:16` (hidden `Version`).
-- `Resources/SharedResource.bn.resx` (2 Bangla messages).
+NO REAL EMAIL:
+- Real email delivery is not implemented/configured or tested.
+- Email verification uses a local outbox/fake transport only.
+- No SMTP connection, no provider, no credentials, no DNS/MX, no real recipients (synthetic @example.test only).
+- Proof is in section E.
 
-**Tests:**
-- `NewsArchive.Tests/Integration/AppTests.cs`: 5 new tests, 1 extended.
-- `Patterns/EmailSenderTests.cs`: 1 changed.
-- `Services/MemoryAppCacheTests.cs` (new, 2 tests).
-- `Security/MappingDepthTests.cs` (new, 1 test).
+Course sources read: C:\Users\User\Downloads\SADP
+- CSC4273_MidTerm_CaseStudy_Guideline.pdf (5 pages).
+- CSC4273_Semester_Project_Proposal_Template.pdf (6 pages).
+- 12 decks: Weeks 01-06 and 08-13.
+- Week 07 was not supplied (W6 s24: exam week); nothing was invented for it.
 
-**Tools and docs:**
-- `tools/smoke/smoke.py` (new).
-- `.gitignore` (`__pycache__/`).
-- `README.md`, `ARCHITECTURE.md`.
+=====================================================================
+B. ARCHITECTURE AND FEATURES (verified in code)
+=====================================================================
+Layers:
+- One ASP.NET Core 10 deployable: NewsArchive (MVC + REST API + Razor) -> BLL -> DAL (EF Core 10, SQL Server).
+- BLL references DAL with PrivateAssets=compile (BLL/BLL.csproj:14), so the UI cannot compile against DAL types.
+- Layers are not physical tiers: one process plus the database.
 
-**SADP deliverables:**
-- `MIDTERM_DRAFT_FOR_REVIEW.md`
-- `01`, `02`, `03`, `04`, `05`, `06`, `07`, `08`
-- `09_C4_AND_4PLUS1/` (`C4_DIAGRAMS.md`, `4PLUS1_VIEWS.md`, `render_c4.py`, `c4_level1_context.png/.svg`, `c4_level2_containers.png/.svg`)
-- `11`, `12`, `13`, `14`, `15`, `WORK_LOG.md`, this file
+Roles: Admin, Author, Reader.
 
-## C. What the reviewer asked, and what was done
+Features:
+- Author drafts/submits; admin approves, schedules or rejects with a note; a background job publishes due stories.
+- Bilingual EN/BN word search, date archive, sections, topics, authors, recommendations, bookmarks, history.
+- Comments with reports and auto-hide at 3, admin moderation, audit log.
+- Newsletter with double opt-in (offline only).
+- Token-protected REST API with Swagger.
 
-| Review item | Done | Evidence |
-|---|---|---|
-| P1.1 Draft vs. Midterm §0–10 | Re-checked section by section against P2 p1–5. Cover, §0 and the member names stay [TBD]. | `04` |
-| P1.2 M4's weak ISP | New `IArticleArchive` (3 members). Archive page, archive API and sitemap depend only on it. Abstract Factory unchanged. | `AppTests.Archive_pages_depend_only_on_the_narrow_archive_contract` (3-method stub serves `/archive` and `/api/archive`) |
-| P1.3 Keep the DI Singleton and explain it | Kept. Side-by-side "classic vs DI-managed" table, viva answer and the honest weakness are in `07` and `13`. | `AppTests.Lockout_and_reset_stores_are_one_instance_for_the_whole_app` |
-| P1.4 4+1 process wording | Corrected: requests run on pool threads, no thread is reserved, an `await` releases the thread; our synchronous EF calls block a pool thread for each query. Cited to Microsoft "ASP.NET Core best practices" [10]. | Draft §5, `09/4PLUS1_VIEWS.md` |
-| P1.5 C4 review | L1, L2 and L3 checked for boundary, element types, technology and arrow labels. Fixed: browser scripts are delivered by the web app; CDN added; SMTP "when configured"; L3 filters run *before* controllers; every arrow labelled. | `09/C4_DIAGRAMS.md` review table |
-| P1.6 Render C4 | `render_c4.py` writes SVG and PNG (local headless Chrome, nothing installed). Both PNGs viewed; overlapping labels fixed and re-rendered. L1 = midterm Figure 1, L2 = proposal §8. | `09_C4_AND_4PLUS1/*.png` |
-| P1.7 IEEE in-text citations | Every draft section cites [n]. 12 references. [4], [5], [7] checked against Crossref; [8], [10], [11] opened. 4 books still need a library check. | Draft §10 |
-| P1.8 No Week 4–13 material in §0–10 | Boundary check written; `DigestSender` described only as an availability tactic. | `04` |
-| P2.1 Stale-edit overwrites | Version (`StatusId-UpdatedAt.Ticks`) in the edit form and the API; `UpdatedAt` is also a concurrency token. A stale save is refused before writing; two saves in flight cannot both win. | `An_edit_from_a_stale_form_never_overwrites_a_newer_edit`, `Two_saves_in_flight_from_the_same_version_cannot_both_win`; smoke over API and MVC |
-| P2.2 409 messages | `ChangeResult.Conflict` → "Another editor acted on this story at the same moment…" or "Someone else changed this article after you opened it…" (EN + BN). Ordinary wrong states keep "Only pending articles…". | `A_decision_racing_another_editor_reports_a_conflict_not_a_wrong_state`; extended `Author_submission_stays_hidden_…` |
-| P2.3 Production email | Outside Development, without SMTP, `SendAsync` now returns `false` and logs "No email transport is configured". Pages still work; the password-reset answer does not reveal whether the account exists; the Development outbox is unchanged. | `EmailSenderTests.Development_outbox_writes_the_message_and_production_without_smtp_reports_failure` |
-| P2.4 Impact review | Visibility, authorization, audit and scheduling reviewed: no change to visibility or authorization; audit only on `Done`; the scheduler uses `ExecuteUpdate` and cannot be blocked, while a form opened before the scheduler acted gets a conflict instead of pushing the story back to Draft. | `12` "Impact review" |
-| P2.5 Stale caches vs. withdrawn content | Verified with tests. Invalidation runs after each successful write, and version keys stop late cache writes. Remaining gap: RSS/sitemap `Cache-Control` (15/60 min) lets proxies keep a withdrawn *title*; its link answers 404. | `A_withdrawn_story_disappears_from_every_public_read_at_once`, `MemoryAppCacheTests` (2); `08`, `15` R-10 |
-| P3.1 Restore, Release build, tests | Restore exit 0; build 0 warnings / 0 errors; **116 passed, 0 failed, 0 skipped**. | `11` |
-| P3.2 E2E smoke on an isolated database | **40/40** on `NewsArchiveSmokeDB`. | `11` |
-| P3.3 Reproducible smoke script | `tools/smoke/smoke.py`: refuses database names without `Smoke`/`Test`, builds, recreates the smoke database, loads sample data, runs the app on loopback in Development, runs the checks, then the optional benchmark, then stops the app. | README "Tests" |
-| P3.4 Benchmark ≥ 5,000 stories | See section D. | `08`, `11` |
-| P3.5 AutoMapper advisory | Not upgraded (15+ is commercially licensed; untested major change). Every map has `MaxDepth(3)`, now guarded by a test. Upgrade paths written down. | `MappingDepthTests.Every_mapping_has_a_depth_limit`; `08` |
-| P3.6 Six NFAs classified | VERIFIED / MEASURED / TARGET / NOT VERIFIED for each. | Draft §3, `08` |
-| P4 Documentation sync | "Not pushed" statements corrected (revision 1 was pushed and merged as PR #9); line numbers updated after the refactor; matrices, diagrams, patterns, evidence and remaining actions updated. Week-by-week coverage keeps IMPLEMENTED / DOCUMENTED / PLANNED / N/A with reasons; no blockchain, IoT, microservices, AI agents or Saga were forced in. | `01`, `02`, `03`, `06`, `12`, `14`, `WORK_LOG.md` |
+=====================================================================
+C. P0 / P1 FINDINGS - BEFORE -> AFTER -> TEST
+=====================================================================
+S1 (P0) An author could delete other users' pictures. FIXED.
+  Before:
+    MediaService.DeleteIfUploaded deleted any "/uploads/..." path without "..".
+    Typed ImagePath values reached it, so an author could put another user's avatar or story picture
+    path into their own story, then clear it or delete the story.
+  After:
+    BLL/Services/MediaService.cs:41 DeleteArticleImageIfUnused accepts only
+      ^/uploads/articles/[0-9]{4}/[0-9]{2}/[0-9a-f]{32}\.(jpg|png|gif|webp)$  (:24).
+    BLL/Services/MediaService.cs:48 DeleteAvatarIfUnused accepts only
+      ^/uploads/avatars/[0-9a-f]{32}\.(...)$  (:27).
+    Both refuse when Articles.ImagePath (DAL/Repos/ArticleRepo.cs:109) or Users.AvatarPath
+    (DAL/Repos/UserRepo.cs:64) still uses the path.
+    Callers: ArticleController.cs:233,270,285,314; Api/ArticlesApiController.cs:183;
+    Api/AuthApiController.cs:103,107,118; AvatarController.cs:47,52,67.
+  Tests (real files in an isolated temporary web root):
+    HardeningTests.Deleting_one_story_never_removes_a_picture_another_story_still_uses
+    HardeningTests.A_story_pointing_at_someone_elses_avatar_never_deletes_it
+    HardeningTests.Only_canonical_unused_upload_paths_can_ever_be_deleted (13 unsafe shapes refused)
+  Mutation check: with the reference check removed, the first test fails.
+  Residual: a millisecond check-then-delete gap at one server (R-13).
 
-## D. Verified evidence
+S2 (P0) Parallel sign-in requests bypassed the 5-per-15-minutes lockout. FIXED.
+  Before:
+    IsLocked() was checked first; RecordFailure() then read the count and wrote count+1 without a lock.
+    20 parallel guesses all passed.
+  After:
+    NewsArchive/Auth/LoginThrottle.cs:41 Attempt(email, verify).
+    Under a lock it refuses when failures + inFlight >= 5 (:47) and reserves a slot.
+    The password is checked outside the lock; the result is recorded under the lock.
+    Used by AuthController.cs:53 (website), Api/AuthApiController.cs:38 (API),
+    Auth/PasswordChanger.cs:48 (current-password check).
+  Tests:
+    SecurityTests.Twenty_simultaneous_wrong_passwords_get_at_most_five_checks (exactly 5 of 20)
+    SecurityTests.A_correct_password_clears_earlier_failures_and_a_crash_does_not_count
+    HardeningTests.Twelve_parallel_wrong_passwords_get_five_checks_and_then_both_sign_in_paths_are_locked
+      (5 x 401, 7 x 429; the right password then gets 429; the MVC form shows the lock)
+  Mutation check: with inFlight removed from the gate, both concurrency tests fail.
+  Residual: the counters are per process; a shared store is planned (ADR-005).
 
-**Commands** (2026-11-09, this machine):
+C1 (P1) The MVC story form with a missing section gave a 500 and lost the text. FIXED.
+  - ArticleController.cs:65 RequireSection runs before any upload (create :213, edit :262).
+  - Race: ArticleRepo.Create/Update (DAL/Repos/ArticleRepo.cs:14,27) catch only SQL 547 (DAL/Repos/DbErrors.cs)
+    and return false; the form returns with the text kept and only its own new upload removed.
+  - Tests: HardeningTests.A_form_for_a_missing_section_keeps_the_text_and_removes_only_its_own_upload,
+    Saving_into_a_section_that_vanished_returns_false_instead_of_crashing.
 
-| Command | Exit | Result |
-|---|---|---|
-| `dotnet restore NewsArchiveSolution.slnx` | 0 | up to date |
-| `dotnet build NewsArchiveSolution.slnx -c Release` | 0 | 0 warnings, 0 errors |
-| `dotnet test NewsArchive.Tests -c Release --no-build` | 0 | 116 passed, 0 failed, 0 skipped |
-| `git diff --check` | 0 | clean |
-| `dotnet list … package --vulnerable --include-transitive` | 0 | only AutoMapper 14.0.0 (GHSA-rvv3-g6hj-g44x, High) |
-| `python tools/smoke/smoke.py --stories 5000` (repo root) | 0 | `SUMMARY 40/40 checks passed; benchmark errors=0` |
+C2 (P1) User deletion ran in separate steps. FIXED.
+  - DAL/Repos/UserRepo.cs:32-55: one transaction (:34). A foreign-key conflict -> rollback, false (:49).
+  - Other failures roll back (dispose) and surface.
+  - Tests: Deleting_a_user_removes_their_comments_reports_and_moderator_links_together;
+    A_user_delete_that_fails_at_the_last_step_rolls_everything_back
+    (a temporary trigger on the test database injects the failure; the user, comment, report and
+    moderator link all remain).
 
-**Smoke checks (40):**
-- Pages and barriers: 200 for public pages; 302 / 401 / 403 where expected.
-- Editorial flow: author → hidden → admin approve → public; a decision on a decided story → 409 "Only pending articles…"; search finds the story.
-- Rejection: the note is visible to the author.
-- Stale edits:
-  - API: 204, then 409 for the stale copy;
-  - MVC: the edit page has a hidden `Version`; first save 302; the same form again shows the conflict.
-- Scheduling: published by the background job after 85 s.
-- Newsletter: exactly one outbox file.
-- Withdrawal: the story is visible before; after the delete it is gone from the page, API, list and RSS.
+C3 (P1) Two registrations for one email at once gave a 500. FIXED.
+  - UserRepo.Create (:19) catches only SQL 2601/2627 and returns false -> 409 "Email already exists".
+  - An outage is not hidden.
+  - Tests: Two_registrations_for_one_email_at_once_create_exactly_one_account
+    (1 x 201, 1 x 409, 1 row, 1 audit entry); A_duplicate_insert_returns_false_and_the_repository_keeps_working.
 
-**Search benchmark:**
-- **Dataset:** 5,024 published stories (5,031 in all), 915,558 word-index rows. The 5,000 generated stories were created through the real admin form; all returned 302 in 27 s.
-- **Story content:** half English, half Bangla. Zipf-weighted vocabulary: 83 real English + 68 real Bangla words, the rest synthetic. Seed 4273.
-- **Configuration:** Windows 11, Ryzen 5 7520U (8 logical CPUs), 13.8 GB RAM, SQL Server 2025 Express on the same machine, Release build, Development, loopback.
-- **Workload:** 30 fixed queries (frequent, mid, rare, two-word, 3-letter prefix, no-match, both languages) on `/Article/Index?keyword=`; 20 warm-up requests; 400 sequential requests; 800 requests from 20 threads.
+C4 (P1) An API edit without "version" was told "someone else changed this article". FIXED.
+  - Api/ArticlesApiController.cs:146-150: missing or malformed version (ArticleRules.IsWellFormedVersion,
+    BLL/Rules/ArticleRules.cs:28) -> 400 ValidationProblem on the key "version":
+    "Send the version returned by GET /api/articles/{id} in the JSON property "version"."
+  - Stale but well-formed -> 409. No article -> 404. Anonymous -> 401. Not allowed -> 403. Current -> 204.
+  - Swagger [EndpointDescription] (:136); README curl example and answer table. The MVC hidden field is unchanged.
+  - Tests: HardeningTests.The_edit_api_explains_a_missing_version_and_keeps_409_for_real_conflicts;
+    AppTests.An_edit_from_a_stale_form_never_overwrites_a_newer_edit (now expects 400 for a missing version).
 
-| Mode | n | p50 | p95 | p99 | Throughput | Errors |
-|---|---|---|---|---|---|---|
-| Sequential | 400 | 47.1 ms | 72.2 ms | 80.3 ms | 20.9 req/s | 0 |
-| 20 concurrent | 800 | 446.7 ms | 672.5 ms | 779.5 ms | 43.0 req/s | 0 |
+P2 items fixed:
+  D1 Removed unused IArticleService.Get() (loads all rows), ICommentService.Get(), ICommentService.Update().
+  D2 MaintenanceJob every 24 h (NewsArchive/Publishing/MaintenanceJob.cs; BLL/BusinessLayerServices.cs:51);
+     test Daily_maintenance_removes_expired_tokens_and_old_audit_entries.
+  D3 News sitemap is filtered and limited in SQL: GetPublishedForSitemap(since, max) (DAL/Repos/ArticleRepo.cs:308,
+     SeoController.cs:131); main sitemap capped at 45,000 (:67).
+  D4 Auto-hide is a conditional UPDATE (CommentRepo.cs:77, CommentService.cs:92): audited once.
+  D5 A delete racing an edit returns false, not a 500 (Repository.cs:64).
+  D6 Knowing an email no longer changes a confirmed subscriber's language (NewsletterService.cs:49).
+  D7 RSS / news sitemap Cache-Control 900 -> 300 s (SeoController.cs:124,147).
+  Each has a regression test (see TEST_MATRIX_AND_COMMANDS.md).
 
-- **Targets:** p95 ≤ 200 ms (1 user) and ≤ 1 s (20 users). Both are met on this machine.
-- **Limits:**
-  - one run;
-  - client and server share the CPU;
-  - synthetic text;
-  - all generated stories share a publish day;
-  - Express edition;
-  - the REST search API was not benchmarked, because it is rate-limited to 120 requests per minute per IP.
+Deferred with reason:
+  D8 AutoMapper 14 advisory GHSA-rvv3-g6hj-g44x (High).
+     Every map has MaxDepth(3), guarded by MappingDepthTests.
+     The fixed versions (15.1.1 / 16.1.1) are commercially licensed (free Community tier with conditions).
+     Not upgraded without an owner decision.
+  D9 Sitemap index beyond 45,000 stories: not reachable at the expected size.
 
-**Six quality attributes (status):**
+Wider scan - no new exploitable issue found:
+  - JSON-LD Html.Raw uses System.Text.Json default escaping.
+  - The service worker does not cache HTML or private paths.
+  - Suggestions, bookmarks and author pages filter on Published.
+  - Not examined deeply: site.js beyond the service worker, analytics queries, CI file, proxy/HTTPS on a real host.
 
-| Attribute | Status |
-|---|---|
-| Reliability | Decisions and edits VERIFIED; scheduled publish MEASURED |
-| Security | VERIFIED |
-| Availability | Mail isolation VERIFIED; 99.5 % uptime NOT VERIFIED (no deployment) |
-| Performance | MEASURED |
-| Scalability | 1 instance MEASURED; 2+ instances TARGET |
-| Maintainability | VERIFIED |
+=====================================================================
+D. BUILD, TESTS, SMOKE, BENCHMARK (2026-11-09, this machine)
+=====================================================================
+Machine: Windows 11, Ryzen 5 7520U (8 logical CPUs), 13.8 GB RAM, .NET SDK 10.0.403, SQL Server 2025 Express.
 
-**Patterns (W3) with GoF roles, unchanged in role:**
+dotnet build NewsArchiveSolution.slnx -c Release     -> exit 0, 0 warnings, 0 errors
+dotnet test NewsArchive.Tests -c Release --no-build  -> 137 passed, 0 failed, 0 skipped
+   (116 + 17 HardeningTests + 2 SecurityTests + 1 CommentServiceTests + 1 NewsletterServiceTests)
+dotnet ef migrations has-pending-model-changes       -> no changes
+dotnet list ... package --vulnerable --include-transitive -> only AutoMapper 14.0.0
+git diff --check                                     -> clean
+python tools/smoke/smoke.py --stories 5000 (repo root) -> 45/45 checks passed, benchmark errors 0, exit 0
 
-| Pattern | Where | Tests |
-|---|---|---|
-| Builder | `BLL/Builders/ArticleBuilder.cs`, director `ArticleService.Create` (`:60`) | 7 |
-| Factory Method | `NewsArchive/Email/EmailSender.cs:20` | 5 |
-| Abstract Factory | `IDataAccessFactory`, family test | 1 |
-| Singleton, DI-managed | `Program.cs:52`, `:118` | `Assert.Same` |
+Smoke guards:
+- Only NewsArchiveSmokeDB* / NewsArchiveTestDB* names on localhost, ".", 127.0.0.1 or (localdb) are accepted.
+  9 guard cases were checked, including refusing NewsArchiveDB, look-alike names and remote servers.
+- Email__*/SMTP* environment variables are removed.
+- The app runs in Development on 127.0.0.1:5199.
 
-## E. What could not be tested
+Smoke checks:
+- EN/BN pages, health, RSS, sitemap, Swagger.
+- 302/401/403 barriers.
+- author -> admin approve/reject/schedule; 409 for a decided story.
+- API stale edit 409 and missing version 400; MVC stale form conflict.
+- Offline email:
+    one confirmation file in the private outbox;
+    the confirm link works;
+    the admin digest reaches the outbox;
+    the reset code is accepted (code not printed);
+    an unknown email gets the same answer and no mail.
+- Withdrawal from page, API, list and RSS.
+- Scheduler published a story set 75 s ahead after 85 s.
 
-- A real deployment, HTTPS on a host, real SMTP delivery, 99.5 % uptime.
-- 2+ app instances, which would need a shared state store.
-- GitHub Actions on this branch: it has not been pushed. The previous revision's 108 tests passed on `main`, as reported by the reviewer.
-- The MVC flash message for a decision race through HTTP. A true race cannot be timed reliably; the service result behind it is tested.
-- The two new Bangla messages as rendered in a browser. They are in the resource file, but were not viewed on screen.
-- The 4 book references against library copies.
+Search benchmark:
+- Dataset: 5,024 published stories (5,000 generated through the real admin form; seed 4273; half EN, half BN;
+  synthetic Zipf vocabulary); 915,558 word-index rows.
+- Workload: 30 fixed queries on /Article/Index?keyword=; 20 warm-up requests; 400 sequential requests;
+  800 requests from 20 threads; 50 requests per sitemap.
 
-## F. Remaining gaps (from `15`)
+                       p50       p95       p99        throughput  errors
+  search, 1 user       46.7 ms   66.9 ms   71.0 ms    21.0 req/s  0
+  search, 20 users     476.8 ms  784.2 ms  1028.0 ms  38.9 req/s  0
+  news sitemap         56.2 ms   80.5 ms   81.2 ms    17.6 req/s  0
+  main sitemap         128.2 ms  150.4 ms  297.2 ms   7.6 req/s   0
 
-| ID | Priority | Gap |
-|---|---|---|
-| R-T1 | **P0** | Member IDs, names, group, section, date; who owns which module |
-| R-T3 | **P0** | Convert the Markdown draft to the submission format (DOCX/PDF) with Figure 1 |
-| R-T4 | P1 | Library check of 4 book references |
-| R-1 | P1 | Shared state store before 2+ instances |
-| R-3b | P1 | Async EF on the search path; re-run the benchmark (tests the 9× concurrency slowdown hypothesis) |
-| R-4 | P1 | Production deployment |
-| R-11 | P1 | Push this branch so CI runs the 116 tests |
-| R-6 | P2 | `IArticleService` still has 26 members; `AdminController` has 12 dependencies |
-| R-7 | P2 | `TimeProvider` instead of the static `SiteClock` |
-| R-8 | P2 | AutoMapper upgrade or replacement |
-| R-9 | P2 | Change the sample password |
-| R-10 | P2 | Shorter RSS/news-sitemap cache headers |
-| R-12 | P2 | Document the API's required `version` field |
+Repeatability: three 5,000-story runs gave 20-client throughput 43.0 / 40.8 / 38.9 req/s and p95 672.5 / 727.8 / 784.2 ms.
 
-## G. User information still required
+Targets:
+- search p95 <= 200 ms (1 user) and <= 1 s (20 users): MET on this machine.
+- >= 40 req/s with 20 users: NOT MET in the final run (38.9).
 
-1. The group number, section and submission date.
-2. Every member's student ID and name, and which member owns which module (M1–M4). The GitHub owner `sadatnuman` must be confirmed by the group.
-3. The submission format the lecturer wants (DOCX or PDF).
-4. Whether to push `sadp/review-corrections` and open a pull request.
-5. For a live demo: a hosting choice and its credentials.
-6. For an AutoMapper upgrade: whether the group qualifies for the free Community licence.
+Limits:
+- client and server on one machine; synthetic text; SQL Server Express;
+- no query plans captured;
+- headless HTTP checks only (no visual browser test).
 
-## H. Verdicts
+=====================================================================
+E. OFFLINE EMAIL - CONFIGURATION AND PROOF
+=====================================================================
+NewsArchive/Program.cs:111-115:
+- Development registers OutboxEmailSender: private App_Data/outbox under the content root, not wwwroot, gitignored.
+- Every other environment registers DisabledEmailSender (NewsArchive/Email/DisabledEmailSender.cs):
+  IsEnabled = false, SendAsync returns false, no transport, no per-mail log.
+- One start-up warning (Program.cs:212).
+- SmtpEmailSender/SmtpTransport stay as a dormant Factory Method product and are never registered,
+  even with Email:Smtp:Host set. The SMTP block was removed from appsettings.json.
+- The admin "Send digest" button checks DigestSender.CanSend (AdminController.cs:161; DigestSender.cs:25)
+  and says email is turned off. No subscriber is marked as sent.
 
-**MIDTERM (§0–10): CODE AND EVIDENCE READY; SUBMISSION PARTIAL.**
-- Every section has real code, test, rendered-diagram or measurement evidence.
-- Every section cites IEEE sources and stays inside Lectures 1–3.
-- It cannot be submitted until the group fills in its personal data (R-T1) and converts the draft to the required format (R-T3).
+Proof:
+- HardeningTests.Outside_development_mail_is_disabled_even_with_an_smtp_host_and_sends_nothing:
+    Production + Email:Smtp:Host=smtp.example.invalid -> DisabledEmailSender is the only registration;
+    2,000 sends to reader{i}@example.test all return false;
+    0 new warning/error logs; exactly 1 start-up warning;
+    a System.Net.Sockets EventListener sees no ConnectStart to ports 25/465/587/2525 or any "smtp" host.
+- HardeningTests.Newsletter_double_opt_in_works_offline_through_the_private_outbox:
+    subscribe -> one outbox file -> confirm -> Bangla re-subscribe does not change the language -> unsubscribe;
+    the outbox is outside wwwroot; the test removes its files and the subscriber.
+- The smoke script performs the same flows plus digest and password reset; tokens and codes are never printed.
 
-**FULL SEMESTER: PARTIAL.**
-- All 12 supplied decks are mapped (Week 7 is the exam week).
-- Week 9 ADRs, Week 12 diagrams-as-code with two rendered levels, and a re-runnable benchmark exist.
-- Week 4–5 patterns are proposed with triggers, not built, on purpose.
-- Weeks 6, 10, 11 and 13 are mostly not applicable to one deployable, with reasons.
-- There is no deployment, no multi-instance test, and the final report and presentation are not written yet.
-- No mark is guaranteed.
+Limit: the socket listener covers .NET-managed sockets only. The app has no other mail code.
+
+Consequence (documented in the README): on a public host, readers cannot confirm a newsletter sign-up
+or reset a password by email. This is scope, not a defect.
+
+=====================================================================
+F. SADP - MIDTERM (P2, Lectures 1-3 only)
+=====================================================================
+Cover / 0 Work split: PARTIAL - member IDs/names, group, section, date are [TBD] (never invented).
+1 Arch vs design:  READY - A1 layering, A2 SQL Server + EF migrations, A3 cookie + opaque-token identity
+                   (BLL/Services/AuthService.cs:101); D1 Builder, D2 Factory Method, D3 tokenizer + cache TTL.
+2 Style:           READY - layered + MVC + client-server; modular monolith vs SOA with drivers (W2 s29-30).
+3 NFA (per member):
+   M1 Reliability: StatusId + UpdatedAt tokens, form version - VERIFIED; scheduler - MEASURED (85 s).
+   M2 Security: parallel-safe lockout, picture-deletion safety, CSRF, PBKDF2 - VERIFIED.
+   M3 Availability as offline failure isolation - VERIFIED; deliverability not measured (no real email);
+      uptime NOT VERIFIED.
+   M4 Performance: 1-user p95 66.9 ms, 20-user p95 784.2 ms - MEASURED.
+4 C4:              READY - rendered sadp_delivery/09_C4_AND_4PLUS1/c4_level1_context.png (Figure 1; checked by eye;
+                   SMTP removed because no provider exists). L2 c4_level2_containers.png is for the proposal.
+5 4+1:             READY - process view corrected (thread pool, no thread per request, await releases the thread;
+                   synchronous EF blocks a pool thread); scenarios S1-S6 tested.
+6 SOLID:           READY - M1 SRP (ArticleBuilder/ArticleService/ArticleRules); M2 DIP (PasswordChanger -> IAuthService);
+                   M3 OCP (EmailSender subclasses); M4 ISP (BLL/Interfaces/IArticleArchive.cs, 3 members;
+                   test Archive_pages_depend_only_on_the_narrow_archive_contract).
+7 CAP:             READY - one SQL Server today (no partition; ACID != CAP); planned CP for editorial state,
+                   AP reads; "withdrawn must vanish" is tested.
+8 Migration:       READY - Newsletter & Notifications first; 5 phases; a plan only.
+9 Creational:      READY - Builder (BLL/Builders/ArticleBuilder.cs, 7 tests);
+                   DI-managed Singleton (LoginThrottle, PasswordResetStore; Assert.Same; classic-vs-DI table in 07);
+                   Factory Method (EmailSender.CreateTransport: OutboxEmailSender active, SmtpEmailSender dormant);
+                   Abstract Factory (DAL/Interfaces/IDataAccessFactory.cs; family test).
+10 IEEE refs:      READY - 12 entries cited in the text; [4][5][7] checked on Crossref; [8][10][11] opened;
+                   4 books to check in the library.
+Week 4-13 material is kept out of sections 0-10.
+
+=====================================================================
+G. SADP - PROPOSAL (P1, sections 1-12, PDF/DOCX, 5-8 pages, via Teams)
+=====================================================================
+- Sections 1-10 and 12: content exists (sadp_delivery/05).
+- Section 8 diagram: L2 rendered.
+- Section 5: all six NFAs with status; the Scalability throughput goal was missed in the final run (38.9 < 40 req/s)
+  and is reported honestly.
+- Section 11 Team & milestones: PARTIAL (names/roles [TBD]).
+- Indicative self-rating 21/24 - NOT a grade prediction.
+
+=====================================================================
+H. WEEKS 4-13 (later milestones; nothing forced into the code)
+=====================================================================
+Implemented:
+- cache-aside with TTL and version keys (W9);
+- p50/p95/p99 measurement (W9);
+- ADR-001..008 (W9; ADR-005 still Proposed);
+- diagrams as code (W12).
+Documented / planned:
+- Facade (article page assembly), Strategy (second ranking), State (more editorial states);
+- shared state store for scale-out; blue-green (not deployed);
+- research proposal outline; mini-ATAM.
+Partial:
+- resilience (fallback via disabled mail; no retry, to avoid double digests);
+- observability (structured logs only).
+Not applicable, with reasons:
+- Composite, Proxy/Decorator claims;
+- API Gateway / EDA / Circuit Breaker / Saga (one deployable; an in-process Channel is not EDA,
+  one SQL transaction is not a Saga);
+- sharding, load balancing (one instance);
+- blockchain / IoT / MQTT (an audit log is not a blockchain);
+- agentic AI / RAG (recommendations are deterministic, not AI);
+- serverless.
+Auth naming: API tokens are opaque random values stored as SHA-256 hashes - NOT JWT, no OAuth2.
+
+=====================================================================
+I. STILL OPEN (no known open P0 security or P1 correctness defect)
+=====================================================================
+ID     Priority            Item
+R-T1   P0 (submission)     Member IDs/names, group, section, date; confirm module owners and group size
+R-T3   P0 (submission)     Convert the Markdown draft to DOCX/PDF with Figure 1
+R-T4   P1                  Library check of 4 book references
+R-11   P1                  Push sadp/final-hardening and open a PR so CI runs 137 tests (needs user approval)
+R-1    P1                  Shared store for lockout/reset codes/cache before 2+ instances (lockout is per process)
+R-3b   P1                  Async EF on the search path; re-measure (throughput 38.9-43.0 req/s around the 40 goal)
+R-4    P1                  Production deployment (needs host and credentials)
+R-E1   P2 (scope)          Real email: not implemented by decision - NOT a security/correctness defect
+R-6..R-9, R-13, R-14  P2   Split IArticleService/AdminController; TimeProvider; AutoMapper licence decision;
+                           demo password; orphan sweep; sitemap index
+
+Reproduce everything:
+  cd NewsArchiveSolution && dotnet build NewsArchiveSolution.slnx -c Release && dotnet test NewsArchive.Tests -c Release --no-build
+  (from repo root) python tools/smoke/smoke.py --stories 5000
+
+=====================================================================
+J. USER INPUT STILL REQUIRED
+=====================================================================
+1. Group number, section, submission date.
+2. Every member's student ID and name, and who owns M1-M4 (the GitHub owner sadatnuman must be confirmed).
+3. The lecturer's required submission format.
+4. Approval to push sadp/final-hardening and open a PR.
+5. Later and optional: hosting and credentials; AutoMapper licence decision; whether real email is ever wanted.
+
+=====================================================================
+K. FINAL GATES
+=====================================================================
+EMAIL_OFFLINE      PASS     Disabled outside Development, even with an SMTP host; 2,000 sends -> false, 0 log noise,
+                            no SMTP socket; Development outbox only; synthetic recipients; no SMTP registration
+                            anywhere (Program.cs:111-115).
+P0_SECURITY        PASS     S1 and S2 fixed, tested with real files and parallel requests, mutation-checked.
+P1_CORRECTNESS     PASS     C1-C4 fixed, each with a test; missing API version -> 400; 137/137 tests pass.
+MIDTERM_CODE       PASS     Sections 0-10 backed by code/tests/figure/measurement, Lectures 1-3 only;
+                            member ownership honest but tentative.
+MIDTERM_SUBMISSION PARTIAL  Needs member names/IDs, group, section, date and the converted DOCX/PDF.
+FULL_SEMESTER      PARTIAL  Applicability matrix and milestone plan exist; final report, presentation,
+                            deployment and multi-instance work do not.
+Database targets: only NewsArchiveTestDB and NewsArchiveSmokeDB were used; NewsArchiveDB is unchanged.
+Mail transport: no SMTP registration exists on this branch.
+No mark is guaranteed.
+```

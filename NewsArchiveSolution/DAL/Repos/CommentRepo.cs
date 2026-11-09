@@ -74,6 +74,16 @@ namespace DAL.Repos
                     .SetProperty(c => c.ModeratedAt, moderatedAt)) > 0;
         }
 
+        public bool HideIfVisible(int commentId, DateTime hiddenAt)
+        {
+            return db.Comments
+                .Where(c => c.CommentId == commentId && !c.IsHidden)
+                .ExecuteUpdate(s => s
+                    .SetProperty(c => c.IsHidden, true)
+                    .SetProperty(c => c.ModeratedById, (int?)null)
+                    .SetProperty(c => c.ModeratedAt, hiddenAt)) > 0;
+        }
+
         public int ClearReports(int commentId)
         {
             return db.CommentReports.Where(r => r.CommentId == commentId).ExecuteDelete();

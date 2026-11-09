@@ -2,6 +2,8 @@ namespace BLL.Email
 {
     public interface IEmailSender
     {
+        bool IsEnabled { get; }
+
         Task<bool> SendAsync(EmailMessage message, CancellationToken cancellationToken = default);
     }
 

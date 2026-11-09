@@ -8,8 +8,8 @@ namespace BLL.Interfaces
 
         MediaUploadResultDTO SaveAvatar(Stream content, long length);
 
-        bool IsUploaded(string? path);
+        bool DeleteArticleImageIfUnused(string? path);
 
-        void DeleteIfUploaded(string? path);
+        bool DeleteAvatarIfUnused(string? path);
     }
 }

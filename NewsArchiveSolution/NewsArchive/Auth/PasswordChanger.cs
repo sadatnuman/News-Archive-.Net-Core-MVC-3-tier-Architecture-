@@ -43,11 +43,11 @@ namespace NewsArchive.Auth
         {
             if (throttle.IsLocked(email)) return Outcome.Locked;
 
-            var viaReset = IsResetVerified(session);
-            if (!viaReset && !authService.VerifyPassword(userId, form.CurrentPassword))
+            if (!IsResetVerified(session))
             {
-                throttle.RecordFailure(email);
-                return Outcome.WrongCurrentPassword;
+                var check = throttle.Attempt(email, () => authService.VerifyPassword(userId, form.CurrentPassword));
+                if (check == LoginThrottle.Outcome.Locked) return Outcome.Locked;
+                if (check == LoginThrottle.Outcome.Failed) return Outcome.WrongCurrentPassword;
             }
 
             if (!authService.ChangePassword(userId, form.PasswordHash)) return Outcome.Failed;

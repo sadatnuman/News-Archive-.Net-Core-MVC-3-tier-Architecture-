@@ -50,13 +50,14 @@
 <path d="M990,726 L990,844 A95.0,16 0 0 0 1180,844 L1180,726 A95.0,16 0 0 0 990,726 Z" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
 <ellipse cx="1085.0" cy="726" rx="95.0" ry="16" fill="#438DD5" stroke="#1f1f1f" stroke-opacity="0.35"/>
 <text x="1085.0" y="768.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">Mail outbox</text>
-<text x="1085.0" y="787.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Container: file</text>
-<text x="1085.0" y="806.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">system, App_Data,</text>
+<text x="1085.0" y="787.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[Container: private</text>
+<text x="1085.0" y="806.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">file folder, App_Data,</text>
 <text x="1085.0" y="825.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Development only]</text>
-<rect x="1250" y="480" width="230" height="120" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
-<text x="1365.0" y="526.0" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">SMTP mail provider</text>
-<text x="1365.0" y="545.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System,</text>
-<text x="1365.0" y="564.0" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">optional]</text>
+<text x="1225" y="470" font-size="14" font-weight="400" fill="#333" text-anchor="start">No email provider:</text>
+<text x="1225" y="489" font-size="14" font-weight="400" fill="#333" text-anchor="start">real email is not</text>
+<text x="1225" y="508" font-size="14" font-weight="400" fill="#333" text-anchor="start">implemented. Mail is</text>
+<text x="1225" y="527" font-size="14" font-weight="400" fill="#333" text-anchor="start">only written to the</text>
+<text x="1225" y="546" font-size="14" font-weight="400" fill="#333" text-anchor="start">Development outbox.</text>
 <line x1="470" y1="212" x2="640" y2="340" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
 <text x="470" y="296" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Visits pages,</text>
 <text x="470" y="313" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">posts forms</text>
@@ -88,10 +89,6 @@
 <line x1="900" y1="530" x2="1060" y2="710" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
 <text x="1050" y="610" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Writes email copies</text>
 <text x="1050" y="627" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[file I/O]</text>
-<line x1="940" y1="430" x2="1250" y2="530" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="1095" y="398" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Sends email when</text>
-<text x="1095" y="415" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">configured</text>
-<text x="1095" y="432" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[SMTP over TLS]</text>
 <text x="30" y="970" font-size="14" font-weight="700" fill="#333">Key</text>
 <rect x="80" y="956" width="28" height="18" rx="4" fill="#08427B"/>
 <text x="116" y="970" font-size="13" fill="#333">Person</text>

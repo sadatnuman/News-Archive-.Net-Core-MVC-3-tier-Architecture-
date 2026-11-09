@@ -4,8 +4,6 @@ namespace BLL.Interfaces
 {
     public interface IArticleService
     {
-        List<ArticleDTO> Get();
-
         ArticleDTO? Get(int id);
 
         int Create(ArticleFormDTO form, int authorId, int roleId, bool submitForReview);
@@ -50,7 +48,7 @@ namespace BLL.Interfaces
 
         List<ArticleDTO> GetLatest(int count, string? language = null);
 
-        List<ArticleDTO> GetPublishedForSitemap();
+        List<ArticleDTO> GetPublishedForSitemap(DateTime? since, int max);
 
         int IndexMissingSearchWords();
 

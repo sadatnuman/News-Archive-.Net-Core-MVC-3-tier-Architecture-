@@ -62,7 +62,7 @@ ADRs are Week 9 material and belong to the Week 9 milestone (P1 p1), **not** to 
 **Consequences.**
 - (+) Exactly one review decision wins, and it is tested.
 - (+) No schema change.
-- (−) An edit form opened long ago can still overwrite a newer edit when the status did not change (open, P2).
+- (−) ~~An edit form opened long ago can still overwrite a newer edit~~ — closed in revision 2: `UpdatedAt` is a second token and forms/API carry a version (400 if missing, 409 if stale).
 
 **Quality attributes served:** Reliability.
 
@@ -116,7 +116,7 @@ ADRs are Week 9 material and belong to the Week 9 milestone (P1 p1), **not** to 
 - New channels may come later.
 - Mail failures must never fail a page.
 
-**Decision.** We will use an abstract `EmailSender` (creator) with `CreateTransport()`, plus one transport per channel, chosen by configuration.
+**Decision.** We will use an abstract `EmailSender` (creator) with `CreateTransport()`, plus one transport per channel. **Amended by ADR-007:** the channel is chosen by environment, and the SMTP channel is never registered.
 
 **Alternatives considered:**
 - *An `if/else` on the channel inside one sender.* Rejected: OCP and SRP violations (W3 s13).
@@ -127,3 +127,45 @@ ADRs are Week 9 material and belong to the Week 9 milestone (P1 p1), **not** to 
 - (−) Two more small types.
 
 **Quality attributes served:** Availability, Maintainability.
+
+## ADR-007: No real email; local outbox in Development, disabled elsewhere
+
+**Status:** Accepted (2026-11-09)
+
+**Context.**
+- The owner has not set up a mail provider and decided not to add one now.
+- Before this decision, setting `Email:Smtp:Host` would have switched the app to SMTP, and Production without SMTP logged one error with a stack trace per mail.
+
+**Decision.**
+- Development registers `OutboxEmailSender`, which writes to the private `App_Data/outbox`.
+- Every other environment registers `DisabledEmailSender`. It returns `false`, opens no connection and writes no per-mail log; one warning is logged at start-up.
+- `SmtpEmailSender` stays as a dormant Factory Method product and is never registered.
+
+**Alternatives considered:**
+- *Keep SMTP selectable by configuration.* Rejected: an inherited host value could send real mail by accident.
+- *Delete the SMTP classes.* Rejected: they are the second concrete creator in the W3 Factory Method example and cost nothing while unregistered.
+
+**Consequences.**
+- (+) No real email can leave the app; this is tested, including a socket check for SMTP ports.
+- (+) No log storm: 2,000 disabled sends add no warning.
+- (−) On a public host, newsletter confirmation and password reset by email do not work. This is documented in the README.
+
+**Quality attributes served:** Security (no accidental data leaving), Availability (failure isolation), Reliability (truthful results).
+
+## ADR-008: Sign-in lockout reserves a slot before checking the password
+
+**Status:** Accepted (2026-11-09)
+
+**Context.** The old lockout read the failure count and then wrote count + 1. Requests sent at the same moment all read the same count, so about 20 guesses per minute got through instead of 5 per 15 minutes.
+
+**Decision.** `LoginThrottle.Attempt` takes a lock, refuses when `failures + in-flight checks ≥ 5`, reserves a slot, checks the password outside the lock, then records the result under the lock. The website, the API and the current-password check all use it.
+
+**Alternatives considered:**
+- *A lock around the whole password check.* Rejected: PBKDF2 takes tens of milliseconds, and one lock would make every user's sign-in wait in one line.
+- *A database-backed counter.* Deferred to ADR-005 (shared store), because there is one server today.
+
+**Consequences.**
+- (+) At most 5 password checks per email and IP per window, even under parallel requests (tested with 12 and 20 parallel attempts).
+- (−) The counters are still per process; with 2+ servers each would allow 5. Shared state stays planned (ADR-005).
+
+**Quality attributes served:** Security.

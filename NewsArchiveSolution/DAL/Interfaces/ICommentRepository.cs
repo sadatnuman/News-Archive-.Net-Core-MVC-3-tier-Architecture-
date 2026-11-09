@@ -18,6 +18,8 @@ namespace DAL.Interfaces
 
         bool SetHidden(int commentId, bool hidden, int? moderatorId, DateTime? moderatedAt);
 
+        bool HideIfVisible(int commentId, DateTime hiddenAt);
+
         int ClearReports(int commentId);
 
         List<Comment> GetReported(int page, int pageSize, out int total);

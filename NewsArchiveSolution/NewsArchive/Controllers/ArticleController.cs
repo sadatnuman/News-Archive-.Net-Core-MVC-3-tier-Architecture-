@@ -60,6 +60,14 @@ namespace NewsArchive.Controllers
             return null;
         }
 
+        private bool SectionExists(int categoryId) => categoryId > 0 && categoryService.Get(categoryId) != null;
+
+        private void RequireSection(ArticleFormDTO form)
+        {
+            if (ModelState.IsValid && !SectionExists(form.CategoryId))
+                ModelState.AddModelError(nameof(form.CategoryId), L[ArticleMessages.SectionMissing]);
+        }
+
         private void SetFormData()
         {
             ViewBag.Categories = categoryService.Get();
@@ -202,6 +210,7 @@ namespace NewsArchive.Controllers
         {
             var userId = CurrentUserId;
             var roleId = CurrentRoleId;
+            RequireSection(form);
             var uploaded = ModelState.IsValid ? ApplyImage(form, imageFile, removeImage) : null;
             if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
@@ -215,10 +224,14 @@ namespace NewsArchive.Controllers
                     Flash("success", submitAction == "submit" ? "Article sent to the admin for approval." : "Draft saved.");
                     return RedirectToAction("MyArticles");
                 }
-                ModelState.AddModelError(string.Empty, L["The article could not be saved."]);
+                if (SectionExists(form.CategoryId))
+                    ModelState.AddModelError(string.Empty, L["The article could not be saved."]);
+                else
+                    ModelState.AddModelError(nameof(form.CategoryId), L[ArticleMessages.SectionMissing]);
             }
 
-            mediaService.DeleteIfUploaded(uploaded);
+            mediaService.DeleteArticleImageIfUnused(uploaded);
+            if (uploaded != null) form.ImagePath = null;
             SetFormData();
             return View(form);
         }
@@ -246,6 +259,7 @@ namespace NewsArchive.Controllers
             var userId = CurrentUserId;
             var roleId = CurrentRoleId;
             var previousImage = articleService.Get(id)?.ImagePath;
+            RequireSection(form);
             var uploaded = ModelState.IsValid ? ApplyImage(form, imageFile, removeImage) : null;
             if (ModelState.IsValid && userId.HasValue && roleId.HasValue)
             {
@@ -253,7 +267,7 @@ namespace NewsArchive.Controllers
                 if (result == ChangeResult.Done)
                 {
                     if (previousImage != form.ImagePath)
-                        mediaService.DeleteIfUploaded(previousImage);
+                        mediaService.DeleteArticleImageIfUnused(previousImage);
                     if (roleId == AppRoles.Admin)
                     {
                         Flash("success", "Article updated.");
@@ -262,10 +276,13 @@ namespace NewsArchive.Controllers
                     Flash("success", submitAction == "submit" ? "Changes sent to the admin for approval." : "Draft saved.");
                     return RedirectToAction("MyArticles");
                 }
-                ModelState.AddModelError(string.Empty, L[result == ChangeResult.Conflict ? ArticleMessages.ChangedElsewhere : "You cannot edit this article."]);
+                if (!SectionExists(form.CategoryId))
+                    ModelState.AddModelError(nameof(form.CategoryId), L[ArticleMessages.SectionMissing]);
+                else
+                    ModelState.AddModelError(string.Empty, L[result == ChangeResult.Conflict ? ArticleMessages.ChangedElsewhere : "You cannot edit this article."]);
             }
 
-            mediaService.DeleteIfUploaded(uploaded);
+            mediaService.DeleteArticleImageIfUnused(uploaded);
             if (uploaded != null) form.ImagePath = previousImage;
 
             form.ArticleId = id;
@@ -294,7 +311,7 @@ namespace NewsArchive.Controllers
                 var image = articleService.Get(id)?.ImagePath;
                 if (articleService.Delete(id, CurrentUserId ?? 0, CurrentRoleId ?? 0))
                 {
-                    mediaService.DeleteIfUploaded(image);
+                    mediaService.DeleteArticleImageIfUnused(image);
                     Flash("success", "Article deleted.");
                 }
                 else

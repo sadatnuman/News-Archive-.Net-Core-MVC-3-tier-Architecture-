@@ -3,7 +3,7 @@
 This draft follows the official template in P2 p3–5 and uses only Lectures 1–3 [9].
 
 **Legend:**
-- **[CONFIRMED]**: backed by the code or a test. Paths are relative to `NewsArchiveSolution/`, on branch `sadp/review-corrections`.
+- **[CONFIRMED]**: backed by the code or a test. Paths are relative to `NewsArchiveSolution/`, on branch `sadp/final-hardening`.
 - **[TBD]**: personal or group data that is still missing. It is never invented here.
 - **Status words in §3:** VERIFIED = an automated test enforces it; MEASURED = a number produced in this work; TARGET = a goal not yet measured; NOT VERIFIED = cannot be checked without a deployment.
 
@@ -23,7 +23,7 @@ The Meridian Newsfolio lets authors write news in English or Bangla, lets admins
 |---|---|---|---|
 | [TBD] — [TBD] (M1) | Editorial workflow: write, submit, review, schedule, edit | Reliability: no lost decision, no lost edit | SRP · Builder (`ArticleBuilder`) |
 | [TBD] — [TBD] (M2) | Accounts & security: sign-in, lockout, reset, roles, API tokens | Security: lockout, CSRF, role checks | DIP · Singleton (DI-managed single instance) |
-| [TBD] — [TBD] (M3) | Newsletter & email delivery | Availability: a mail failure never breaks a page | OCP · Factory Method (`EmailSender.CreateTransport`) |
+| [TBD] — [TBD] (M3) | Newsletter & email delivery (offline: local outbox in Development, disabled elsewhere) | Availability: a mail failure or disabled mail never breaks a page | OCP · Factory Method (`EmailSender.CreateTransport`) |
 | [TBD] — [TBD] (M4) | Discovery: search, date archive, recommendations | Performance: search latency | ISP (`IArticleArchive`) · Abstract Factory (`IDataAccessFactory`) |
 
 For 2, 3 or 5 members, see `13_MEMBER_WORK_SPLIT_AND_VIVA.md`.
@@ -71,13 +71,13 @@ Each member owns one quality attribute [1], [9, L1 s27–39]:
 | Member | Quality attribute | Measurable target | How the design achieves it | Status |
 |---|---|---|---|---|
 | M1 [TBD] | Reliability | (a) When two admins decide the same pending story, exactly 1 decision is stored and the other admin is told so. (b) An edit saved from an out-of-date form never overwrites a newer edit. (c) A scheduled story goes live once, ≤ 60 s after its time. | Optimistic concurrency [8]: `StatusId` and `UpdatedAt` are concurrency tokens (`DAL/EF/NewsArchiveDbContext.cs:91–92`). The edit form carries a version (`BLL/Services/ArticleService.cs:89`). A conflict becomes `ChangeResult.Conflict`, which the API answers with 409. Scheduled stories go live in one atomic `UPDATE` (`DAL/Repos/ArticleRepo.cs:259`). | (a), (b) VERIFIED by `AppTests` (4 tests) and by smoke over the API and the MVC form. (c) MEASURED: live 85 s after a schedule set 75 s ahead. |
-| M2 [TBD] | Security | 0 unpublished stories readable by the public. 5 failed sign-ins per email+IP lock that pair for 15 min. 100 % of form POSTs need an antiforgery token. Passwords use PBKDF2-SHA256 with 100k iterations. | `ArticleRules.CanView`; `LoginThrottle` (`NewsArchive/Auth/LoginThrottle.cs:7`); `AutoValidateAntiforgeryToken` (`Program.cs:151`); `PasswordHasher` (`BLL/Security/PasswordHasher.cs:9`). | VERIFIED by `SecurityTests` and `AppTests` (lockout → 429, missing token → 400, roles → 401/403, hidden pending story → 404). |
-| M3 [TBD] | Availability | A mail-server outage, a bad address or missing mail settings cause 0 failed page requests, and `SendAsync` never reports a mail as sent when it was not. | `EmailSender.SendAsync` contains every delivery error and returns `false` (`NewsArchive/Email/EmailSender.cs:22`). Outside Development, with no SMTP host, the outbox transport refuses and the send returns `false` (`OutboxEmailSender.cs:39`). The digest runs in the background `DigestSender`. | VERIFIED by `EmailSenderTests` (5). Uptime target (99.5 %) is NOT VERIFIED: there is no deployment. |
-| M4 [TBD] | Performance | Search page p95 ≤ 200 ms for 1 user and ≤ 1 s for 20 concurrent users, on one server, with ≥ 5,000 stories. | `ArticleWords` word index (prefix seek), list projection without the article body, caches. | MEASURED on a laptop with 5,024 published stories: 1 user p95 = 72.2 ms; 20 users p95 = 672.5 ms (43.0 req/s, 0 errors). Both targets met on this machine; not measured on production hardware. |
+| M2 [TBD] | Security | 0 unpublished stories readable by the public. At most 5 password checks per email+IP per 15 min, **even with 20 requests sent at once**. 100 % of form POSTs need an antiforgery token. Passwords use PBKDF2-SHA256 with 100k iterations. | `ArticleRules.CanView`; `LoginThrottle.Attempt` reserves a slot under a lock before the password check (`NewsArchive/Auth/LoginThrottle.cs:41-47`); `AutoValidateAntiforgeryToken` (`Program.cs`); `PasswordHasher` (`BLL/Security/PasswordHasher.cs:9`). | VERIFIED by `SecurityTests` (20 parallel attempts → exactly 5 checks) and `HardeningTests` (12 parallel API attempts → 5 × 401, 7 × 429, then the website is locked too); `AppTests` (missing token → 400, roles → 401/403, hidden pending story → 404). |
+| M3 [TBD] | Availability (failure isolation, offline) | A failing transport, a bad address or disabled email cause 0 failed page requests; `SendAsync` never reports a mail as sent when it was not; 2,000 disabled sends add 0 warning logs. | `EmailSender.SendAsync` contains every delivery error and returns `false` (`NewsArchive/Email/EmailSender.cs`). Outside Development the app registers `DisabledEmailSender`, which returns `false` without any transport (`Program.cs:111-115`). The digest runs in the background `DigestSender`. | VERIFIED by `EmailSenderTests` (5) and `HardeningTests.Outside_development_mail_is_disabled…` (2,000 sends, no SMTP socket). Real email delivery is **not implemented** (owner's decision), so deliverability is not measured. Uptime (99.5 %) is NOT VERIFIED: no deployment. |
+| M4 [TBD] | Performance | Search page p95 ≤ 200 ms for 1 user and ≤ 1 s for 20 concurrent users, on one server, with ≥ 5,000 stories. | `ArticleWords` word index (prefix seek), list projection without the article body, caches. | MEASURED on a laptop with 5,024 published stories (final run): 1 user p95 = 66.9 ms; 20 users p95 = 784.2 ms (38.9 req/s, 0 errors). Both latency targets met on this machine; not measured on production hardware. |
 
 **The other two attributes (group view, same status words):**
-- **Scalability.** One instance serves 20 concurrent readers with 0 errors: MEASURED. Running 2+ instances: TARGET, blocked by in-memory lockout, reset-code and cache state.
-- **Maintainability.** 0 reverse layer dependencies, VERIFIED by the compiler. 116 automated tests pass (run locally on this branch; CI runs the whole suite on every push and pull request to `develop` and `main`): VERIFIED.
+- **Scalability.** One instance serves 20 concurrent readers with 0 errors: MEASURED (38.9–43.0 req/s over three runs; the ≥ 40 req/s goal was missed in the final run). Running 2+ instances: TARGET, blocked by in-memory lockout, reset-code and cache state.
+- **Maintainability.** 0 reverse layer dependencies, VERIFIED by the compiler. 137 automated tests pass (run locally on this branch; CI runs the whole suite on every push and pull request to `develop` and `main`): VERIFIED.
 
 ## 4 · C4 Diagram & Why (GROUP, Q4)
 
@@ -87,7 +87,7 @@ Each member owns one quality attribute [1], [9, L1 s27–39]:
 
 **Why this view:**
 - It shows everyone who uses the Newsfolio and every outside system it depends on, on one page that a non-technical reader understands in a minute [6], [9, L2 s23].
-- It fixes the system boundary before any technology detail: email is the only outside service our server calls, and fonts are loaded by the browser.
+- It fixes the system boundary before any technology detail: our server calls no outside service (real email is not implemented), and fonts are loaded by the browser.
 
 ## 5 · 4+1 View Model (GROUP, Q5)
 
@@ -96,10 +96,10 @@ Views as defined by Kruchten [4], [9, L1 s8–9]:
 | 4+1 view | Our system in this view |
 |---|---|
 | Logical | Article (status, schedule and review fields), User/Role, Category, Tag, Comment/CommentReport, Bookmark, ReadingHistory, Subscriber, AuditLog, ArticleWord. Services: `ArticleService` + `ArticleBuilder` + `ArticleRules`, the archive contract `IArticleArchive`, Search/Recommendation, Comment, Auth, Newsletter, Audit. |
-| Process | Requests run on .NET thread-pool threads. No thread is reserved for one request: an `async` step releases its thread while it waits, and continues on any free thread [10]. Our data access is mostly synchronous EF Core, so each SQL call blocks the current pool thread for its duration. Each request has its own DI scope and `DbContext`. Shared single instances: lockout store, reset codes, cache. A background job every 30 s publishes due stories; a background queue sends digests. Optimistic concurrency protects review decisions and edits. |
-| Development | `NewsArchiveSolution.slnx`: DAL (EF, repositories, migrations) ← BLL (services, rules, builders) ← NewsArchive (MVC + API + Razor), plus NewsArchive.Tests. CI builds and runs every test on each push and pull request to `develop` and `main` (116 tests on this branch). |
+| Process | Requests run on .NET thread-pool threads. No thread is reserved for one request: an `async` step releases its thread while it waits, and continues on any free thread [10]. Our data access is mostly synchronous EF Core, so each SQL call blocks the current pool thread for its duration. Each request has its own DI scope and `DbContext`. Shared single instances: lockout store, reset codes, cache. A background job every 30 s publishes due stories; a daily job removes expired data; a background queue handles digests (Development outbox only). Optimistic concurrency protects review decisions and edits. |
+| Development | `NewsArchiveSolution.slnx`: DAL (EF, repositories, migrations) ← BLL (services, rules, builders) ← NewsArchive (MVC + API + Razor), plus NewsArchive.Tests. CI builds and runs every test on each push and pull request to `develop` and `main` (137 tests on this branch). |
 | Physical | Dev: one laptop with Kestrel and SQL Server Express; local disk for uploads and the email outbox. CI: GitHub Ubuntu runner plus a SQL Server 2022 container. Planned production: one app host plus a managed SQL database (not deployed). |
-| Scenarios | S1 author submits → admin approves → reader reads. S2 two admins race on one story. S3 a scheduled story goes live. S4 bilingual search. S5 subscribe and digest. S6 two editors save from old forms. Each is traced through all four views and tested (`09_C4_AND_4PLUS1/4PLUS1_VIEWS.md`). |
+| Scenarios | S1 author submits → admin approves → reader reads. S2 two admins race on one story. S3 a scheduled story goes live. S4 bilingual search. S5 subscribe and digest (offline outbox). S6 two editors save from old forms. Each is traced through all four views and tested (`09_C4_AND_4PLUS1/4PLUS1_VIEWS.md`). |
 
 ## 6 · SOLID in a Feature (INDIVIDUAL, Q6)
 
@@ -142,7 +142,7 @@ Patterns as defined by the GoF [2], [9, L3]:
 |---|---|---|---|
 | M1 [TBD] | Creating an article | Builder (`BLL/Builders/ArticleBuilder.cs`) | 12+ fields, an optional image, breaking flag and publish time, and status rules that depend on the creator's role. Fluent steps plus a validating `Build()` replace a long object initialiser and scattered status logic [9, L3 s25–28]. Tested by 7 unit tests. |
 | M2 [TBD] | Lockout and reset-code stores | Singleton, DI-managed | Exactly one store must exist, or a lockout recorded in one copy is missed by another. The DI container creates one instance for the whole app and hands the same one to every request [11]; the lecture calls this a "DI-scoped singleton" [9, L3 s11, s31]. Unlike the classic form (private constructor, static instance, `GetInstance()` [2]), there is no global access point, so classes still receive it through their constructor and tests can replace it. Tested with `Assert.Same` across scopes. |
-| M3 [TBD] | Sending email | Factory Method (`EmailSender.CreateTransport()`) | The creator keeps the shared send logic; subclasses decide which transport to create (SMTP or outbox). A new channel = a new subclass (OCP). Tested by 5 tests. |
+| M3 [TBD] | Sending email | Factory Method (`EmailSender.CreateTransport()`) | The creator keeps the shared send logic; subclasses decide which transport to create: `OutboxEmailSender` → `OutboxTransport` (used in Development) and `SmtpEmailSender` → `SmtpTransport` (kept dormant, never registered). A new channel = a new subclass (OCP). Tested by 5 tests with a recording transport, no network. |
 | M4 [TBD] | Data access for discovery | Abstract Factory (`IDataAccessFactory`) | Creates a family of repositories that share one unit of work (one `DbContext`). Swapping to the in-memory test family changes no service code. Tested by `Repositories_from_one_factory_share_one_unit_of_work`. |
 
 ## 10 · References (GROUP, IEEE)

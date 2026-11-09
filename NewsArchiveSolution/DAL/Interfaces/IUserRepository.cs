@@ -14,6 +14,8 @@ namespace DAL.Interfaces
 
         bool UpdateAvatar(int userId, string? avatarPath);
 
+        bool UsesAvatar(string avatarPath);
+
         List<User> SuggestAuthors(string term, string? language, int count);
     }
 }

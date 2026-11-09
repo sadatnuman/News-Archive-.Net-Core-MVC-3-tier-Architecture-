@@ -21,15 +21,18 @@ PROJECT = os.path.join(SOLUTION, "NewsArchive")
 DLL = os.path.join(PROJECT, "bin", "Release", "net10.0", "NewsArchive.dll")
 OUTBOX = os.path.join(PROJECT, "App_Data", "outbox")
 SAMPLE_SQL = os.path.join(ROOT, "database", "sample-data.sql")
-SAFE_DB = re.compile(r"^[A-Za-z0-9_]*(Smoke|Test)[A-Za-z0-9_]*$")
+SAFE_DB = re.compile(r"^NewsArchive(Smoke|Test)DB[A-Za-z0-9_]{0,32}$")
+LOCAL_SERVER = re.compile(r"^(localhost|\.|127\.0\.0\.1|\(localdb\))(\\[A-Za-z0-9_]+)?$", re.IGNORECASE)
 
 results = []
 base = ""
 
 
-def guard(db):
+def guard(server, db):
     if not SAFE_DB.match(db) or db.lower() == "newsarchivedb":
-        sys.exit(f"Refusing to use database '{db}': its name must contain 'Smoke' or 'Test'.")
+        sys.exit(f"Refusing to use database '{db}': only NewsArchiveSmokeDB* or NewsArchiveTestDB* may be used.")
+    if not LOCAL_SERVER.match(server):
+        sys.exit(f"Refusing to use server '{server}': only a local SQL Server (localhost, ., 127.0.0.1, (localdb)) is allowed.")
 
 
 def sql(server, query, db="master"):
@@ -76,7 +79,7 @@ def check(name, ok, info=""):
 
 
 def start_app(server, db, port):
-    env = dict(os.environ)
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("EMAIL__", "EMAIL:", "SMTP"))}
     env["ASPNETCORE_ENVIRONMENT"] = "Development"
     env["ConnectionStrings__DbConn"] = f"Data Source={server};Initial Catalog={db};Integrated Security=True;TrustServerCertificate=True;"
     env["ASPNETCORE_URLS"] = f"http://127.0.0.1:{port}"
@@ -176,6 +179,8 @@ def functional_checks(accounts, wait_scheduler):
     s1 = req("PUT", f"/api/articles/{a1}", dict(body, title="Smoke edit by the first editor", version=loaded["version"]), token=admin)[0]
     s2, b2, _ = req("PUT", f"/api/articles/{a1}", dict(body, title="Smoke edit from a stale copy", version=loaded["version"]), token=admin)
     check("API: first edit saves (204), stale copy is refused (409)", s1 == 204 and s2 == 409 and "Someone else changed" in b2, (s1, s2, b2))
+    s3, b3, _ = req("PUT", f"/api/articles/{a1}", body, token=admin)
+    check("API: an edit without a version gets 400 that names the version field", s3 == 400 and "version" in b3, (s3, b3[:120]))
     check("API: the first edit is what readers see", json.loads(req("GET", f"/api/articles/{a1}")[1])["title"] == "Smoke edit by the first editor")
 
     op = cookie_session(*accounts["Admin"])
@@ -197,14 +202,49 @@ def functional_checks(accounts, wait_scheduler):
     check("scheduled story is not public yet (404)", req("GET", f"/api/articles/{a3}")[0] == 404)
     check("scheduled list contains it", f'"articleId":{a3}' in req("GET", "/api/articles/scheduled", token=admin)[1])
 
-    print("== Newsletter (local outbox only) ==")
-    before = len(glob.glob(os.path.join(OUTBOX, "*.txt")))
+    print("== Offline email: newsletter, digest, password reset (local outbox only) ==")
+    existing = set(glob.glob(os.path.join(OUTBOX, "*.txt")))
+
+    def mails_to(address, wait=0, kind=""):
+        deadline = time.time() + wait
+        while True:
+            found = [f for f in set(glob.glob(os.path.join(OUTBOX, "*.txt"))) - existing
+                     if kind in os.path.basename(f) and "To: " + address in open(f, encoding="utf-8").read()]
+            if found or time.time() >= deadline:
+                return found
+            time.sleep(0.5)
+
+    subscriber = f"smoke{int(time.time())}@example.test"
     op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
     _, html, _ = req("GET", "/", opener=op)
-    s, _, _ = req("POST", "/newsletter/subscribe", form={"email": f"smoke{int(time.time())}@example.com", "__RequestVerificationToken": form_token(html)},
+    s, _, _ = req("POST", "/newsletter/subscribe", form={"email": subscriber, "__RequestVerificationToken": form_token(html)},
                   opener=op, headers={"Accept": "application/json", "X-Requested-With": "fetch"})
-    after = len(glob.glob(os.path.join(OUTBOX, "*.txt")))
-    check("subscribe returns ok and writes one confirmation to the local outbox", s == 200 and after == before + 1, (s, before, after))
+    confirmation = mails_to(subscriber)
+    check("subscribe returns ok and writes exactly one confirmation to the private outbox", s == 200 and len(confirmation) == 1, (s, len(confirmation)))
+    token = re.search(r"/newsletter/confirm\?token=([A-Za-z0-9%]+)", open(confirmation[0], encoding="utf-8").read()).group(1) if confirmation else ""
+    s, page, _ = req("GET", "/newsletter/confirm?token=" + token)
+    check("the confirmation link from the outbox confirms the subscription", s == 200)
+
+    admin_web = cookie_session(*accounts["Admin"])
+    _, page, _ = req("GET", "/Admin/Newsletter", opener=admin_web)
+    s, _, _ = req("POST", "/Admin/SendDigest", opener=admin_web, form={"language": "en", "__RequestVerificationToken": form_token(page)})
+    digest = mails_to(subscriber, wait=30, kind="digest")
+    check("admin 'send digest' writes the digest for the new subscriber to the outbox", s == 302 and len(digest) == 1, (s, len(digest)))
+
+    reader_email = accounts["Reader"][0]
+    web = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()), NoRedirect)
+    _, page, _ = req("GET", "/Auth/ForgetPassword", opener=web)
+    req("POST", "/Auth/ForgetPassword", opener=web, form={"email": reader_email, "__RequestVerificationToken": form_token(page)})
+    reset = mails_to(reader_email)
+    code = re.search(r"\b(\d{6})\b", open(reset[0], encoding="utf-8").read()).group(1) if reset else ""
+    _, page, _ = req("GET", "/Auth/VerifyOtp?email=" + urllib.parse.quote(reader_email), opener=web)
+    s, _, h = req("POST", "/Auth/VerifyOtp", opener=web, form={"email": reader_email, "otp": code, "__RequestVerificationToken": form_token(page)})
+    check("password-reset code from the outbox is accepted (code not printed)", len(reset) == 1 and s == 302 and "ChangePassword" in (h.get("Location") or ""), (len(reset), s))
+    _, page, _ = req("GET", "/Auth/ForgetPassword", opener=web)
+    s, _, _ = req("POST", "/Auth/ForgetPassword", opener=web, form={"email": "nobody" + str(int(time.time())) + "@example.test", "__RequestVerificationToken": form_token(page)})
+    check("an unknown email gets the same answer and no mail", s == 302 and not mails_to("nobody"), s)
+    for f in set(glob.glob(os.path.join(OUTBOX, "*.txt"))) - existing:
+        os.remove(f)
 
     print("== Withdrawal ==")
     s, a4 = story("Smoke withdrawn story")
@@ -334,6 +374,10 @@ def benchmark(query_list, sequential, concurrent_requests, workers):
     with concurrent.futures.ThreadPoolExecutor(workers) as pool:
         samples = list(pool.map(lambda i: timed(pages[i % len(pages)]), range(concurrent_requests)))
     errors += report(f"search page concurrent={workers}", samples, time.perf_counter() - t)
+    for label, path in (("news sitemap             ", "/news-sitemap.xml"), ("sitemap                  ", "/sitemap.xml")):
+        t = time.perf_counter()
+        samples = [timed(path) for _ in range(50)]
+        errors += report(label, samples, time.perf_counter() - t)
     return errors
 
 
@@ -348,7 +392,7 @@ def main():
     parser.add_argument("--keep-db", action="store_true", help="reuse the existing smoke database instead of recreating it")
     parser.add_argument("--skip-scheduler", action="store_true")
     args = parser.parse_args()
-    guard(args.db)
+    guard(args.server, args.db)
     base = f"http://127.0.0.1:{args.port}"
 
     subprocess.run(["dotnet", "build", os.path.join(SOLUTION, "NewsArchiveSolution.slnx"), "-c", "Release", "-v", "q"], check=True)

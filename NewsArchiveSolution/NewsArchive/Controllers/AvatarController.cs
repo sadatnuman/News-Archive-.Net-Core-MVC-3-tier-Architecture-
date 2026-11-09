@@ -44,12 +44,12 @@ namespace NewsArchive.Controllers
 
             if (!userService.SetAvatar(userId, result.Path))
             {
-                mediaService.DeleteIfUploaded(result.Path);
+                mediaService.DeleteAvatarIfUnused(result.Path);
                 Flash("danger", "Update failed");
                 return BackToProfile();
             }
 
-            mediaService.DeleteIfUploaded(user.AvatarPath);
+            mediaService.DeleteAvatarIfUnused(user.AvatarPath);
             await RefreshSignInAsync(userId);
             Flash("success", "Profile picture updated.");
             return BackToProfile();
@@ -64,7 +64,7 @@ namespace NewsArchive.Controllers
 
             if (userService.SetAvatar(userId, null))
             {
-                mediaService.DeleteIfUploaded(user.AvatarPath);
+                mediaService.DeleteAvatarIfUnused(user.AvatarPath);
                 await RefreshSignInAsync(userId);
                 Flash("success", "Profile picture removed.");
             }

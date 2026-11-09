@@ -34,17 +34,12 @@ namespace NewsArchive.Controllers.Api
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
         public IActionResult Login([FromBody] LoginDTO login, [FromQuery] bool webClient = false)
         {
-            if (throttle.IsLocked(login.Email))
+            AuthUserDTO? user = null;
+            var outcome = throttle.Attempt(login.Email, () => (user = authService.Authenticate(login.Email, login.Password)) != null);
+            if (outcome == LoginThrottle.Outcome.Locked)
                 return Problem(statusCode: StatusCodes.Status429TooManyRequests, title: "Too many failed attempts. Try again in 15 minutes.");
-
-            var user = authService.Authenticate(login.Email, login.Password);
             if (user == null)
-            {
-                throttle.RecordFailure(login.Email);
                 return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid email or password");
-            }
-
-            throttle.Reset(login.Email);
 
             var token = authService.IssueToken(user, webClient ? TokenClients.Web : TokenClients.Api, options.TokenLifetime);
             if (token == null)
@@ -105,11 +100,11 @@ namespace NewsArchive.Controllers.Api
 
             if (!userService.SetAvatar(user.UserId, result.Path))
             {
-                mediaService.DeleteIfUploaded(result.Path);
+                mediaService.DeleteAvatarIfUnused(result.Path);
                 return Problem(statusCode: StatusCodes.Status500InternalServerError, title: "Update failed");
             }
 
-            mediaService.DeleteIfUploaded(user.AvatarPath);
+            mediaService.DeleteAvatarIfUnused(user.AvatarPath);
             return Ok(authService.GetUser(user.UserId));
         }
 
@@ -120,7 +115,7 @@ namespace NewsArchive.Controllers.Api
         {
             var user = await RequireApiUserAsync();
             if (userService.SetAvatar(user.UserId, null))
-                mediaService.DeleteIfUploaded(user.AvatarPath);
+                mediaService.DeleteAvatarIfUnused(user.AvatarPath);
             return NoContent();
         }
 

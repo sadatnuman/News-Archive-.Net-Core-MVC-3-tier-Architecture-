@@ -22,6 +22,8 @@ namespace NewsArchive.Email
             this.logger = logger;
         }
 
+        public bool CanSend => emailSender.IsEnabled;
+
         public bool Enqueue(DigestJob job)
         {
             if (!pending.TryAdd(job.Language, 0)) return false;

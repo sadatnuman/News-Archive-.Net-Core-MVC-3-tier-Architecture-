@@ -42,11 +42,10 @@
 <text x="260.0" y="735.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System]</text>
 <text x="260.0" y="754.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">App or script using the</text>
 <text x="260.0" y="773.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">token-protected REST API</text>
-<rect x="990" y="680" width="300" height="120" rx="10" fill="#8A8A8A" stroke="#1f1f1f" stroke-opacity="0.35"/>
-<text x="1140.0" y="716.5" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">SMTP mail provider</text>
-<text x="1140.0" y="735.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">[External System, optional]</text>
-<text x="1140.0" y="754.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">Delivers confirmation, digest</text>
-<text x="1140.0" y="773.5" font-size="14" font-weight="400" fill="#fff" text-anchor="middle">and reset-code emails</text>
+<text x="1000" y="700" font-size="15" font-weight="400" fill="#333" text-anchor="start">No email provider is connected.</text>
+<text x="1000" y="720" font-size="15" font-weight="400" fill="#333" text-anchor="start">Real email is not implemented;</text>
+<text x="1000" y="740" font-size="15" font-weight="400" fill="#333" text-anchor="start">Development writes mails to a</text>
+<text x="1000" y="760" font-size="15" font-weight="400" fill="#333" text-anchor="start">private local outbox file.</text>
 <line x1="300" y1="255" x2="560" y2="360" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
 <text x="540" y="268" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Reads and searches news,</text>
 <text x="540" y="285" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">comments, subscribes</text>
@@ -65,9 +64,6 @@
 <line x1="330" y1="680" x2="520" y2="530" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
 <text x="280" y="600" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Calls JSON endpoints</text>
 <text x="280" y="617" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[HTTPS/JSON, bearer token]</text>
-<line x1="880" y1="530" x2="1080" y2="680" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="1110" y="600" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Sends emails</text>
-<text x="1110" y="617" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" font-style="italic">[SMTP over TLS]</text>
 <line x1="200" y1="255" x2="155" y2="380" stroke="#555555" stroke-width="1.8" marker-end="url(#arrow)" stroke-dasharray="5 5"/>
 <text x="110" y="300" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">Browser loads</text>
 <text x="110" y="317" font-size="13" fill="#222" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">fonts and icons</text>

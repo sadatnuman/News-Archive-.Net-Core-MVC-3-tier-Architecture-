@@ -55,6 +55,8 @@ builder.Services.AddScoped<IActorContext, HttpActorContext>();
 builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
 builder.Services.AddSingleton<IFileStorage, WebRootFileStorage>();
 builder.Services.AddHostedService<ScheduledPublisher>();
+builder.Services.AddSingleton<MaintenanceJob>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<MaintenanceJob>());
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "Meridian.Antiforgery";
@@ -106,12 +108,11 @@ builder.Services.AddRateLimiter(options =>
     PerIpPerMinute(ApiOptions.NewsletterRateLimit, 5);
 });
 
-var emailOptions = builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>() ?? new EmailOptions();
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
-if (emailOptions.UseSmtp)
-    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
-else
+if (isDevelopment)
     builder.Services.AddSingleton<IEmailSender, OutboxEmailSender>();
+else
+    builder.Services.AddSingleton<IEmailSender, DisabledEmailSender>();
 builder.Services.AddScoped<MailComposer>();
 builder.Services.AddSingleton<DigestSender>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<DigestSender>());
@@ -206,6 +207,9 @@ catch (Exception ex)
     app.Logger.LogCritical(ex, "The database could not be prepared. Check ConnectionStrings:DbConn in appsettings.json and make sure SQL Server is running.");
     if (!app.Environment.IsDevelopment()) throw;
 }
+
+if (!app.Environment.IsDevelopment())
+    app.Logger.LogWarning("Email delivery is disabled: this build has no real mail transport. Newsletter confirmations, digests and password-reset codes are not sent.");
 
 app.UseForwardedHeaders();
 

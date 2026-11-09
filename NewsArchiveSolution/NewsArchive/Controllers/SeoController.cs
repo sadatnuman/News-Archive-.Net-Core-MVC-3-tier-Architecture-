@@ -64,7 +64,7 @@ namespace NewsArchive.Controllers
         [ResponseCache(Duration = 3600)]
         public ContentResult Sitemap()
         {
-            var articles = articleService.GetPublishedForSitemap();
+            var articles = articleService.GetPublishedForSitemap(null, SeoLimits.MaxSitemapArticles);
             var root = new XElement(SitemapNs + "urlset",
                 new XAttribute(XNamespace.Xmlns + "image", ImageNs));
 
@@ -121,14 +121,14 @@ namespace NewsArchive.Controllers
         }
 
         [HttpGet("news-sitemap.xml")]
-        [ResponseCache(Duration = 900)]
+        [ResponseCache(Duration = 300)]
         public ContentResult NewsSitemap()
         {
-            var cutoff = BLL.SiteClock.Now.AddDays(-2);
+            var cutoff = BLL.SiteClock.Now - SeoLimits.NewsSitemapWindow;
             var root = new XElement(SitemapNs + "urlset",
                 new XAttribute(XNamespace.Xmlns + "news", NewsNs));
 
-            foreach (var a in articleService.GetPublishedForSitemap().Where(a => a.PublishDate >= cutoff).Take(1000))
+            foreach (var a in articleService.GetPublishedForSitemap(cutoff, SeoLimits.MaxNewsSitemapArticles))
             {
                 root.Add(new XElement(SitemapNs + "url",
                     new XElement(SitemapNs + "loc", urls.Absolute(SeoUrls.Article(a))),
@@ -144,7 +144,7 @@ namespace NewsArchive.Controllers
         }
 
         [HttpGet("rss.xml")]
-        [ResponseCache(Duration = 900)]
+        [ResponseCache(Duration = 300)]
         public ContentResult Rss()
         {
             XNamespace atom = "http://www.w3.org/2005/Atom";
