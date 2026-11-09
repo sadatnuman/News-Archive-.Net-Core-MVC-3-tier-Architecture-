@@ -98,13 +98,14 @@ All schema changes are EF Core migrations in `DAL/EF/Migrations` (generated comm
 | `CommentReports` | `(CommentId, UserId)` | `CommentId` (cascade), `UserId`, `ReasonId` | One report per reader per comment, optional note |
 | `Bookmarks` | `(UserId, ArticleId)` | both cascade | Saved stories |
 | `ReadingHistory` | `(UserId, ArticleId)` | both cascade | First and last read time, read count |
+| `ArticleWords` | `(Word, ArticleId)` | `ArticleId → Articles` (cascade) | Search index: each distinct word (2-40 characters, lower case) of the title, summary and text |
 | `UserTokens` | `TokenId` | `UserId` (cascade) | SHA-256 of the API token, client type, expiry, revocation |
 | `AuditLogs` | `AuditLogId` | `UserId → Users` (set null) | Action, entity, id, details, IP, time |
 | `Subscribers` | `SubscriberId` | `LanguageCode → Languages` | Unique email, confirm-token hash, unsubscribe token, confirmed, unsubscribed and last-sent times |
 
 ### Migrations
 
-`InitialSchema` → `NormalizeSchemaAndApprovalWorkflow` → `AddLanguages` → `AddUserTokens` → `AddTagTranslationsAndSlugs` → `AddUserAvatars` → `AddUserBio` → `AddBookmarks` → `AddScheduledPublishing` → `AddReadingHistory` → `AddCommentModeration` → `AddAuditLog` → `AddNewsletterSubscribers`.
+`InitialSchema` → `NormalizeSchemaAndApprovalWorkflow` → `AddLanguages` → `AddUserTokens` → `AddTagTranslationsAndSlugs` → `AddUserAvatars` → `AddUserBio` → `AddBookmarks` → `AddScheduledPublishing` → `AddReadingHistory` → `AddCommentModeration` → `AddAuditLog` → `AddNewsletterSubscribers` → `AddArticleWords`.
 
 ### Indexes worth knowing
 
@@ -348,12 +349,13 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 
 - **Data cache** (`IAppCache`, in memory):
   - Sections are cached for 30 minutes. They are read by the menu, the footer and every story list.
-  - Trending stories, popular topics and section counts are cached for 2 minutes.
+  - Trending stories, popular topics, section counts and *Recommended for you* lists are cached for 2 minutes. The recommendation key is the reader's recent reading list, so a new read gives fresh results at once.
   - Any publish, edit, delete, schedule or moderation clears the affected region at once.
   - Whole pages are deliberately not cached, because each page carries per-visitor antiforgery tokens.
 - **Queries**:
   - Paging, counting and grouping run in SQL, and the sections page counts in one grouped query.
   - Every list loads story cards without the article body; only the article page and the editor load the full text.
+  - Search uses the `ArticleWords` index instead of scanning article text. Every word of the query must match the start of a word in the story (`rail` finds *railway*), as an index seek on any SQL Server edition, with no full-text feature needed. Bangla vowel signs stay part of the word. New and edited stories are indexed on save; stories added by SQL (such as the sample data) are indexed by the background job within 30 seconds.
   - Search suggestions match titles only.
   - A view is counted once per signed-in reader (their first read), and reading history is trimmed only when a new story is added to it.
 - **Static files**:
@@ -371,8 +373,8 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 
 | Tool | What |
 |---|---|
-| `NewsArchive.Tests` (xUnit, 83 tests) | Rules (articles, slugs, passwords, recommendations, moderation, search, newsletter, audit), services (comments, newsletter, recommendations, audit) and security (sign-in lockout, reset codes, password change, Markdown links, no demo logins in the base settings) with DispatchProxy-based fakes, so no database is needed |
-| `.github/workflows/build.yml` | On every push and PR to `develop`/`main`: restore, Release build, unit tests, vulnerable package report |
+| `NewsArchive.Tests` (xUnit, 92 tests) | Unit tests with DispatchProxy-based fakes and no database: rules (articles, slugs, passwords, recommendations, moderation, search words, newsletter, audit), services (comments, newsletter, recommendations, audit) and security classes (sign-in lockout, reset codes, password change, Markdown links, no demo logins in the base settings). Integration tests (`Integration/`) start the whole app with `WebApplicationFactory` against a separate `NewsArchiveTestDB`: sign-in redirect, antiforgery, security headers, API roles, account lockout, word search in English and Bangla, and script-free Markdown pages |
+| `.github/workflows/build.yml` | On every push and PR to `develop`/`main`: restore, Release build, all tests against a SQL Server 2022 service container, vulnerable package report |
 | `.vscode/` | Launch configuration and `build`, `watch`, `test` and `database update` tasks |
 | `global.json` | .NET 10 SDK, latest feature band |
 | `/health` | Database reachability check |

@@ -257,5 +257,13 @@ namespace NewsArchive.Tests.Rules
             Assert.Equal(AuditRules.MaxDetailsLength, AuditRules.Clip(new string('d', 900))!.Length);
             Assert.Null(AuditRules.Clip("  "));
         }
+
+        [Fact]
+        public void Search_words_keep_bangla_marks_and_drop_punctuation()
+        {
+            Assert.Equal(new[] { "river", "ferry", "নদীবন্দর", "2026" }, SearchRules.IndexWords("River, ferry! নদীবন্দর 2026 a river"));
+            Assert.Equal(new[] { "a", "b" }, SearchRules.QueryTerms("a, b"));
+            Assert.Equal(SearchRules.MaxQueryTerms, SearchRules.QueryTerms("a b c d e f g").Count);
+        }
     }
 }

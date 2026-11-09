@@ -15,7 +15,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 - English and Bangla editions; every page, form, message and email is translated
 - Light, dark and system themes, with a light 3D layer (rotating globe, tilt cards) that switches off for reduced motion
 - Home page with lead story, latest news, trending, popular topics, *On this day* and a breaking-news ticker
-- Sections, topics, date archive with a calendar, author pages, search by keyword and date
+- Sections, topics, date archive with a calendar, author pages, fast word search in English and Bangla, and search by date
 - **Search suggestions** while typing: stories, topics, sections and authors
 - **Recommendations while reading**:
   - an *Up next* story and *More like this*, each with the reason (same topic, similar story, same section or author)
@@ -82,7 +82,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 | Content | Markdig (safe Markdown) |
 | API docs | Swashbuckle / Swagger |
 | UI | Razor, Bootstrap 5.3, Bootstrap Icons, Source Serif 4, Inter, Cinzel, Noto Bengali |
-| Tests | xUnit (83 tests), GitHub Actions |
+| Tests | xUnit (92 unit and integration tests), GitHub Actions |
 
 ## Project structure
 
@@ -175,6 +175,8 @@ dotnet run --project NewsArchive --launch-profile http
 cd NewsArchiveSolution
 dotnet test NewsArchive.Tests
 ```
+
+The integration tests start the app against a separate database, `NewsArchiveTestDB`, which they create on `localhost\SQLEXPRESS`. Your own database is never touched. To use another server, set the environment variable `NEWSARCHIVE_TEST_DB` to a connection string. CI runs them against a SQL Server container.
 
 ### 6. API
 

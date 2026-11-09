@@ -86,6 +86,7 @@ namespace BLL.Services
 
             if (!repo.Create(article)) return 0;
             SaveTags(article.ArticleId, form.TagIds);
+            Index(article);
             if (isAdmin)
             {
                 if (article.StatusId == ArticleStatus.Scheduled)
@@ -127,6 +128,7 @@ namespace BLL.Services
 
             if (!repo.Update(article)) return false;
             SaveTags(articleId, form.TagIds);
+            Index(article);
             cache.Invalidate(CacheRegions.Content);
             if (isAdmin && (wasPublished || article.AuthorId != editorId))
                 Log(AuditActions.ArticleEdited, article, ArticleStatus.Name(article.StatusId), editorId);
@@ -304,7 +306,13 @@ namespace BLL.Services
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 50) pageSize = 9;
-            var data = repo.Search(keyword, from, to, page, pageSize, out total, language);
+            var terms = SearchRules.QueryTerms(keyword);
+            if (terms.Count == 0 && !string.IsNullOrWhiteSpace(keyword))
+            {
+                total = 0;
+                return new List<ArticleDTO>();
+            }
+            var data = repo.Search(terms, from, to, page, pageSize, out total, language);
             return mapper.Map<List<ArticleDTO>>(data);
         }
 
@@ -357,6 +365,21 @@ namespace BLL.Services
         public List<ArticleDTO> GetPublishedForSitemap()
         {
             return mapper.Map<List<ArticleDTO>>(repo.GetPublishedForSitemap());
+        }
+
+        private void Index(Article article)
+        {
+            repo.ReplaceWords(article.ArticleId, SearchRules.IndexWords(article.Title + " " + article.Summary + " " + article.Content));
+        }
+
+        public int IndexMissingSearchWords()
+        {
+            var articles = repo.GetUnindexed(50);
+            foreach (var article in articles)
+                Index(article);
+            if (articles.Count > 0)
+                cache.Invalidate(CacheRegions.Content);
+            return articles.Count;
         }
 
         public void EnsureSlugs()

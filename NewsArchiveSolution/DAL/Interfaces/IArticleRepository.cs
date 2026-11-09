@@ -12,7 +12,11 @@ namespace DAL.Interfaces
 
         bool IsPublished(int articleId);
 
-        List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
+        void ReplaceWords(int articleId, IEnumerable<string> words);
+
+        List<Article> GetUnindexed(int count);
+
+        List<Article> Search(IReadOnlyList<string> terms, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null);
 
         List<Article> GetByPeriod(DateTime from, DateTime toExclusive, string? language, int page, int pageSize, out int total);
 

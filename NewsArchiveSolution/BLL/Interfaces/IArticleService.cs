@@ -58,6 +58,8 @@ namespace BLL.Interfaces
 
         List<ArticleDTO> GetPublishedForSitemap();
 
+        int IndexMissingSearchWords();
+
         void EnsureSlugs();
     }
 }

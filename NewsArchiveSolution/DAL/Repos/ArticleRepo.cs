@@ -80,11 +80,29 @@ namespace DAL.Repos
             return db.Articles.Any(a => a.ArticleId == articleId && a.StatusId == ArticleStatusIds.Published);
         }
 
-        public List<Article> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
+        public void ReplaceWords(int articleId, IEnumerable<string> words)
+        {
+            db.ArticleWords.Where(w => w.ArticleId == articleId).ExecuteDelete();
+            db.ArticleWords.AddRange(words.Select(w => new ArticleWord { ArticleId = articleId, Word = w }));
+            db.SaveChanges();
+            db.ChangeTracker.Clear();
+        }
+
+        public List<Article> GetUnindexed(int count)
+        {
+            return db.Articles.AsNoTracking()
+                .Where(a => !a.Words.Any())
+                .OrderBy(a => a.ArticleId)
+                .Take(count)
+                .Select(a => new Article { ArticleId = a.ArticleId, Title = a.Title, Summary = a.Summary, Content = a.Content })
+                .ToList();
+        }
+
+        public List<Article> Search(IReadOnlyList<string> terms, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
         {
             var query = Published(language);
-            if (!string.IsNullOrWhiteSpace(keyword))
-                query = query.Where(a => a.Title.Contains(keyword) || a.Summary.Contains(keyword) || a.Content.Contains(keyword));
+            foreach (var term in terms)
+                query = query.Where(a => a.Words.Any(w => w.Word.StartsWith(term)));
             if (from.HasValue)
                 query = query.Where(a => a.PublishDate >= from.Value);
             if (to.HasValue)

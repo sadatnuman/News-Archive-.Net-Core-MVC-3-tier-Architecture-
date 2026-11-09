@@ -12,6 +12,7 @@ DELETE FROM [UserTokens];
 DELETE FROM [ContentLabels];
 DELETE FROM [CommentReports];
 DELETE FROM [Comments];
+DELETE FROM [ArticleWords];
 DELETE FROM [Articles];
 DELETE FROM [Tags];
 DELETE FROM [Categories];

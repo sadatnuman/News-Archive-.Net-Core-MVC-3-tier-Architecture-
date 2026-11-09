@@ -23,9 +23,13 @@ namespace NewsArchive.Publishing
                 try
                 {
                     using var scope = scopeFactory.CreateScope();
-                    var published = scope.ServiceProvider.GetRequiredService<IArticleService>().PublishDue();
+                    var articles = scope.ServiceProvider.GetRequiredService<IArticleService>();
+                    var published = articles.PublishDue();
                     if (published > 0)
                         LogPublished(published);
+                    var indexed = articles.IndexMissingSearchWords();
+                    if (indexed > 0)
+                        LogIndexed(indexed);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -37,6 +41,9 @@ namespace NewsArchive.Publishing
 
         [LoggerMessage(Level = LogLevel.Information, Message = "Published {Count} scheduled article(s)")]
         private partial void LogPublished(int count);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Added {Count} article(s) to the search index")]
+        private partial void LogIndexed(int count);
 
         [LoggerMessage(Level = LogLevel.Error, Message = "Publishing scheduled articles failed")]
         private partial void LogFailed(Exception exception);

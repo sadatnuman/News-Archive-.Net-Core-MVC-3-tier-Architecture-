@@ -1,3 +1,4 @@
+using BLL.Caching;
 using BLL.DTOs;
 using BLL.Interfaces;
 using DAL.EF.Tables;
@@ -11,9 +12,11 @@ namespace BLL.Services
         private readonly IArticleRepository articleRepo;
         private readonly IReadingHistoryRepository historyRepo;
         private readonly IMapper mapper;
+        private readonly IAppCache cache;
 
-        public RecommendationService(IDataAccessFactory factory, IMapper mapper)
+        public RecommendationService(IDataAccessFactory factory, IMapper mapper, IAppCache cache)
         {
+            this.cache = cache;
             articleRepo = factory.GetArticleRepository();
             historyRepo = factory.GetReadingHistoryRepository();
             this.mapper = mapper;
@@ -88,7 +91,14 @@ namespace BLL.Services
             count = Math.Clamp(count, 1, RecommendationRules.MaxCount);
             var recent = RecentIds(userId, recentIds);
             if (recent.Count == 0 || recent.Count < minHistory) return new List<RecommendationDTO>();
+            if (excludeIds != null) return Personalize(recent, language, count, excludeIds);
 
+            return cache.GetOrCreate(CacheRegions.Content, $"reader:{AppLanguages.Normalize(language)}:{count}:{string.Join(',', recent)}",
+                CacheTimes.Listings, () => Personalize(recent, language, count, null));
+        }
+
+        private List<RecommendationDTO> Personalize(List<int> recent, string language, int count, IEnumerable<int>? excludeIds)
+        {
             var position = recent.Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i);
             var readArticles = articleRepo.GetManyWithTags(recent);
             if (readArticles.Count == 0) return new List<RecommendationDTO>();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DAL.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -190,6 +190,23 @@ namespace DAL.EF.Migrations
                             StatusId = 5,
                             Name = "Scheduled"
                         });
+                });
+
+            modelBuilder.Entity("DAL.EF.Tables.ArticleWord", b =>
+                {
+                    b.Property<string>("Word")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Word", "ArticleId")
+                        .HasName("PK_ArticleWords");
+
+                    b.HasIndex(new[] { "ArticleId" }, "IX_ArticleWords_ArticleId");
+
+                    b.ToTable("ArticleWords");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.AuditLog", b =>
@@ -805,6 +822,18 @@ namespace DAL.EF.Migrations
                     b.Navigation("Status");
                 });
 
+            modelBuilder.Entity("DAL.EF.Tables.ArticleWord", b =>
+                {
+                    b.HasOne("DAL.EF.Tables.Article", "Article")
+                        .WithMany("Words")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ArticleWords_Articles");
+
+                    b.Navigation("Article");
+                });
+
             modelBuilder.Entity("DAL.EF.Tables.AuditLog", b =>
                 {
                     b.HasOne("DAL.EF.Tables.User", "User")
@@ -954,6 +983,8 @@ namespace DAL.EF.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Readers");
+
+                    b.Navigation("Words");
                 });
 
             modelBuilder.Entity("DAL.EF.Tables.ArticleStatus", b =>
