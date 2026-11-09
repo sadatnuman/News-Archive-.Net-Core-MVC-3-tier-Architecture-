@@ -4,7 +4,7 @@ namespace DAL.Interfaces
 {
     public interface IBookmarkRepository
     {
-        bool Add(int userId, int articleId);
+        bool Add(int userId, int articleId, DateTime createdAt);
 
         bool Remove(int userId, int articleId);
 

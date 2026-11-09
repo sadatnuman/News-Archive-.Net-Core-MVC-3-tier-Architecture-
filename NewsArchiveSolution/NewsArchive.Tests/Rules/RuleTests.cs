@@ -175,7 +175,7 @@ namespace NewsArchive.Tests.Rules
         [Fact]
         public void Newer_stories_score_higher_for_freshness()
         {
-            var now = DateTime.Now;
+            var now = BLL.SiteClock.Now;
             Assert.True(RecommendationRules.Recency(now.AddDays(-1), now) > RecommendationRules.Recency(now.AddDays(-20), now));
             Assert.Equal(1, RecommendationRules.Recency(now.AddDays(1), now), 3);
         }
@@ -252,10 +252,8 @@ namespace NewsArchive.Tests.Rules
         }
 
         [Fact]
-        public void Audit_masks_emails_and_clips_details()
+        public void Audit_clips_details()
         {
-            Assert.Equal("n*****@example.com", AuditRules.MaskEmail("Nobody@Example.com"));
-            Assert.Equal("(empty)", AuditRules.MaskEmail(" "));
             Assert.Equal(AuditRules.MaxDetailsLength, AuditRules.Clip(new string('d', 900))!.Length);
             Assert.Null(AuditRules.Clip("  "));
         }

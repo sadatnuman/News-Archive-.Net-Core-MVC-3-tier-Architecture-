@@ -28,22 +28,5 @@ namespace BLL.Services
             var data = repo.Get(id);
             return data == null ? null : mapper.Map<RoleDTO>(data);
         }
-
-        public bool Create(RoleDTO c)
-        {
-            var converted = mapper.Map<Role>(c);
-            return repo.Create(converted);
-        }
-
-        public bool Update(RoleDTO c)
-        {
-            var converted = mapper.Map<Role>(c);
-            return repo.Update(converted);
-        }
-
-        public bool Delete(int id)
-        {
-            return repo.Delete(id);
-        }
     }
 }

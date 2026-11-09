@@ -110,11 +110,11 @@
 {
     if (meta.PublishedTime.HasValue)
     {
-        <meta property="article:published_time" content="@meta.PublishedTime.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")" />
+        <meta property="article:published_time" content="@BLL.SiteClock.ToUtc(meta.PublishedTime.Value).ToString("yyyy-MM-ddTHH:mm:ssZ")" />
     }
     if (meta.ModifiedTime.HasValue)
     {
-        <meta property="article:modified_time" content="@meta.ModifiedTime.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")" />
+        <meta property="article:modified_time" content="@BLL.SiteClock.ToUtc(meta.ModifiedTime.Value).ToString("yyyy-MM-ddTHH:mm:ssZ")" />
     }
     if (!string.IsNullOrEmpty(meta.Section))
     {

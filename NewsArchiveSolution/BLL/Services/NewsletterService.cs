@@ -40,7 +40,7 @@ namespace BLL.Services
             var lang = AppLanguages.Normalize(language);
             if (normalized == null) return new SubscribeResultDTO { Status = SubscribeStatus.InvalidEmail, LanguageCode = lang };
 
-            var now = DateTime.Now;
+            var now = SiteClock.Now;
             var existing = repo.GetByEmail(normalized);
             var result = new SubscribeResultDTO { Email = normalized, LanguageCode = lang };
 
@@ -111,13 +111,13 @@ namespace BLL.Services
                 result.Status = ConfirmStatus.AlreadyConfirmed;
                 return result;
             }
-            if (DateTime.Now - subscriber.CreatedAt > NewsletterRules.ConfirmWindow)
+            if (SiteClock.Now - subscriber.CreatedAt > NewsletterRules.ConfirmWindow)
             {
                 result.Status = ConfirmStatus.Expired;
                 return result;
             }
 
-            subscriber.ConfirmedAt = DateTime.Now;
+            subscriber.ConfirmedAt = SiteClock.Now;
             result.Status = repo.Save(subscriber) ? ConfirmStatus.Confirmed : ConfirmStatus.NotFound;
             return result;
         }
@@ -136,7 +136,7 @@ namespace BLL.Services
             if (subscriber == null) return false;
             if (subscriber.UnsubscribedAt != null) return true;
 
-            subscriber.UnsubscribedAt = DateTime.Now;
+            subscriber.UnsubscribedAt = SiteClock.Now;
             return repo.Save(subscriber);
         }
 
@@ -161,13 +161,14 @@ namespace BLL.Services
         public NewsletterDigestDTO BuildDigest(string language)
         {
             var lang = AppLanguages.Normalize(language);
-            var now = DateTime.Now;
+            var now = SiteClock.Now;
             var stories = articleRepo.GetByPeriod(now.AddDays(-NewsletterRules.DigestDays), now.AddMinutes(1), lang, 1, NewsletterRules.DigestStories, out _);
             return new NewsletterDigestDTO
             {
                 LanguageCode = lang,
                 Stories = mapper.Map<List<ArticleDTO>>(stories),
                 Recipients = repo.GetActive(lang)
+                    .Where(s => s.LastSentAt == null || now - s.LastSentAt.Value >= NewsletterRules.DigestGap)
                     .Select(s => new NewsletterRecipientDTO { SubscriberId = s.SubscriberId, Email = s.Email, UnsubscribeToken = s.UnsubscribeToken })
                     .ToList()
             };
@@ -176,7 +177,7 @@ namespace BLL.Services
         public void MarkSent(IEnumerable<int> subscriberIds, string language, int stories)
         {
             var ids = subscriberIds.ToList();
-            var count = ids.Count == 0 ? 0 : repo.MarkSent(ids, DateTime.Now);
+            var count = ids.Count == 0 ? 0 : repo.MarkSent(ids, SiteClock.Now);
             audit.Record(AuditActions.NewsletterSent, AuditEntities.Newsletter, null,
                 $"{AppLanguages.NativeName(AppLanguages.Normalize(language))}: {stories} stories to {count} subscribers");
         }
@@ -190,7 +191,7 @@ namespace BLL.Services
 
         public int PurgeStale()
         {
-            return repo.DeleteStalePending(DateTime.Now - NewsletterRules.PendingRetention);
+            return repo.DeleteStalePending(SiteClock.Now - NewsletterRules.PendingRetention);
         }
     }
 }

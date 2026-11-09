@@ -21,7 +21,7 @@ namespace NewsArchive.Tests.Services
             AuthorId = author,
             LanguageCode = "en",
             StatusId = ArticleStatusIds.Published,
-            PublishDate = DateTime.Now.AddDays(-id),
+            PublishDate = BLL.SiteClock.Now.AddDays(-id),
             ViewsCount = 10,
             Tags = tags.Select(t => new Tag { TagId = t, Name = "tag" + t }).ToList()
         };

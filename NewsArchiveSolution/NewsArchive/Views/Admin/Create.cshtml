@@ -10,7 +10,7 @@
     <div class="auth-card">
         <h1 class="h3 mb-4">@L["Add user"]</h1>
         <form asp-action="Create" method="post">
-            <input type="hidden" asp-for="CreatedAt" value="@DateTime.Now.ToString("s")" />
+            <input type="hidden" asp-for="CreatedAt" value="@BLL.SiteClock.Now.ToString("s")" />
             <partial name="_UserFields" model="Model" />
             <div class="mb-4">
                 <label asp-for="RoleId" class="form-label fw-semibold"></label>

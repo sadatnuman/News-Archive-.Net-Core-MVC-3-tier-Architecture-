@@ -23,7 +23,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
   - *Recommended for you* on the home page and in the article sidebar
 - **Reading history** (`/history`) with remove and clear, and **saved stories** (`/bookmarks`)
 - Comments, with a **Report** button for spam, abuse, off-topic or misinformation
-- **Weekly email digest** with double opt-in and one-click unsubscribe
+- **Weekly email digest** with double opt-in, one-click unsubscribe and a bot trap
 - Works **offline**: a bilingual offline page, and repeat visits load faster
 - Sign up, profile picture, bio, password change, and password reset by an emailed code; eye button on every password field
 
@@ -36,7 +36,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 
 - Approve, reject or **schedule** stories; nothing an author writes goes live without approval
 - **Comment moderation**: reported and hidden queues; a comment is hidden automatically after 3 reports
-- **Newsletter**: subscriber list, digest preview and *Send now* for each edition
+- **Newsletter**: subscriber list, digest preview and *Send now* for each edition, sent in the background and never twice in one week
 - **Audit log**: every editorial, moderation, account and sign-in action, filterable by type and person
 - Sections, topics and users (with roles); dashboard with totals, review queue, reported comments and most-viewed stories
 
@@ -50,7 +50,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 
 - **Passwords and lockout:**
   - PBKDF2 password hashing; old MD5 hashes are upgraded automatically.
-  - 5 failed sign-ins lock the account for 15 minutes.
+  - 5 failed sign-ins from one IP address lock that email there for 15 minutes.
   - Every endpoint that accepts input is rate limited.
 - **Account protection:**
   - Changing your password requires the current one.
@@ -82,7 +82,7 @@ A bilingual (English and Bangla) news archive built with ASP.NET Core MVC on .NE
 | Content | Markdig (safe Markdown) |
 | API docs | Swashbuckle / Swagger |
 | UI | Razor, Bootstrap 5.3, Bootstrap Icons, Source Serif 4, Inter, Cinzel, Noto Bengali |
-| Tests | xUnit (71 tests), GitHub Actions |
+| Tests | xUnit (83 tests), GitHub Actions |
 
 ## Project structure
 
@@ -144,7 +144,7 @@ sqlcmd -S "localhost\SQLEXPRESS" -E -d NewsArchiveDB -f 65001 -i database/sample
 | Audit log entries | 14 |
 | Expired and revoked API tokens (cannot be used) | 6 |
 
-Sample accounts all use the password `Meridian@2026`. On the sign-in page, the **Demo Admin**, **Demo Author** and **Demo Reader** buttons fill them in with one click. Change them before going live.
+Sample accounts all use the password `Meridian@2026`. In Development, the **Demo Admin**, **Demo Author** and **Demo Reader** buttons on the sign-in page fill them in with one click. They come from `appsettings.Development.json`, so a production deployment never shows them. Change the passwords before going live.
 
 | Email | Role |
 |---|---|
@@ -196,13 +196,15 @@ curl "http://localhost:5096/api/search/suggest?q=rail&lang=en"
 | `Site:Name`, `Site:Tagline`, `Site:Description` | Brand text for titles, meta tags, feeds and emails |
 | `Site:BaseUrl` | Public address for canonical URLs, sitemaps, share images and email links |
 | `Site:SocialProfiles`, `Site:TwitterHandle`, `Site:ContactEmail` | Social links (shown as footer icons) and contact details |
-| `Site:ShowDemoNotice` | Sample-content banner; also shows the demo account buttons on the sign-in page |
-| `Site:DemoAccounts` | Demo Admin, Author and Reader buttons on the sign-in page that fill in the email and password with one click |
+| `Site:TimeZone` | Time zone for every stored and shown time (default `Asia/Dhaka`), independent of the server clock |
+| `Site:ShowDemoNotice` | Sample-content banner (on only in Development) |
+| `Site:DemoAccounts` | Demo Admin, Author and Reader buttons on the sign-in page (set only in `appsettings.Development.json`) |
 | `Api:SwaggerEnabled`, `Api:TokenLifetimeHours`, `Api:AllowedOrigins` | Swagger outside Development, token lifetime (default 12 h), CORS origins |
 | `Email:FromAddress`, `Email:FromName` | Sender of all emails |
 | `Email:Smtp:Host`, `Port`, `UseSsl`, `UserName`, `Password` | SMTP server; leave `Host` empty to keep emails in the log |
 | `Email:OutboxFolder` | Where Development writes emails as text files (default `App_Data/outbox`, not in git) |
 | `Hosting:KnownProxies` | Reverse proxies whose `X-Forwarded-*` headers are trusted |
+| `Hosting:TrustAllProxies` | Set `true` on Azure App Service and other hosts that put a proxy in front of the app, so every visitor gets their own rate limit |
 | `Database:MigrateOnStartup` | Apply migrations on startup outside Development |
 
 ### Turning on real email
@@ -220,8 +222,9 @@ The newsletter confirmations, digests and password reset codes then go out throu
 
 ### Before going live
 
-- Change the sample passwords, set `Site:ShowDemoNotice` to `false` and empty `Site:DemoAccounts`.
+- Change the sample passwords. Demo buttons and the sample banner are already off outside Development.
 - Set `Site:BaseUrl`.
+- Behind a host proxy (Azure App Service, most free hosts), set `Hosting:TrustAllProxies` to `true`.
 - Serve the site over HTTPS (cookies are Secure outside Development).
 - Configure SMTP.
 - Keep `Api:SwaggerEnabled` off unless the API docs should be public.

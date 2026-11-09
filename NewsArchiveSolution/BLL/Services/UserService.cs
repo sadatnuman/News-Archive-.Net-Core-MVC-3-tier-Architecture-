@@ -53,7 +53,7 @@ namespace BLL.Services
             converted.Email = converted.Email.Trim();
             converted.PasswordHash = PasswordHasher.Hash(c.PasswordHash);
             converted.Bio = CleanBio(c.Bio);
-            converted.CreatedAt = DateTime.Now;
+            converted.CreatedAt = SiteClock.Now;
             converted.AvatarPath = null;
             if (!repo.Create(converted)) return false;
 

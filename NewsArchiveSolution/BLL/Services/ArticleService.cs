@@ -56,7 +56,7 @@ namespace BLL.Services
             var isAdmin = roleId == AppRoles.Admin;
             if (!isAdmin && roleId != AppRoles.Author) return 0;
 
-            var now = DateTime.Now;
+            var now = SiteClock.Now;
             var article = new Article
             {
                 Title = form.Title.Trim(),
@@ -110,15 +110,15 @@ namespace BLL.Services
             article.ImagePath = string.IsNullOrWhiteSpace(form.ImagePath) ? null : form.ImagePath.Trim();
             article.CategoryId = form.CategoryId;
             article.LanguageCode = AppLanguages.Normalize(form.LanguageCode);
-            article.UpdatedAt = DateTime.Now;
+            article.UpdatedAt = SiteClock.Now;
 
             if (isAdmin)
             {
                 article.IsBreakingNews = form.IsBreakingNews;
-                if (article.StatusId != ArticleStatus.Published && ArticleRules.IsFutureSchedule(form.PublishAt, DateTime.Now))
-                    PublishOrSchedule(article, form.PublishAt, DateTime.Now);
+                if (article.StatusId != ArticleStatus.Published && ArticleRules.IsFutureSchedule(form.PublishAt, SiteClock.Now))
+                    PublishOrSchedule(article, form.PublishAt, SiteClock.Now);
                 else if (article.StatusId == ArticleStatus.Scheduled && form.PublishAt == null)
-                    PublishOrSchedule(article, null, DateTime.Now);
+                    PublishOrSchedule(article, null, SiteClock.Now);
             }
             else
             {
@@ -140,7 +140,7 @@ namespace BLL.Services
             if (article.StatusId != ArticleStatus.Draft && article.StatusId != ArticleStatus.Rejected) return false;
 
             article.StatusId = ArticleStatus.Pending;
-            article.UpdatedAt = DateTime.Now;
+            article.UpdatedAt = SiteClock.Now;
             return repo.Update(article);
         }
 
@@ -165,7 +165,7 @@ namespace BLL.Services
             var article = repo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Pending) return false;
 
-            var now = DateTime.Now;
+            var now = SiteClock.Now;
             PublishOrSchedule(article, publishAt, now);
             article.ReviewedById = adminId;
             article.ReviewedAt = now;
@@ -183,7 +183,7 @@ namespace BLL.Services
         {
             var article = repo.Get(articleId);
             if (article == null || article.StatusId != ArticleStatus.Scheduled) return false;
-            PublishOrSchedule(article, null, DateTime.Now);
+            PublishOrSchedule(article, null, SiteClock.Now);
             if (!repo.Update(article)) return false;
 
             Log(AuditActions.ArticlePublishedEarly, article);
@@ -204,7 +204,7 @@ namespace BLL.Services
 
         public int PublishDue()
         {
-            var count = repo.PublishDue(DateTime.Now);
+            var count = repo.PublishDue(SiteClock.Now);
             if (count > 0)
             {
                 cache.Invalidate(CacheRegions.Content);
@@ -225,7 +225,7 @@ namespace BLL.Services
 
             article.StatusId = ArticleStatus.Rejected;
             article.ReviewedById = adminId;
-            article.ReviewedAt = DateTime.Now;
+            article.ReviewedAt = SiteClock.Now;
             var cleanNote = string.IsNullOrWhiteSpace(note) ? "No reason given." : note.Trim();
             article.ReviewNote = cleanNote.Length > 500 ? cleanNote[..500] : cleanNote;
             if (!repo.Update(article)) return false;
@@ -300,11 +300,6 @@ namespace BLL.Services
             return data == null ? null : mapper.Map<ArticleDTO>(data);
         }
 
-        public void IncrementViewCount(int articleId)
-        {
-            repo.IncrementViewCount(articleId);
-        }
-
         public List<ArticleDTO> Search(string? keyword, DateTime? from, DateTime? to, int page, int pageSize, out int total, string? language = null)
         {
             if (page < 1) page = 1;
@@ -362,16 +357,6 @@ namespace BLL.Services
         public List<ArticleDTO> GetPublishedForSitemap()
         {
             return mapper.Map<List<ArticleDTO>>(repo.GetPublishedForSitemap());
-        }
-
-        public int GetCommentCount(int articleId)
-        {
-            return repo.GetCommentCount(articleId);
-        }
-
-        public bool HasBreakingNews(string? language = null)
-        {
-            return repo.HasBreakingNews(language);
         }
 
         public void EnsureSlugs()

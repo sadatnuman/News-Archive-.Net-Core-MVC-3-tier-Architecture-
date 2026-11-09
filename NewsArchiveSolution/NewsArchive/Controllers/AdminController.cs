@@ -3,7 +3,6 @@ using BLL.DTOs;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
-using BLL.Email;
 using NewsArchive.Auth;
 using NewsArchive.Email;
 using NewsArchive.Filters;
@@ -23,7 +22,7 @@ namespace NewsArchive.Controllers
         private readonly ICommentService commentService;
         private readonly IAuditService auditService;
         private readonly INewsletterService newsletterService;
-        private readonly IEmailSender emailSender;
+        private readonly DigestSender digestSender;
         private readonly MailComposer mail;
         private readonly PasswordChanger passwordChanger;
 
@@ -33,12 +32,12 @@ namespace NewsArchive.Controllers
 
         public AdminController(IUserService userService, IRoleService roleService, IAnalyticsService analyticsService, IArticleService articleService,
             ICategoryService categoryService, IAuthService authService, ICommentService commentService, IAuditService auditService,
-            INewsletterService newsletterService, IEmailSender emailSender, MailComposer mail, PasswordChanger passwordChanger, IStringLocalizer<SharedResource> localizer)
+            INewsletterService newsletterService, DigestSender digestSender, MailComposer mail, PasswordChanger passwordChanger, IStringLocalizer<SharedResource> localizer)
         {
             L = localizer;
             this.passwordChanger = passwordChanger;
             this.newsletterService = newsletterService;
-            this.emailSender = emailSender;
+            this.digestSender = digestSender;
             this.mail = mail;
             this.commentService = commentService;
             this.auditService = auditService;
@@ -75,7 +74,7 @@ namespace NewsArchive.Controllers
         [HttpPost]
         public IActionResult Approve(int id, DateTime? publishAt)
         {
-            var scheduled = ArticleRules.IsFutureSchedule(publishAt, DateTime.Now);
+            var scheduled = ArticleRules.IsFutureSchedule(publishAt, BLL.SiteClock.Now);
             if (articleService.Approve(id, CurrentUserId ?? 0, publishAt))
                 Flash("success", scheduled ? "Article approved and scheduled." : "Article approved and published.");
             else
@@ -159,7 +158,7 @@ namespace NewsArchive.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendDigest(string language, CancellationToken cancellationToken)
+        public IActionResult SendDigest(string language)
         {
             var digest = newsletterService.BuildDigest(language);
             if (digest.Stories.Count == 0)
@@ -174,19 +173,11 @@ namespace NewsArchive.Controllers
             }
 
             var sections = categoryService.Get().ToDictionary(c => c.CategoryId, c => c.LocalName(digest.LanguageCode));
-            var sent = new List<int>();
-            foreach (var recipient in digest.Recipients)
-            {
-                if (cancellationToken.IsCancellationRequested) break;
-                if (await emailSender.SendAsync(mail.Digest(digest, recipient, sections), cancellationToken))
-                    sent.Add(recipient.SubscriberId);
-            }
-            newsletterService.MarkSent(sent, digest.LanguageCode, digest.Stories.Count);
-
-            if (sent.Count == digest.Recipients.Count)
-                Flash("success", "Digest sent to every subscriber.");
+            var mails = digest.Recipients.Select(r => (r.SubscriberId, mail.Digest(digest, r, sections))).ToList();
+            if (digestSender.Enqueue(new DigestJob(digest.LanguageCode, digest.Stories.Count, mails)))
+                Flash("success", "The digest is being sent in the background. The audit log shows the result.");
             else
-                Flash("warning", "Some emails could not be sent. Check the email settings and the log.");
+                Flash("warning", "This edition is already being sent.");
             return RedirectToAction("Newsletter");
         }
 

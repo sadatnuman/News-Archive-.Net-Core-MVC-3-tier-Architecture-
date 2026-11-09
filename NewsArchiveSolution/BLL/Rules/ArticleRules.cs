@@ -27,7 +27,7 @@ namespace BLL
 
         public static bool IsValidArchiveDate(int year, int? month = null, int? day = null)
         {
-            if (year < ArchiveMinYear || year > DateTime.Now.Year + 1) return false;
+            if (year < ArchiveMinYear || year > SiteClock.Now.Year + 1) return false;
             if (month == null) return day == null;
             if (month < 1 || month > 12) return false;
             return day == null || (day >= 1 && day <= DateTime.DaysInMonth(year, month.Value));

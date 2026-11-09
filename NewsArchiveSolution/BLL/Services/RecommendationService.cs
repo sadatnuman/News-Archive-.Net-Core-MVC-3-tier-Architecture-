@@ -58,7 +58,7 @@ namespace BLL.Services
             var read = RecentIds(userId, recentIds).ToHashSet();
             var sourceTags = source.Tags.Select(t => t.TagId).ToHashSet();
             var sourceWords = RecommendationRules.Keywords(source.Title, source.Summary);
-            var now = DateTime.Now;
+            var now = SiteClock.Now;
 
             var candidates = articleRepo.GetRecommendationCandidates(source.LanguageCode, new[] { articleId },
                 new[] { source.CategoryId }, sourceTags, new[] { source.AuthorId },
@@ -117,7 +117,7 @@ namespace BLL.Services
                     map[key] /= total;
 
             var topTags = tagAffinity.OrderByDescending(x => x.Value).Take(15).Select(x => x.Key).ToList();
-            var now = DateTime.Now;
+            var now = SiteClock.Now;
             var exclude = recent.Concat(excludeIds ?? Enumerable.Empty<int>()).ToList();
 
             var candidates = articleRepo.GetRecommendationCandidates(AppLanguages.Normalize(language), exclude,
@@ -146,12 +146,14 @@ namespace BLL.Services
 
         public bool RecordRead(int userId, int articleId)
         {
-            var article = articleRepo.Get(articleId);
-            if (article == null || article.StatusId != ArticleStatus.Published) return false;
+            if (!articleRepo.IsPublished(articleId)) return false;
 
-            historyRepo.Record(userId, articleId, DateTime.Now);
-            if (historyRepo.Count(userId) > RecommendationRules.HistorySize)
-                historyRepo.Trim(userId, RecommendationRules.HistorySize);
+            if (historyRepo.Record(userId, articleId, SiteClock.Now))
+            {
+                articleRepo.IncrementViewCount(articleId);
+                if (historyRepo.Count(userId) > RecommendationRules.HistorySize)
+                    historyRepo.Trim(userId, RecommendationRules.HistorySize);
+            }
             return true;
         }
 

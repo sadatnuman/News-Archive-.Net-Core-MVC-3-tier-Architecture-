@@ -1,5 +1,7 @@
-const VERSION = "meridian-v1";
+const VERSION = "meridian-v2";
 const STATIC_CACHE = VERSION + "-static";
+const IMAGE_CACHE = VERSION + "-images";
+const MAX_IMAGES = 60;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
     OFFLINE_URL,
@@ -13,6 +15,7 @@ const PRECACHE = [
     "/lib/jquery/dist/jquery.min.js"
 ];
 const STATIC_PREFIXES = ["/css/", "/js/", "/lib/", "/images/brand/", "/images/articles/", "/images/avatars/", "/uploads/"];
+const IMAGE_PREFIXES = ["/images/articles/", "/images/avatars/", "/uploads/"];
 const PRIVATE_PREFIXES = ["/api/", "/Admin", "/Auth", "/Member", "/history", "/bookmarks", "/newsletter", "/swagger", "/health"];
 
 self.addEventListener("install", function (event) {
@@ -39,6 +42,16 @@ function isStatic(url) {
     return STATIC_PREFIXES.some(function (prefix) { return url.pathname.indexOf(prefix) === 0; });
 }
 
+function isImage(url) {
+    return IMAGE_PREFIXES.some(function (prefix) { return url.pathname.indexOf(prefix) === 0; });
+}
+
+function trimImages(cache) {
+    return cache.keys().then(function (keys) {
+        return Promise.all(keys.slice(0, Math.max(0, keys.length - MAX_IMAGES)).map(function (key) { return cache.delete(key); }));
+    });
+}
+
 function isPrivate(url) {
     return PRIVATE_PREFIXES.some(function (prefix) { return url.pathname.indexOf(prefix) === 0; });
 }
@@ -58,10 +71,15 @@ self.addEventListener("fetch", function (event) {
     }
 
     if (isStatic(url)) {
-        event.respondWith(caches.open(STATIC_CACHE).then(function (cache) {
+        const image = isImage(url);
+        event.respondWith(caches.open(image ? IMAGE_CACHE : STATIC_CACHE).then(function (cache) {
             return cache.match(request).then(function (cached) {
                 const network = fetch(request).then(function (response) {
-                    if (response.ok && response.type === "basic") cache.put(request, response.clone());
+                    if (response.ok && response.type === "basic") {
+                        cache.put(request, response.clone()).then(function () {
+                            if (image) trimImages(cache);
+                        });
+                    }
                     return response;
                 }).catch(function () {
                     return cached;

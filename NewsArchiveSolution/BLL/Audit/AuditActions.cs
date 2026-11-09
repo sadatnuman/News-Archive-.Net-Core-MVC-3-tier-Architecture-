@@ -66,15 +66,5 @@ namespace BLL.Audit
             var trimmed = details.Trim();
             return trimmed.Length > MaxDetailsLength ? trimmed[..MaxDetailsLength] : trimmed;
         }
-
-        public static string MaskEmail(string? email)
-        {
-            if (string.IsNullOrWhiteSpace(email)) return "(empty)";
-            var e = email.Trim().ToLowerInvariant();
-            if (e.Length > 150) e = e[..150];
-            var at = e.IndexOf('@');
-            if (at <= 1) return "***" + (at >= 0 ? e[at..] : string.Empty);
-            return e[0] + new string('*', Math.Min(at - 1, 6)) + e[at..];
-        }
     }
 }

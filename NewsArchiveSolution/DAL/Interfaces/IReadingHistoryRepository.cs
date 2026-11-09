@@ -4,7 +4,7 @@ namespace DAL.Interfaces
 {
     public interface IReadingHistoryRepository
     {
-        void Record(int userId, int articleId, DateTime readAt);
+        bool Record(int userId, int articleId, DateTime readAt);
 
         void Trim(int userId, int keep);
 

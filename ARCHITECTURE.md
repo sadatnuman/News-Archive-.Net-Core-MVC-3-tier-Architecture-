@@ -200,9 +200,9 @@ Draft (1) ──submit──► Pending (2) ──approve───────�
 ### Newsletter
 
 - Double opt-in: the footer and home page form sends a confirmation link valid for 48 hours. Only the SHA-256 of the confirm token is stored. The response is the same whether or not the address is known.
-- Requests for the same address within 2 minutes don't send a second email.
+- Requests for the same address within 2 minutes don't send a second email. A hidden honeypot field catches simple bots: when it is filled, the form answers as usual and nothing is sent.
 - Every email has an unsubscribe link and `List-Unsubscribe` headers. The unsubscribe page asks for confirmation, so link scanners can't unsubscribe anyone; one-click `POST` also works.
-- `/Admin/Newsletter` shows counts per edition, previews the English and Bangla digests (stories from the past 7 days, up to 6) and sends them. Every send is audited.
+- `/Admin/Newsletter` shows counts per edition, previews the English and Bangla digests (stories from the past 7 days, up to 6). *Send now* hands the composed emails to `DigestSender`, a background service, so the page returns at once. Subscribers who got a digest in the past 6 days are skipped, and a second press while an edition is still sending is refused. Every send is audited.
 
 ### Audit log
 
@@ -215,7 +215,7 @@ Draft (1) ──submit──► Pending (2) ──approve───────�
 | User | Created, updated, role changed (from → to), deleted |
 | Section / Tag | Created, updated, deleted (articles moved to …) |
 | Newsletter | Digest sent (edition, stories, recipients), subscriber removed |
-| Security | Signed in, failed sign-in (unknown emails masked), account created, password changed, password change refused, reset code requested, signed out everywhere |
+| Security | Signed in, failed sign-in for an existing account, account created, password changed, password change refused, reset code requested, signed out everywhere |
 
 Passwords and codes are never written to the log. Entries are kept for 365 days.
 
@@ -232,7 +232,7 @@ Passwords and codes are never written to the log. Entries are kept for 365 days.
 | Website sign-in | Cookie with claims (`NameIdentifier`, `Name`, `Email`, `Role`, `RoleId`, `SecurityStamp`, avatar), HttpOnly, SameSite=Lax, Secure outside Development, 8 h sliding. `CookieSessionValidator` re-checks every request: a deleted account, changed role or changed password signs the cookie out |
 | Sign-out | `POST` with an antiforgery token; `GET /Auth/Logout` only shows a confirmation page |
 | API tokens | 256-bit random. Only the SHA-256 is stored, with expiry (`Api:TokenLifetimeHours`) and revocation. Sent as `Bearer` or as the HttpOnly `AuthToken` cookie (SameSite=Strict, path `/api`). Changing a password revokes every token |
-| Brute force | 5 failed sign-ins lock the account for 15 minutes (website and API). Unknown emails cost the same time as known ones |
+| Brute force | 5 failed sign-ins for one email from one IP address lock that pair for 15 minutes (website and API), so nobody can lock another person out from their own computer. The per-IP rate limit is the second layer. Unknown emails cost the same time as known ones |
 | Rate limits (per IP per minute) | Sign-in, sign-up and reset 20; comments 6; reports 10; newsletter 5; whole API 120 |
 | Password change | Requires the current password, which is throttled and audited. Right after an emailed-code reset, the verified code counts instead for 10 minutes |
 | Password reset | 6-digit code from a cryptographic RNG, stored as a hash in `PasswordResetStore`. Valid 10 minutes, single use, 5 attempts. At most 3 codes per account per hour, and a new code doesn't reset the attempt count. Same answer whether the account exists or not; sent through `IEmailSender` |
@@ -241,7 +241,7 @@ Passwords and codes are never written to the log. Entries are kept for 365 days.
 | XSS | Razor encoding, safe Markdown renderer, JSON-LD serialized with the default encoder, image paths limited to site paths or `https://` |
 | Headers | CSP (`script-src 'self'`, no inline scripts), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `no-store` on account and API responses, no `Server` header, HSTS outside Development |
 | Redirects | `returnUrl` is followed only when `Url.IsLocalUrl` accepts it |
-| Proxies | Forwarded headers trusted only from loopback or `Hosting:KnownProxies` |
+| Proxies | Forwarded headers trusted only from loopback or `Hosting:KnownProxies`. On hosts where every request comes through the host's proxy (Azure App Service, most free hosts), `Hosting:TrustAllProxies=true` trusts the forwarded client address so rate limits and the audit log see real visitors |
 | Privacy | Masked emails in logs, privacy page explains reading history and the newsletter in both languages |
 
 ## 7. REST API
@@ -297,7 +297,7 @@ Controllers in `Controllers/Api` inherit `ApiControllerBase` (`[ApiController]`,
 | Member | `Profile`, `ChangePassword` | Reader, Author |
 | Avatar | `Upload`, `Remove` | Signed in, own picture |
 | Bookmark, History | `/bookmarks`, `/bookmarks/toggle`, `/history`, `/history/remove`, `/history/clear` | Signed in, own data |
-| Auth | `Login` (with demo account buttons from `Site:DemoAccounts` while `Site:ShowDemoNotice` is on), `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
+| Auth | `Login` (with demo account buttons when `Site:DemoAccounts` has entries, which only `appsettings.Development.json` sets), `Create`, `Logout`, `ForgetPassword`, `VerifyOtp`, `AccessDenied` | Public |
 | Newsletter | `/newsletter/subscribe`, `/newsletter/confirm`, `/newsletter/unsubscribe` | Public |
 
 All MVC controllers except `Seo` and `Pages` inherit `AppController`, which exposes `CurrentUserId`, `CurrentRoleId`, `CurrentEmail`, `CurrentLanguage`, `SignInUserAsync`, `SetArticleLookups` and `Flash`. Flash messages store the English key and the layout translates it.
@@ -326,6 +326,7 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 | UI text | `IStringLocalizer<SharedResource>` as `L` in every view; English is the key, Bangla is in `Resources/SharedResource.bn.resx` (580+ entries) |
 | Long pages | Culture-specific views (`About.bn.cshtml`, `Privacy.bn.cshtml`, …) |
 | Switching | `?lang=bn` / `?lang=en`, remembered in the culture cookie |
+| Time | `BLL.SiteClock` gives every stored and shown time in `Site:TimeZone` (default `Asia/Dhaka`), whatever the server clock is, so schedules work on UTC hosts. Feeds, sitemaps and meta tags convert to UTC with `SiteClock.ToUtc`. API tokens use UTC |
 | Content | Each article has a language. Listings, recommendations and suggestions show the current language; article pages use the article's own `lang` |
 | Theme | Classic newspaper look: white masthead, ink `#121212`, red `#c8102e`; dark mode `#121212` with `#ff4d5e`. Light, dark and system modes, applied before paint by `theme-init.js` |
 | 3D layer | Rotating CSS meridian globe, tilt cards with glare, glass sticky navigation, scroll reveal. Everything stops under `prefers-reduced-motion` |
@@ -350,7 +351,11 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
   - Trending stories, popular topics and section counts are cached for 2 minutes.
   - Any publish, edit, delete, schedule or moderation clears the affected region at once.
   - Whole pages are deliberately not cached, because each page carries per-visitor antiforgery tokens.
-- **Queries**: paging, counting and grouping run in SQL, and the sections page counts in one grouped query.
+- **Queries**:
+  - Paging, counting and grouping run in SQL, and the sections page counts in one grouped query.
+  - Every list loads story cards without the article body; only the article page and the editor load the full text.
+  - Search suggestions match titles only.
+  - A view is counted once per signed-in reader (their first read), and reading history is trimmed only when a new story is added to it.
 - **Static files**:
   - Versioned CSS and JS (`?v=`) are `immutable` for a year.
   - Pictures under `/images` and `/uploads` are cached for a day.
@@ -358,7 +363,7 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
   - Responses are compressed over HTTPS.
 - **PWA**:
   - `site.webmanifest`, plus `wwwroot/sw.js`, which precaches the offline page, icons and core CSS and JS.
-  - Static assets are served stale-while-revalidate.
+  - Static assets are served stale-while-revalidate. Pictures go to their own cache, which keeps only the 60 newest.
   - A failed page load falls back to the bilingual `offline.html`.
   - The API, admin, account, history, bookmark and newsletter paths are never cached.
 
@@ -366,7 +371,7 @@ All MVC controllers except `Seo` and `Pages` inherit `AppController`, which expo
 
 | Tool | What |
 |---|---|
-| `NewsArchive.Tests` (xUnit, 71 tests) | Rules (articles, slugs, passwords, recommendations, moderation, search, newsletter, audit) and services (comments, newsletter, recommendations, audit) with DispatchProxy-based fakes, so no database is needed |
+| `NewsArchive.Tests` (xUnit, 83 tests) | Rules (articles, slugs, passwords, recommendations, moderation, search, newsletter, audit), services (comments, newsletter, recommendations, audit) and security (sign-in lockout, reset codes, password change, Markdown links, no demo logins in the base settings) with DispatchProxy-based fakes, so no database is needed |
 | `.github/workflows/build.yml` | On every push and PR to `develop`/`main`: restore, Release build, unit tests, vulnerable package report |
 | `.vscode/` | Launch configuration and `build`, `watch`, `test` and `database update` tasks |
 | `global.json` | .NET 10 SDK, latest feature band |

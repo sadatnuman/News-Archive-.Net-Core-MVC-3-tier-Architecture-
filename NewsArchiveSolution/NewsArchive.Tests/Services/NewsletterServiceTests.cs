@@ -73,7 +73,7 @@ namespace NewsArchive.Tests.Services
         {
             var service = Service();
             var token = service.Subscribe("reader@example.com", "en").ConfirmToken!;
-            store[0].CreatedAt = DateTime.Now.AddDays(-3);
+            store[0].CreatedAt = BLL.SiteClock.Now.AddDays(-3);
             Assert.Equal(ConfirmStatus.Expired, service.Confirm(token).Status);
         }
 
@@ -97,6 +97,23 @@ namespace NewsArchive.Tests.Services
             Assert.Equal(SubscribeStatus.ConfirmationNeeded, service.Subscribe("reader@example.com", "en").Status);
             Assert.Null(store[0].UnsubscribedAt);
             Assert.Null(store[0].ConfirmedAt);
+        }
+
+        [Fact]
+        public void Digest_skips_readers_who_got_one_this_week()
+        {
+            var now = SiteClock.Now;
+            data.Subscribers.On("GetActive", _ => new List<Subscriber>
+            {
+                new() { SubscriberId = 1, Email = "new@example.com", UnsubscribeToken = "a" },
+                new() { SubscriberId = 2, Email = "recent@example.com", UnsubscribeToken = "b", LastSentAt = now.AddDays(-2) },
+                new() { SubscriberId = 3, Email = "old@example.com", UnsubscribeToken = "c", LastSentAt = now.AddDays(-8) }
+            });
+            data.Articles.On("GetByPeriod", a => { a[5] = 0; return new List<Article>(); });
+
+            var ids = Service().BuildDigest("en").Recipients.Select(r => r.SubscriberId);
+
+            Assert.Equal(new[] { 1, 3 }, ids);
         }
     }
 }
